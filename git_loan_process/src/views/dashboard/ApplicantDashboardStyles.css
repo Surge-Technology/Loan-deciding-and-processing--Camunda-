@@ -1,0 +1,73 @@
+.sideMenu{
+    background-color: #EFE9D5;
+    width: 25%;
+    border-Right: solid rgba(180, 169, 169, 0.912) 2px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    height: 590px;
+
+}
+.loanButton{
+    background-color: #EB5A3C;
+    margin: 35px 0 0 45px;
+    color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.loanButton:hover{
+    background-color: #11ce4a;
+    color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.loanButton:active{
+    background-color: #11ce4a;
+    border: none;
+    transform: scale(0.95);
+    
+}
+.filtersection{
+    display: flex;
+    justify-content: space-around;
+    margin: 20px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.filterbtn{
+    width: auto;
+    margin: 4px;
+    color: white;
+}
+.table{
+    margin-left: 20px;
+    max-height: 750px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 99%;
+    scrollbar-width: thin; /* Makes the scrollbar thin */
+    scrollbar-color: rgba(180, 169, 169, 0.912)  #f1f1f1; 
+}
+/* Custom scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.table::-webkit-scrollbar {
+    width: 2px; /* Width of the scrollbar */
+}
+
+.table::-webkit-scrollbar-track {
+    background: #91720d; 
+    border-radius: 10px;
+}
+
+.table::-webkit-scrollbar-thumb {
+    background:  #91720d; 
+    border-radius: 10px;
+}
+
+.table::-webkit-scrollbar-thumb:hover {
+    background:  #91720d; 
+}
+
+.repay{
+    color: white;
+}
+.repay:active{
+    transform: scale(0.95);
+    color: white;
+}

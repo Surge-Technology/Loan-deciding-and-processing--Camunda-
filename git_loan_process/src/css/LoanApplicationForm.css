@@ -1,0 +1,43 @@
+/* Container for all files */
+.file-metadata-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px;
+  }
+  
+  /* Style for each file's info */
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .file-info {
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+  }
+  
+  /* Style for the download button and icon */
+  .download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .download-icon {
+    font-size: 20px;
+    color: #007bff;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  
+  .download-icon:hover {
+    color: #0056b3;
+  }
+  

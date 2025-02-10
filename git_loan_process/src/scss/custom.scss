@@ -1,0 +1,85 @@
+// Here you can add other styles
+#bttn{
+    text-align: center;
+    color: white;
+    background-color: rgba(13, 116, 200, 0.774);
+    border:none;
+    margin-bottom: 15px;
+    width:100px;
+    height: 35px;
+    border-radius: 8px;
+    transition-duration: all 0.7s;
+    padding: 4px;
+}
+#bttn:hover{
+    cursor: pointer;
+    background-color: green;
+
+}
+#bttn:active{
+    transform: translateY(4px);
+    background-color: green;
+    color: black;
+}
+#cancel{
+    text-align: center;
+    color: white;
+    background-color: rgba(13, 116, 200, 0.774);
+    border:none;
+    margin-bottom: 15px;
+    width:100px;
+    height: 35px;
+    border-radius: 8px;
+    transition-duration: all 0.7s;
+    padding: 4px;
+} 
+#cancel:hover{
+    cursor: pointer;
+    background-color: rgb(238, 7, 7);
+
+}
+#cancel:active{
+    transform: translateY(4px);
+    background-color: rgb(202, 8, 18);
+    color: black;
+}
+
+// .highlight:hover{
+//     text-align: center;
+//     //background-color: rgba(50, 180, 227, 0.774);
+//     border:none;
+//     height: 35px;
+//     border-radius: 8px;
+//     transition: transform 0.5s ease-in-out;
+//     transition-duration: all 0.7s;
+//     padding: 3px;
+// }
+
+.highlight:hover {
+    text-align: center;
+    border: none;
+    height: 35px;
+    border-radius: 8px;
+    transition: transform 0.5s ease-in-out;
+    transition-duration: all 0.7s;
+    padding: 3px;
+    /* You can uncomment the background color if you want a hover effect */
+    /* background-color: rgba(50, 180, 227, 0.774); */
+}
+
+.highlight.active {
+    background-color: rgba(50, 180, 227, 0.774); /* Highlight color */
+    color: white; /* Change text color */
+    font-weight: bold !important; /* Make it bold */
+}
+
+.dark-label .form-floating label {
+    color: #000; /* Dark black color */
+}
+
+
+.transparent-input {
+    background-color: transparentize($color: #f0f8f652, $amount: 0) !important;
+    border-color: rgba(35, 11, 11, 0.945) !important;
+}
+

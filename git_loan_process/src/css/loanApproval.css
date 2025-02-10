@@ -1,0 +1,14 @@
+.radio-group {
+    gap: 20px; /* Spacing between the radio buttons */
+    display: flex; /* Ensure row alignment */
+  }
+  
+  .radio-label-spacing {
+    margin-right: 25px; /* Add space after each radio button */
+  }
+  /* .label-frame {
+    padding: 5px 15px;
+    background-color: #f8f9fa; 
+    border-radius: 5px;
+    font-weight: bold;
+  } */

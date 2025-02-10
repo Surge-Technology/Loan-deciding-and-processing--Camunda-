@@ -1,0 +1,69 @@
+.form-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: #343a40;
+  }
+  
+  .form-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    color: #495057;
+    margin-bottom: 15px;
+  }
+  
+  .form-control {
+    font-size: 14px;
+  }
+  
+  label {
+    font-weight: 600;
+    color: #495057;
+  }
+  .section-title {
+   /* color: #6a1b9a;  Purple color for the title */
+   color:#06111c ;
+    background-color: #72beea; /* Light purple background for the title */
+    padding: 5px 10px;
+    border-radius: 4px;
+  }
+  
+  .highlight-row {
+    background-color: #f3e5f5; /* Light purple background for the row */
+    padding: 10px; /* Padding to give space around the fields */
+    border-radius: 4px;
+  }
+  /* Override CoreUI primary button color */
+.btn-primary {
+    background-color: #007bff !important; /* Blue background */
+    border-color: #007bff !important; /* Blue border */
+  }
+  
+  .btn-primary:hover {
+    background-color: #0056b3 !important; /* Darker blue on hover */
+    border-color: #004085 !important; /* Darker border on hover */
+  }
+  
+  /* Override CoreUI danger button color */
+  .btn-danger {
+    background-color: #dc3545 !important; /* Red background */
+    border-color: #dc3545 !important; /* Red border */
+  }
+  
+  .btn-danger:hover {
+    background-color: #c82333 !important; /* Darker red on hover */
+    border-color: #bd2130 !important; /* Darker red border on hover */
+  }
+  

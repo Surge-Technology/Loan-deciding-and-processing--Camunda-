@@ -1,0 +1,64 @@
+.milestone-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 20px 0;
+  }
+  
+  .milestone-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+    width: 100px;
+  }
+  
+  .milestone-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  
+  .milestone-details {
+    max-width: 120px;
+  }
+  
+  .milestone-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .milestone-description {
+    font-size: 12px;
+    margin: 0;
+    color: #666;
+  }
+  
+  .milestone-connector {
+    position: absolute;
+    top: 24px;
+    left: 100%;
+    width: calc(100% - 20px);
+    height: 2px;
+    background-color: #ccc;
+    z-index: -1;
+  }
+  
+  .completed-connector {
+    background-color: #4caf50;
+  }
+  
+  .completed .milestone-icon {
+    color: #4caf50;
+  }
+  
+  .current .milestone-icon {
+    color: #2196f3;
+  }
+  
+  .upcoming .milestone-icon {
+    color: #ccc;
+  }
+  

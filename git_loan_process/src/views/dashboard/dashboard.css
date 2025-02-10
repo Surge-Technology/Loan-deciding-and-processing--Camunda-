@@ -1,0 +1,26 @@
+
+.icon-container{
+  text-align: center;
+}
+.icon-animation {
+    opacity: 0; 
+    /* transition: transform 3s ease, opacity 3s ease; */
+    position: relative;
+    display: inline-block;
+
+    transition: transform 0.5s ease-in-out;  }
+  
+  .move-icon {
+    opacity: 1; 
+    transform: translateY(-20px); 
+  }
+  .text-center{
+    text-align: center;
+  }
+  .hover-zoom,.hover-btn-zoom{
+    transition: transform 0.3s ease;
+  }
+  .hover-zoom:hover {
+    transform: scale(1.1); 
+  }
+ 
