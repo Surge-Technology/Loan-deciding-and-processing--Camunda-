@@ -26,7 +26,7 @@ const LoanAmountDetails = (props) => {
  
     const userIdFromStorage = sessionStorage.getItem('email');
     const URL = import.meta.env.VITE_BASE_URL;
-
+const navigate=useNavigate();
  
     // useEffect(() => {
  
@@ -68,11 +68,11 @@ const LoanAmountDetails = (props) => {
     const formik = useFormik({
         initialValues: {
             loanType: "homeLoan",
-                loanAmount: '4000000',
+                loanAmount: '650000',
             priority: "high",
             currency: "INR",
             repayLoan: "6 months",
-            intrestRate: '10%',
+            intrestRate: '7%',
             expectedDate: "2027-10-19",
             emiAmount: '6000',
             // otherComments: '10-11-2030',
@@ -161,39 +161,85 @@ const LoanAmountDetails = (props) => {
  
  
  
-    const handleLoadData = () => {
-        const jsonData = {
-            loanType: "Home Loan",
-            loanAmount: "4,00,000",
-            priority: "high",
-            currency: "INR",
-            repayLoan: "6months",
-            intrestRate: "9%",
-            expectedDate: "20/12/28",
-            emiAmount: "50000",
-            otherComments: "NA",
-            repayDuration: "4years",
-            purposeofLoan: "construction",
+    // const handleLoadData = () => {
+    //     const jsonData = {
+    //         loanType: "Home Loan",
+    //         loanAmount: "4,00,000",
+    //         priority: "high",
+    //         currency: "INR",
+    //         repayLoan: "6months",
+    //         intrestRate: "9%",
+    //         expectedDate: "20/12/28",
+    //         emiAmount: "50000",
+    //         otherComments: "NA",
+    //         repayDuration: "4years",
+    //         purposeofLoan: "construction",
  
-        };
+    //     };
  
-        formik.setValues({
-            ...formik.values,
-            loanType: jsonData.loanType,
-            loanAmount: jsonData.loanAmount,
-            priority: jsonData.priority,
-            currency: jsonData.currency,
-            repayLoan: jsonData.repayLoan,
-            intrestRate: jsonData.intrestRate,
-            expectedDate: jsonData.expectedDate,
-            emiAmount: jsonData.emiAmount,
-            repayDuration: jsonData.repayDuration,
-            purposeofLoan: jsonData.purposeofLoan,
-        });
-    };
+    //     formik.setValues({
+    //         ...formik.values,
+    //         loanType: jsonData.loanType,
+    //         loanAmount: jsonData.loanAmount,
+    //         priority: jsonData.priority,
+    //         currency: jsonData.currency,
+    //         repayLoan: jsonData.repayLoan,
+    //         intrestRate: jsonData.intrestRate,
+    //         expectedDate: jsonData.expectedDate,
+    //         emiAmount: jsonData.emiAmount,
+    //         repayDuration: jsonData.repayDuration,
+    //         purposeofLoan: jsonData.purposeofLoan,
+    //     });
+    // };
+    const processInstance = localStorage.getItem('processId');
+    console.log("process Instance id retrived",processInstance);
+    
  
- 
- 
+    const handleApprove = async (loanId) => {
+        const approve = {
+          Customer: 'Approved', // Use an appropriate key for the backend
+          // approver: storedUser // Store the approver’s username
+        }
+    
+        try {
+          const response = await axios.post(`${URL}/customerAcknowledgement?processInstanceId=${processInstance}`, approve)
+          console.log('Handle Approve Response:', response.data)
+          // toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: "top-right" });
+          // Show success message
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: `Loan has been Approved`,
+            confirmButtonColor: '#28a745',
+          })
+          navigate('/home')
+        } catch (error) {
+          console.error('Error approving task:', error)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: `Loan ID has been Approved`,
+            confirmButtonColor: '#d33',
+          })
+        }
+    
+        // alert(`Loan ID ${loanId} has been Approved`);
+      }
+    
+      const handleReject = (loanId) => {
+    
+        
+        const reject = {
+         Customer: 'Reject',
+          // approver: storedUser
+        }
+    
+        const response = axios.post(` ${URL}/customerAcknowledgement?processInstanceId=${processInstance}`, reject)
+        console.log('handle reject', response)
+        // toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: "top-right" });
+        navigate('/home')
+        // alert(`Loan ID ${loanId} has been Rejected`);
+      }
     
  
     return (
@@ -382,12 +428,12 @@ const LoanAmountDetails = (props) => {
                       <div className="mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
         <button
           className="btn btn-primary "
-          onClick={handleSubmit}
+          onClick={handleApprove}
         //   disabled={!isAcknowledged} // Disable button if not acknowledged
         >
           Submit
         </button>
-        <button className="btn btn-danger" onClick={handleCancel}>
+        <button className="btn btn-danger" onClick={handleReject}>
           Cancel
         </button>
       </div>

@@ -37,7 +37,7 @@
     color: white;
 }
 .table{
-    margin-left: 20px;
+    margin-left: 15px;
     max-height: 750px;
     overflow-y: auto;
     overflow-x: hidden;

@@ -43,7 +43,7 @@ import { CChartLine } from '@coreui/react-chartjs'
 import axios from 'axios'
 import { Nav } from 'react-bootstrap'
 import { FaUser } from 'react-icons/fa6'
-
+import '../css/AppHeader.css'
 
 const AppHeader = () => {
   const headerRef = useRef()
@@ -76,6 +76,9 @@ navigate('/UserRegistration');
               <img src={icons} style={{ width: '50px', height: '30px' }} alt="My Icon" />
 
             </a>
+            <h4><span>Loan Process</span>
+            </h4>
+            
           </CNavItem>
             <CNavItem className="d-none d-md-block highlight" >
               <CNavLink to="/home" as={NavLink} style={{ paddingLeft: '645px' }}>
@@ -93,7 +96,6 @@ navigate('/UserRegistration');
             
             </CNavItem>
         </CHeaderNav>
-       
         <div className="d-flex flex-column">
           <a href="#">
             <img
@@ -109,11 +111,23 @@ navigate('/UserRegistration');
           
         </div>
         <CHeaderNav>
-        <CNavItem className="d-none d-md-block">
-          <CButton onClick={handleLoginClick} variant="ghost" className="p-0" title="Login">
-            <FaUser size={22} style={{ color: "#555", cursor: "pointer" }} /> 
-          </CButton>
-        </CNavItem>
+        <CNavItem>
+        <CDropdown variant="d-none d-md-block" className="user-dropdown">
+        <CDropdownToggle variant="ghost" className="p-0"  style={{ outline: "none", border: "none", boxShadow: "none" }}>
+          <FaUser size={22} style={{ color: "#555", cursor: "pointer" }} />
+        </CDropdownToggle>
+        <CDropdownMenu>
+          <CDropdownItem onClick={handleLoginClick} style={{ color: "#555", cursor: "pointer" }}>
+            Logout
+          </CDropdownItem>
+        </CDropdownMenu>
+      </CDropdown>
+      
+      
+      
+</CNavItem>
+
+       
       </CHeaderNav>
         <CHeaderNav>
           <li className="nav-item ">

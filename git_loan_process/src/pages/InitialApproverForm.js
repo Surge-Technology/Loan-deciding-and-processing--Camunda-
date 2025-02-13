@@ -33,12 +33,16 @@ const InitialApproverForm = () => {
     comments: '',
     approvalStatus: '',
   })
+  const processInstance = localStorage.getItem('processId');
+ console.log("process Instance id retrived",processInstance);
+ 
 
   useEffect(() => {
     const fetchLoanDetails = async () => {
       try {
         const email = localStorage.getItem('emailId')
-        console.log('getemail', email)
+        console.log('1234567', email)
+ 
 
         // const email = "camerongre1@gmail.com"; // Replace with dynamic email
 
@@ -73,14 +77,14 @@ const InitialApproverForm = () => {
     }
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}`, approve)
+      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}`, approve)
       console.log('Handle Approve Response:', response.data)
       // toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: "top-right" });
       // Show success message
       Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: `Loan has been Approved`,
+        text: `Approved`,
         confirmButtonColor: '#28a745',
       })
       navigate('/loanApproverDashboard')
@@ -89,7 +93,7 @@ const InitialApproverForm = () => {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: `Loan ID has been Approved`,
+        text: `Error`,
         confirmButtonColor: '#d33',
       })
     }
@@ -98,12 +102,14 @@ const InitialApproverForm = () => {
   }
 
   const handleReject = (loanId) => {
+
+    
     const reject = {
       [storedUser]: 'Reject',
       // approver: storedUser
     }
 
-    const response = axios.post(` ${URL}/${storedUser}`, reject)
+    const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstance}`, reject)
     console.log('handle reject', response)
     // toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: "top-right" });
     navigate('/loanApproverDashboard')

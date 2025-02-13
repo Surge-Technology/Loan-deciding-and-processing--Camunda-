@@ -1,0 +1,9 @@
+.custom-modal .modal-dialog {
+    max-width: 90vw !important; /* 90% of the viewport width */
+    height: 80vh; /* 80% of the viewport height */
+  }
+  
+  .custom-modal .modal-content {
+    height: 100%;
+  }
+  

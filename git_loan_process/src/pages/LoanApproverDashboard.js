@@ -28,6 +28,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Swal from 'sweetalert2'
 import DisbursementForm from './DisbursementForm'
+// import '../css/Model.css';
 const LoanApproverDashboard = () => {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,75 +38,76 @@ const LoanApproverDashboard = () => {
   const [showModal, setShowModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState()
   const URL = import.meta.env.VITE_BASE_URL
-
+  const [filterLoans,setFilterLoans] = useState([]);
   useEffect(() => {
     fetchLoanApplications()
   }, [])
   const storedUser = localStorage.getItem('username')
 
-  // const fetchLoanApplications = async () => {
-  //   try {
-  //     const response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`);
-
-  //     // Extracting multiple loan applications from rootNode
-  //     const formattedLoans = response.data.flatMap((task) => {
-  //       return Object.values(task.rootNode).map((loanData) => ({
-  //         loanId: loanData.loanAccountNumber,
-  //         loanType: loanData.loanType,
-  //         applicantName: loanData.applicantName,
-  //         loanAmount: loanData.loanAmount,
-  //         loanStatus: loanData.loanStatus,
-  //         emailId: loanData.emailId,
-  //         loanAccountNumber: loanData.loanAccountNumber,
-  //         id: loanData.id,
-  //       }));
-  //     });
-
-  //     setLoans(formattedLoans);
-  //   } catch (error) {
-  //     console.error("Error fetching loan applications:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const fetchLoanApplications = async () => {
     try {
       let response
       let formattedLoans = []
 
       if (storedUser !== 'Manager') {
-        response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`)
+        try {
+          response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`)
+          console.log('API Response for User Tasks:', response.data) // Debugging Step 1
 
-        // Filtering tasks where assignee matches storedUser
-        const validTasks = response.data.filter((task) => task.assignee === storedUser)
+          // Ensure response.data is an array
+          if (Array.isArray(response.data)) {
+            const validTasks = response.data.filter((task) => task.assignee === storedUser);
+            console.log('Filtered Tasks for User:', validTasks[0]?.loanDetails); // Ensure safe access
+        
+            const formattedLoans = validTasks.map((item) => ({
+                loanId: item.loanDetails.loanAccountNumber, // Corrected object structure
+                loanType: item.loanDetails.loanType,
+                applicantName: item.loanDetails.applicantName,
+                loanAmount: item.loanDetails.loanAmount,
+                loanStatus: String(item.loanDetails.loanStatus || "").trim(), // Ensure loanStatus is a string before trimming
+                emailId: item.loanDetails.emailId,
+                loanAccountNumber: item.loanDetails.loanAccountNumber,
+                processId:item.loanDetails.processInstanceId,
+                id: item.loanDetails.id,
+            }));
+            setFilterLoans(formattedLoans);
+            formattedLoans.forEach((loan) => {
+              console.log(`Storing processId: ${loan.processId} for Loan ID: ${loan.loanId}`);
 
-        // Extracting multiple loan applications from rootNode if validTasks exist
-        formattedLoans = validTasks.flatMap((task) =>
-          Object.values(task.rootNode).map((loanData) => ({
-            loanId: loanData.loanAccountNumber,
-            loanType: loanData.loanType,
-            applicantName: loanData.applicantName,
-            loanAmount: loanData.loanAmount,
-            loanStatus: loanData.loanStatus,
-            emailId: loanData.emailId,
-            loanAccountNumber: loanData.loanAccountNumber,
-            id: loanData.id,
-          })),
-        )
+        localStorage.setItem(`processId_${loan.loanId}`, loan.processId);
+    });
+
+    console.log("Filtered Loans:", formattedLoans);
+
+// setProcessInstanceId(formattedLoans.processId);
+            // console.log("Filtered Loan Details:", filter);
+        }
+        
+        } catch (error) {
+          console.error('Error fetching tasks:', error)
+        }
       } else {
         response = await axios.get(`${URL}/getApplicantDetails`)
+        console.log('API Response for Manager:', response.data) // Debugging Step 3
 
-        // Extracting multiple loan applications from the response data
-        formattedLoans = response.data.map((loanData) => ({
-          loanId: loanData.loanAccountNumber,
-          loanType: loanData.loanType,
-          applicantName: loanData.applicantName,
-          loanAmount: loanData.loanAmount,
-          loanStatus: loanData.loanStatus,
-          emailId: loanData.emailId,
-          loanAccountNumber: loanData.loanAccountNumber,
-          id: loanData.id,
-        }))
+        // Ensure response.data is an array
+        const formattedLoans = Array.isArray(response.data)
+          ? response.data
+              .filter((loan) => loan.loanStatus?.trim().toLowerCase() !== 'pending')
+              .map((loanData) => ({
+                loanId: loanData.loanAccountNumber,
+                loanType: loanData.loanType,
+                applicantName: loanData.applicantName,
+                loanAmount: loanData.loanAmount,
+                loanStatus: loanData.loanStatus?.trim() || '',
+                emailId: loanData.emailId,
+                loanAccountNumber: loanData.loanAccountNumber,
+                id: loanData.id,
+              }))
+          : []
+
+          setFilterLoans(formattedLoans);
+          console.log('Formatted Loans:', formattedLoans,filterLoans)  // Debugging Step 4
       }
 
       // Updating state
@@ -116,19 +118,33 @@ const LoanApproverDashboard = () => {
       setLoading(false)
     }
   }
-
+  // const processInstanceId = localStorage.getItem("processId");
   const handleApprove = async (loanId) => {
-    const storedUser = localStorage.getItem('username') // Retrieve username
+    const storedUser = localStorage.getItem('username'); // Retrieve username
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
 
+    if (!processInstanceId) {
+        console.error(`No processId found for Loan ID: ${loanId}`);
+        return;
+    }
+    console.log("Retrieved Process Instance ID:", processInstanceId);
+  
     const approve = {
-      [storedUser]: 'Approved', // Use an appropriate key for the backend
+      [storedUser]: 'Approved',
+      // processInstanceId: processInstanceId,
+      // processInstance:processInstanceId;
       // approver: storedUser // Store the approver’s username
     }
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}`, approve)
+      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstanceId}`, approve)
       console.log('Handle Approve Response:', response.data)
       toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: 'top-right' })
+      if (statusCode==200) {
+        window.location.reload(); // Reload the page after successful API call
+      } else {
+        console.error(` failed`);
+      }
     } catch (error) {
       console.error('Error approving task:', error)
     }
@@ -137,15 +153,28 @@ const LoanApproverDashboard = () => {
   }
 
   const handleReject = (loanId) => {
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
+
+    if (!processInstanceId) {
+        console.error(`No processId found for Loan ID: ${loanId}`);
+        return;
+    }
+    console.log("Retrieved Process Instance ID:", processInstanceId);
+  
     const reject = {
       [storedUser]: 'Reject',
+      // processInstanceId: processInstanceId,
       // approver: storedUser
     }
 
-    const response = axios.post(` ${URL}/${storedUser}`, reject)
+    const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstanceId}`, reject)
     console.log('handle reject', response)
     toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: 'top-right' })
-
+    if (response.ok) {
+      window.location.reload(); // Reload the page after successful API call
+    } else {
+      console.error(` failed`);
+    }
     // alert(`Loan ID ${loanId} has been Rejected`);
   }
 
@@ -160,15 +189,28 @@ const LoanApproverDashboard = () => {
 
   // Loan Statistics
 
-  const handleView = (id, loanStatus) => {
+  const handleView = (id,processId, loanStatus) => {
     console.log(`Viewing Loan ID: ${id}`)
     console.log(`LoanStatus for ${id} is ${loanStatus}`)
+    if (!processId) {
+      console.error('Process Instance ID is undefined or null');
+      return;
+  }
 
+  console.log(`Viewing Process Instance ID: ${processId}`);
+
+  
+  console.log(`LoanStatus for Process Instance ID ${processId} is ${loanStatus}`);
+
+    
     // Store emailId in localStorage
     localStorage.setItem('emailId', id)
+    localStorage.setItem('processId',processId)
+    
 
     // Retrieve stored user role
     const storedUser = localStorage.getItem('username')
+    // const storedUser = localStorage.getItem('username')
 
     // Navigate based on user role
     if (storedUser === 'InitialApprover') {
@@ -187,10 +229,10 @@ const LoanApproverDashboard = () => {
     }
   }
 
-  const totalLoans = loans.length
-  const pendingLoans = loans.filter((loan) => loan.loanStatus === 'Pending').length
-  const approvedLoans = loans.filter((loan) => loan.loanStatus === 'Approved').length
-  const rejectedLoans = loans.filter((loan) => loan.loanStatus === 'Rejected').length
+  const totalLoans = filterLoans.length
+  const pendingLoans = filterLoans.filter((loan) => loan.loanStatus === 'Pending').length
+  const approvedLoans = filterLoans.filter((loan) => loan.loanStatus === 'Approved').length
+  const rejectedLoans = filterLoans.filter((loan) => loan.loanStatus === 'Rejected').length
 
   // Pie Chart Data
   const pieData = {
@@ -205,13 +247,19 @@ const LoanApproverDashboard = () => {
   }
 
   // Filter loans based on search term
-  const filteredLoans = loans.filter(
-    (loan) =>
-      loan.loanId.toString().includes(searchTerm) ||
-      loan.loanStatus.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loan.applicantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loan.loanAccountNumber.toString().includes(searchTerm),
-  )
+const [selectedStatus, setSelectedStatus] = useState(''); // State for status filter
+
+const filteredLoans = loans.filter((loan) => {
+  const search = searchTerm.toLowerCase();
+  return (
+    (loan.loanAccountNumber.toLowerCase().includes(search) ||
+      loan.applicantName.toLowerCase().includes(search) ||
+      loan.loanType.toLowerCase().includes(search) ||
+      loan.loanStatus.toLowerCase().includes(search)) &&
+    (selectedStatus ? loan.loanStatus === selectedStatus : true)
+  );
+});
+
 
   const handleExportClick = () => {
     // Swal.fire({
@@ -254,12 +302,12 @@ const LoanApproverDashboard = () => {
       })
   }
 
-  const [selectedLoanAmount,setSelectedLoanAmount] =useState();
-  const handleDisbursement = (loanAccountNumber,loanAmount) => {
+  const [selectedLoanAmount, setSelectedLoanAmount] = useState()
+  const handleDisbursement = (loanAccountNumber, loanAmount) => {
     console.log({ storedUser, loanAccountNumber, loanAmount })
     setShowModal(true)
-    setSelectedLoan(loanAccountNumber);
-    setSelectedLoanAmount(loanAmount);
+    setSelectedLoan(loanAccountNumber)
+    setSelectedLoanAmount(loanAmount)
   }
 
   return (
@@ -267,15 +315,10 @@ const LoanApproverDashboard = () => {
       <CModal
         visible={showModal}
         onClose={() => setShowModal(false)}
+        // className="custom-modal"
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-        centered
+        // centered
       >
-        <CModalHeader
-          className="cardbg"
-          style={{ backgroundColor: 'rgb(51, 187, 255', color: 'white' }}
-        >
-          <b>Disbursement Loan Details:</b>
-        </CModalHeader>
         <ModalBody style={{ height: '45%' }}>
           <DisbursementForm
             loanAccountNumber={selectedLoan}
@@ -390,8 +433,8 @@ const LoanApproverDashboard = () => {
                         </CTableRow>
                       </CTableHead>
                       <CTableBody>
-                        {filteredLoans.length > 0 ? (
-                          filteredLoans.map((loan, index) => (
+                        {filterLoans.length > 0 ? (
+                          filterLoans.map((loan, index) => (
                             <CTableRow key={loan.id}>
                               <CTableDataCell>{index + 1}</CTableDataCell>
                               <CTableDataCell>{loan.loanAccountNumber}</CTableDataCell>
@@ -406,9 +449,12 @@ const LoanApproverDashboard = () => {
                                       color="success"
                                       size="sm"
                                       className="me-2"
-                                      onClick={() => handleDisbursement(loan.loanAccountNumber,loan.loanAmount)}
+                                      disabled={loan.loanStatus.toLowerCase() === 'disbursed'}
+                                      onClick={() =>
+                                        handleDisbursement(loan.loanAccountNumber, loan.loanAmount)
+                                      }
                                     >
-                                      Get Disbursement
+                                      Disbursement
                                     </CButton>
                                   </>
                                 ) : (
@@ -432,7 +478,7 @@ const LoanApproverDashboard = () => {
                                     <CButton
                                       color="info"
                                       size="sm"
-                                      onClick={() => handleView(loan.id, loan.loanStatus)}
+                                      onClick={() => handleView(loan.id,loan.processId, loan.loanStatus)}
                                     >
                                       View
                                     </CButton>

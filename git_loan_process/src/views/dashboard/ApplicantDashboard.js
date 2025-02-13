@@ -1,13 +1,10 @@
 /* eslint-disable prettier/prettier */
 
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import './ApplicantDashboardStyles.css'
+import { cilChevronRight } from '@coreui/icons'
+import CIcon from '@coreui/icons-react'
 import {
   CButton,
   CCard,
-  CCardBody,
-  CCardTitle,
   CCol,
   CModal,
   CModalHeader,
@@ -17,11 +14,14 @@ import {
   CTableDataCell,
   CTableHead,
   CTableHeaderCell,
-  CTableRow,
+  CTableRow
 } from '@coreui/react'
-import { cilChevronRight } from '@coreui/icons'
-import CIcon from '@coreui/icons-react'
-import { ModalBody, Spinner } from 'react-bootstrap'
+import axios from 'axios'
+import React, { useState } from 'react'
+import { ModalBody } from 'react-bootstrap'
+import { FaPlusCircle } from 'react-icons/fa'
+import { useNavigate } from 'react-router-dom'
+import './ApplicantDashboardStyles.css'
 import RepayPayment from './RepayPayment'
 const URL = import.meta.env.VITE_BASE_URL
 
@@ -32,118 +32,106 @@ const ApplicantDashboard = () => {
   const [loanDetails, setLoanDetails] = useState()
   const [data, setData] = useState([])
 
+  const [balanceAmount, setBalanceAmount] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All')
+  const navigate = useNavigate()
 
-  // useEffect(() => {
-  //     // setData(
-  //     //     {
-  //     //         id: '',
-  //     //         loanAccountNumber: '',
-  //     //         loanAmount:'',
-  //     //         loanType: '',
-  //     //         loanStatus: '',
-  //     //         _cellProps: { id: { scope: 'row' } },
-  //     //     }
-  //     // )
-  //     const updatedDetails = [];
-  // }, []);
+  // const loadApplicants1 = () => {
+  //   getEmailId
+  //   const email = localStorage.getItem('email')
+
+  //   axios
+  //     .get(`${URL}/ApplicantDashboard?emailId=${email}`)
+  //     .then((res) => {
+  //       console.log('response', res.data.loanDetails)
+  //       const formattedData = res.data.loanDetails.map((item, index) => ({
+  //         id: index + 1,
+  //         loanAccountNumber: item.accountNumber || '',
+  //         applicantName: item.applicantName || '',
+  //         createdDate: item.createdDate || '',
+  //         loanAmount: item.loanAmount || '',
+  //         balanceAmount: balanceAmount || '',
+  //         loanType: item.loanType || '',
+  //         loanStatus: item.loanStatus || '',
+  //         action:
+  //           item.loanStatus === 'Disbursed' ? (
+  //             <CButton
+  //               color="success"
+  //               className="repay"
+  //               onClick={() => modalHandleChange(item.accountNumber, item)}
+  //             >
+  //               Repay
+  //             </CButton>
+  //           ) : null,
+  //       }))
+  //       setData(formattedData)
+  //       console.log('formattedData', formattedData)
+  //     })
+  //     .catch((err) => {
+  //       console.log('Error fetching applicants:', err)
+  //     })
+  // }
 
   const loadApplicants = () => {
     const email = localStorage.getItem('email')
+
     axios
-      .get(`${URL}/ApplicantDashboard?emailId=camerongre1@gmail.com`)
-      .then((res) => {
-        console.log('response', res.data.loanDetails)
-        const formattedData = res.data.loanDetails.map((item, index) => ({
-          id: index + 1,
-          loanAccountNumber: item.accountNumber || '',
-          applicantName: item.applicantName || '',
-          createdDate: item.createdDate || '',
-          loanAmount: item.loanAmount || '',
-          loanType: item.loanType || '',
-          loanStatus: item.loanStatus || '',
-          action:
-            item.loanStatus === 'Disbursed' ? (
+      .get(`${URL}/ApplicantDashboard?emailId=${email}`)
+      // axios.get(`${URL}/ApplicantDashboard?emailId=camerongre1@gmail.com`)
+      .then((loanRes) => {
+        console.log('Loan Details Response:', loanRes.data.loanDetails)
+        const loanData = loanRes.data.loanDetails
+
+        // Fetch Transaction Details API
+        return axios.get(`${URL}/getAllTransaction`).then((transactionRes) => {
+          console.log('Transaction Details Response:', transactionRes.data)
+          const transactionData = transactionRes.data
+
+          // Create a map to store the latest balance amount for each accountNumber
+          const balanceMap = {}
+          transactionData.forEach((txn) => {
+            balanceMap[txn.accountNumber] = txn.balanceAmount
+          })
+
+          // ✅ Store balanceAmount in localStorage and merge data
+          const formattedData = loanData.map((item, index) => {
+            // const latestBalance = balanceMap[item.accountNumber] ?? item.loanAmount
+            // localStorage.setItem(`balance_${item.accountNumber}`, latestBalance)
+            const latestBalance = balanceMap[item.accountNumber] ?? item.loanAmount;
+             localStorage.setItem(`balance_${item.accountNumber}`, latestBalance)
+
+            return {
+              id: index + 1,
+              loanAccountNumber: item.accountNumber || '',
+              applicantName: item.applicantName || '',
+              createdDate: item.createdDate || '',
+              loanAmount: item.loanAmount || '',
+              balanceAmount: latestBalance,
+              loanType: item.loanType || '',
+              loanStatus: item.loanStatus || '',
+              action:
               <CButton
-                color="success"
-                className="repay"
-                onClick={() => modalHandleChange(item.accountNumber, item)}
-              >
-                Repay
-              </CButton>
-            ) : null,
-        }))
-        setData(formattedData)
-        console.log('formattedData', formattedData)
+              color={item.loanStatus === "Disbursed" && latestBalance > 0 ? "success" : "secondary"}
+              className="repay"
+              onClick={() => modalHandleChange(item.accountNumber, item)}
+              disabled={item.loanStatus !== "Disbursed" || latestBalance === 0}
+            >
+              {item.loanStatus === "Disbursed" && latestBalance === 0 ? "Paid" : "Repay"}
+            </CButton>
+            }
+          })
+
+          setData(formattedData)
+          console.log('Final Merged Data:', formattedData)
+        })
       })
-      .catch((err) => {
-        console.log('Error fetching applicants:', err)
-      })
+      .catch((err) => console.error('Error fetching data:', err))
   }
 
-  const columns = [
-    {
-      key: 'id',
-      label: 'S.No',
-      _props: { scope: 'col' },
-    },
-    {
-      key: 'loanAccountNumber',
-      label: 'Loan Account Number',
-      _props: { scope: 'col' },
-    },
-    {
-      key: 'loanAmount',
-      label: 'Loan Amount',
-      _props: { scope: 'col' },
-    },
-    {
-      key: 'loanType',
-      label: 'Loan Type',
-      _props: { scope: 'col' },
-    },
-    {
-      key: 'loanStatus',
-      label: 'Loan Status',
-      _props: { scope: 'col' },
-    },
-    {
-      key: 'action',
-      label: 'Action',
-      _props: { scope: 'col' },
-    },
-  ]
-  // const items = [
-  //     {
-  //         id: 1,
-  //         loanAccountNumber: 124578985,
-  //         loanAmount: 50000,
-  //         loanType: 'personal',
-  //         loanStatus: 'approved',
-  //         _cellProps: { id: { scope: 'row' } },
-  //     }, {
-  //         id: 2,
-  //         loanAccountNumber: 124578985,
-  //         loanAmount: 50000,
-  //         loanType: 'personal',
-  //         loanStatus: 'Pending',
-  //         _cellProps: { id: { scope: 'row' } },
-  //     },
-  // ]
 
-  // const modalHandleChange = (data,id) => {
-
-  //     if (data === "repay") {
-  //         console.log("repayModle........", RepayModal);
-  //         // setState((prevState) => ({
-  //         //     ...prevState,
-  //         //     RepayModal: !RepayModal
-  //         // }))
-  //         setRepayModal(!RepayModal)
-  //     }
-
-  //     console.log("repayModle....", RepayModal );
-  // }
+  const handleLoanRequest = () => {
+    navigate('/selectType')
+  }
 
   const modalHandleChange = (loanId, loanDetails) => {
     setSelectedLoan(loanId)
@@ -155,45 +143,11 @@ const ApplicantDashboard = () => {
     modalHandleChange(data)
   }
 
-  const fetchData = async () => {
-    const email = localStorage.getItem('email')
-    axios
-      .get(`{${URL}/ApplicantDashboard?emailId=${email}`)
-      .then((res) => {
-        console.log('response', res.data.loanDetails)
-        const formattedData = res.data.loanDetails.map((item, index) => ({
-          id: index + 1,
-          loanAccountNumber: item.accountNumber || '',
-          applicantName: item.applicantName || '',
-          createdDate: item.createdDate || '',
-          loanAmount: item.loanAmount || '',
-          loanType: item.loanType || '',
-          loanStatus: item.loanStatus || '',
-          action:
-            item.loanStatus === 'Disbursed' ? (
-              <CButton
-                color="success"
-                className="repay"
-                onClick={() => modalHandleChange(item.accountNumber, item)}
-              >
-                Repay
-              </CButton>
-            ) : null,
-        }))
-        setData(formattedData)
-        console.log('formattedData', formattedData)
-      })
-      .catch((error) => {
-        console.error('Error fetching data:', error)
-      })
-  }
-
-  // ✅ Ensure `data` is always an array (default to empty array)
-const filteredData = data?.length
-? selectedStatus === "All"
-  ? data
-  : data.filter((item) => item.loanStatus === selectedStatus)
-: [];
+  const filteredData = data?.length
+    ? selectedStatus === 'All'
+      ? data
+      : data.filter((item) => item.loanStatus === selectedStatus)
+    : []
 
   return (
     <>
@@ -215,8 +169,10 @@ const filteredData = data?.length
             onClose={() => setRepayModal(false)}
             onSuccess={() => {
               setRepayModal(false) // Close the modal
-              // Add logic to refresh the component (e.g., fetch updated data)
-              fetchData() // Example: Fetch updated data
+              // console.log('Transaction Amount:', transactionAmount)
+              console.log('Balance Amount:', balanceAmount)
+              // // Add logic to refresh the component (e.g., fetch updated data)
+              // fetchData() // Example: Fetch updated data
             }}
           />
         </ModalBody>
@@ -237,12 +193,12 @@ const filteredData = data?.length
           <CRow className="g-0" style={{ display: 'flex', height: '100%' }}>
             <CCol md={4} className="sideMenu" style={{ height: '100%' }}>
               <CButton className="loanButton" size="lg" onClick={loadApplicants}>
-                Loans
+                Show Loans
                 <CIcon style={{ marginLeft: '4px' }} icon={cilChevronRight} title="Download file" />
               </CButton>
 
               <CRow className="filtersection">
-                <h5 >Status Filters</h5>
+                <h5>Status Filters</h5>
                 <CButton
                   color={selectedStatus === 'All' ? 'primary' : 'secondary'}
                   onClick={() => setSelectedStatus('All')}
@@ -274,17 +230,42 @@ const filteredData = data?.length
               </CRow>
             </CCol>
             <CCol md={8}>
-              <h2 className="text-center">Applicant Loans</h2>
+             {/* <div className="flex justify-space-between">
+                <h2 className="text-xl font-bold flex items-center">
+                  <span>
+                    <FaPlusCircle
+                      className="text-blue-600 text-2xl cursor-pointer hover:text-blue-800 transition-transform hover:scale-110"
+                      style={{ cursor: 'pointer', marginLeft: '10px' }}
+                    />
+                  </span>
+                </h2>
+              </div>*/}
+              <CRow>
+                <CCol md={10}>
+                  <h2 className="text-xl font-bold flex items-center w-full">Applicant Loans</h2>
+                </CCol>
+                <CCol
+                  md={2}
+                  className="text-blue-600 text-2xl cursor-pointer hover:text-blue-800 transition-transform hover:scale-110 text-end"
+                  style={{ marginTop: '4px', cursor: 'pointer', borderRadius: '50%' }}
+                >
+                  {' '}
+                  <FaPlusCircle onClick={() => navigate('/selectType')} />
+                </CCol>
+              </CRow>
+
               <div className="table">
                 <CTable hover borderless>
                   <CTableHead>
                     <CTableRow>
                       <CTableHeaderCell>S.No</CTableHeaderCell>
-                      <CTableHeaderCell>Loan Account Number</CTableHeaderCell>
+                      <CTableHeaderCell>Account Number</CTableHeaderCell>
                       <CTableHeaderCell>Applicant Name</CTableHeaderCell>
                       <CTableHeaderCell>Loan Amount</CTableHeaderCell>
-                      <CTableHeaderCell>Loan Type</CTableHeaderCell>
-                      <CTableHeaderCell>Loan Status</CTableHeaderCell>
+                      <CTableHeaderCell>Balance</CTableHeaderCell>
+                      <CTableHeaderCell>Type</CTableHeaderCell>
+
+                      <CTableHeaderCell>Status</CTableHeaderCell>
                       <CTableHeaderCell>Action</CTableHeaderCell>
                     </CTableRow>
                   </CTableHead>
@@ -296,6 +277,7 @@ const filteredData = data?.length
                           <CTableDataCell>{item.loanAccountNumber}</CTableDataCell>
                           <CTableDataCell>{item.applicantName}</CTableDataCell>
                           <CTableDataCell>{item.loanAmount}</CTableDataCell>
+                          <CTableDataCell>{item.balanceAmount}</CTableDataCell>
                           <CTableDataCell>{item.loanType}</CTableDataCell>
                           <CTableDataCell>{item.loanStatus}</CTableDataCell>
                           <CTableDataCell>{item.action}</CTableDataCell>
@@ -311,20 +293,6 @@ const filteredData = data?.length
                   </CTableBody>
                 </CTable>
               </div>
-
-             {/* {(!data || data.length === 0) && (
-                <p>
-                  <center>No data to show</center>
-                </p>
-              )}
-
-               {data && data.length > 0 ? (
-                                    // <BootstrapTable keyField="id" data={data} columns={columns} striped hover />
-                                    <div className='table '  style={{ maxWidth:'90%', overflowY: '-moz-hidden-unscrollable' }}>  <CTable hover borderless columns={columns} items={data} /></div>
-                                ) : (
-                                    <><div className='table'>  <CTable hover borderless columns={columns} /></div>
-                                        <p><center>No data to show</center></p></>
-                                })} */}
             </CCol>
           </CRow>
         </CCard>

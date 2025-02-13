@@ -1,192 +1,140 @@
 /* eslint-disable prettier/prettier */
 
-import { CButton } from '@coreui/react'
-import { Input, Select } from '@mui/material'
-import axios from 'axios'
-import { ErrorMessage, Form, Formik } from 'formik'
-import moment from 'moment'
-import React, { useEffect, useState } from 'react'
-import { Col, Row } from 'react-bootstrap'
-import * as Yup from 'yup'
-import Swal from 'sweetalert2'
-import { useNavigate } from 'react-router-dom'
-const URL = import.meta.env.VITE_BASE_URL
+import { CButton, CModal, CModalHeader, CModalBody } from '@coreui/react';
+import { TextField } from '@mui/material';
+import axios from 'axios';
+import { Form, Formik } from 'formik';
+import React, { useEffect, useState } from 'react';
+import { Col, Row, Card } from 'react-bootstrap';
+import Swal from 'sweetalert2';
 
-const DisbursementForm = (props) => {
-  const { loanAccountNumber,loanAmount, onClose, onSuccess } = props
+const URL = import.meta.env.VITE_BASE_URL;
+
+const DisbursementForm = ({ loanAccountNumber, loanAmount, onClose, onSuccess }) => {
   const [state, setState] = useState({
-    loanId: '',
     loanAccountNumber: loanAccountNumber || '',
     applicantName: '',
     loanAmount: loanAmount || '',
     tenure: '',
     interestRate: '',
-  })
-
-  const navigate = useNavigate()
-
-  console.log('props', props, loanAccountNumber)
-
-//   const fieldHandleChange = (e) => {
-//     const { name, value } = e.target
-
-//     setState((prevState) => ({
-//       ...prevState,
-//       [name]: value,
-//     }))
-//   }
-
-  const submitForm = (values) => {
-    // let payload = {
-    //   "loanAccountNumber": state.loanAccountNumber, // Fixed typo (loanaccountnumber -> loanAccountNumber)
-    //   "applicantName": state.applicantName,
-    //   "loanAmount": state.loanAmount,
-    //   "tenure": state.tenure,
-    //   "interestRate": state.interestRate,
-    // };
-    
-  
-    //console.log("Payload", payload);
-  
-    axios
-      .post(`${URL}/ManagerEnd`)
-      .then((res) => {
-        console.log("Successfully initiated repayment", res.data);
-        Swal.fire({
-          position: "center",
-          icon: "success",
-          title: "Successfully completed disbursement",
-          showConfirmButton: true,
-        }).then(() => {
-          // Navigate back to the previous page;
-          onSuccess() 
-        })
-      })
-      .catch((err) => {
-        console.log("Error occurred in initiating repayment", err);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: err.response?.data?.message || "Please try again later",
-        });
-      });
-  };
+  });
   
   useEffect(() => {
     axios
-      .post(`${URL}/calculateTenureInterest`)
+      .post(`${URL}/calculateTenureInterest`, { loanAccountNumber })
       .then((res) => {
-        //console.log('Succesfully completed ', res.data)
-        setState((prevState) => ({
-          ...prevState,
-          loanId: res.data.id,
+        setState({
           loanAccountNumber: res.data.loanAccountNumber,
           applicantName: res.data.applicantName,
           loanAmount: res.data.loanAmount,
           tenure: res.data.tenure,
           interestRate: res.data.interestRate,
-        }))
+        });
       })
       .catch((err) => {
-        console.log('Error occered in initiating repayment', err)
-        Swal.fire(err.response.data.message, 'Please try again later')
+        console.error('Error:', err);
+        Swal.fire('Error', 'Failed to fetch loan details. Please try again.', 'error');
+      });
+  }, [loanAccountNumber]);
+  const processInstance = localStorage.getItem('processId');
+  console.log("process Instance id retrived",processInstance);
+  
+  const submitForm = () => {
+    axios
+      .post(`${URL}/ManagerEnd?processInstanceId=${processInstance}`, { loanAccountNumber: state.loanAccountNumber })
+      .then(() => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Disbursement Successful!',
+          text: 'Loan has been successfully disbursed.',
+        }).then(() => {
+          onSuccess();
+        });
       })
-  }, [])
+      .catch((err) => {
+        Swal.fire('Error', err.response?.data?.message || 'Please try again later.', 'error');
+      });
+  };
 
   return (
-    <>
-      <Formik initialValues={state} onSubmit={submitForm}>
-        {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, errors, touched }) => (
-          <Form>
-            <Row className="mb-3">
-              <Col md={12}>
-                <label style={{marginRight:'6px'}}>Applicant Name: </label>
-                <Input
-                  type="text"
-                  name="id"
-                  //value={values.id}
-                  value={state.applicantName}
-                //  onBlur={handleBlur}
-                  //onChangeCapture={handleChange}
-                  //onChange={fieldHandleChange}
-                />
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Col md={6}>
-                <label>Account Number: </label>
-                <Input
-                  type="text"
-                  name="loanAccountNumber"
-                  //value={values.loanDetailsAccountNumber}
-                  value={state.loanAccountNumber}
-                //  onBlur={handleBlur}
-                 // onChangeCapture={handleChange}
-                 // onChange={fieldHandleChange}
-                />
-              </Col>
-              <Col md={6}>
-                <label>Loan Ammount: </label>
-                <Input
-                  type="text"
-                  name="loanDetailsAmmount"
-                  //value={values.loanAmmount}
-                  value={state.loanAmount}
-                //   onBlur={handleBlur}
-                //   onChangeCapture={handleChange}
-                //   onChange={fieldHandleChange}
-                />
-              </Col>
-            </Row>
-            <Row>
-              <Col md={6}>
-                <label>Tenure: </label>
-                <Input
-                  type="text"
-                  name="loanAmmount"
-                  //value={values.loanAmmount}
-                  value={state.tenure}
-                //   onBlur={handleBlur}
-                //   onChangeCapture={handleChange}
-                //   onChange={fieldHandleChange}
-                />
-              </Col>
-              <Col md={6}>
-                <label>Interest Rate: </label>
-                <Input
-                  type="text"
-                  name="loanAmmount"
-                  //value={values.loanAmmount}
-                  value={state.interestRate}
-                //   onBlur={handleBlur}
-                //   onChangeCapture={handleChange}
-                //   onChange={fieldHandleChange}
-                />
-              </Col>
-            </Row>
+    <CModal visible onClose={onClose} size="lg" centered>
+      <CModalHeader className="bg-primary text-white">
+        <b>Disbursement Loan Details</b>
+      </CModalHeader>
+      <CModalBody>
+        <Card className="p-3 shadow-lg">
+          <Formik initialValues={state} onSubmit={submitForm}>
+            {() => (
+              <Form>
+                <Row className="mb-3">
+                  <Col md={12}>
+                    <TextField
+                      label="Applicant Name"
+                      variant="outlined"
+                      fullWidth
+                      value={state.applicantName}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Col>
+                </Row>
 
-            <div style={{ marginTop: '18px' }}>
-              <center>
-                <CButton
-                  type="reset"
-                  color="danger"
-                  className="btn"
-                  size="sm"
-                  style={{ margin: '10px' }}
-                  onClick={onClose}
-                >
-                  Cancel
-                </CButton>
-                <CButton type="submit" color="primary" className="btn" size="sm">
-                  Approve
-                </CButton>
-              </center>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </>
-  )
-}
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <TextField
+                      label="Loan Account Number"
+                      variant="outlined"
+                      fullWidth
+                      value={state.loanAccountNumber}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <TextField
+                      label="Loan Amount"
+                      variant="outlined"
+                      fullWidth
+                      value={`₹ ${state.loanAmount}`}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Col>
+                </Row>
 
-export default DisbursementForm
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <TextField
+                      label="Tenure (Years)"
+                      variant="outlined"
+                      fullWidth
+                      value={state.tenure}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <TextField
+                      label="Interest Rate (%)"
+                      variant="outlined"
+                      fullWidth
+                      value={`${state.interestRate} %`}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </Col>
+                </Row>
+
+                <div className="text-center mt-3">
+                  <CButton type="button" color="danger" size="sm" className="me-2" onClick={onClose}>
+                    Cancel
+                  </CButton>
+                  <CButton type="submit" color="primary" size="sm">
+                    Approve
+                  </CButton>
+                </div>
+              </Form>
+            )}
+          </Formik>
+        </Card>
+      </CModalBody>
+    </CModal>
+  );
+};
+
+export default DisbursementForm;

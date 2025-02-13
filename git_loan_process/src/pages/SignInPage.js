@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import '../css/UserRegistration.css';
 
 
 const SignInPage = () => {
@@ -48,13 +48,15 @@ const SignInPage = () => {
         // If the response is successful, navigate to taskInbox
 
         if (response.status === 200) {
-        const userName= localStorage.setItem("username", response.data);
-        console.log(response.data);
+        const userName= localStorage.setItem("username", response.data.userName);
+        console.log(response.data.userName);
         const approverRoles = ["InitialApprover", "UnderWriter", "LegalApprover", "Manager"];
 
-        if (approverRoles.includes(response.data)) {
+        if (approverRoles.includes(response.data.userName)) {
           navigate("/loanApproverDashboard");
         } else {
+          const EmailId= localStorage.setItem("email", response.data.email);
+
           navigate("/applicantDashboard");
         }
       
@@ -78,11 +80,13 @@ const SignInPage = () => {
   };
 
   return (
+    <div>
+    <section className="login-CA" >
     <Container maxWidth="xs" style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <Paper elevation={6} style={{ padding: '20px', width: '100%', marginTop: '40px', textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
-          Login
-        </Typography>
+    <Paper elevation={6} style={{ padding: '20px', width: '100%', marginTop: '40px', textAlign: 'center' }}>
+    <Typography variant="h4" gutterBottom>
+    Login
+    </Typography>
 
         {/* Show Header Error Message when both fields are empty */}
         {headerError && (
@@ -104,7 +108,7 @@ const SignInPage = () => {
               <TextField
                 variant="outlined"
                 fullWidth
-                label="Email"
+                label="Email/UserName"
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -136,6 +140,8 @@ const SignInPage = () => {
         </form>
       </Paper>
     </Container>
+    </section>
+    </div>
   );
 };
 

@@ -139,9 +139,9 @@ const CustomerForm = () => {
   const handleLoadData = () => {
     const jsonData = {
       personalInfo: {
-        firstName: 'Abi',
-        lastName: 'Johny',
-        legalFullName: 'Abi Johny',
+        firstName: 'Mano',
+        lastName: 'John',
+        legalFullName: 'Mano Johny',
         gender: 'Male',
         maritalStatus: 'Single',
         spouseName: '',

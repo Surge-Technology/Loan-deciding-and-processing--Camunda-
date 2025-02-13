@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
+import '../css/UserRegistration.css';
 
 const UserRegistration = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,12 +38,13 @@ const UserRegistration = () => {
 
         // Handle successful response
         if (response.status === 200) {
+
           Swal.fire({
             title: "SignUp Successful!",
             icon: "success",
             confirmButtonText: "OK",
           }).then(() => {
-            navigate("/customerForm");
+            navigate("/selectType");
           });
         } else {
           // Handle error if needed
@@ -55,18 +57,28 @@ const UserRegistration = () => {
         }
       } catch (error) {
         // Handle any network or API call errors
-        console.error("Error submitting form:", error);
-        Swal.fire({
-          title: "Error!",
-          text: "Something went wrong. Please try again.",
-          icon: "error",
-          confirmButtonText: "Retry",
-        });
-      }
+       console.error("Error submitting form:", error);
+
+    // Extract error message from API response
+    const errorMessage =
+      error.response && error.response.data && error.response.data.error
+        ? error.response.data.error
+        : "Something went wrong. Please try again.";
+
+    // Show error message in alert
+    Swal.fire({
+      text: errorMessage,
+      icon: "error",
+      confirmButtonText: "Retry",
+    });
+  }
     },
   });
 
   return (
+    <div>
+    <section className="login-CA" >
+
     <Container maxWidth="xs">
       <Paper elevation={6} style={{ padding: "20px", marginTop: "40px", textAlign: "center" }}>
         <Typography variant="h4" gutterBottom>
@@ -137,6 +149,8 @@ const UserRegistration = () => {
         </form>
       </Paper>
     </Container>
+    </section>
+    </div>
   );
 };
 

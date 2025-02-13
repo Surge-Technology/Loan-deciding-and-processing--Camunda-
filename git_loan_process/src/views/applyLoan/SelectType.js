@@ -86,7 +86,7 @@ console.log(type,"loan Type>>>>>>>>>");
                     <CCol md={4} className="ml-6 mr-6 mr-7 mb-4 text-end">
                         <div className="mx-3" style={{ padding: '3px 3px', listStyle: 'none' }}>
                             <CNavItem >
-                                <CNavLink to={`/checkCustomer`} as={NavLink}>
+                                <CNavLink to={`/customerForm`} as={NavLink}>
                                     <CCardImage
                                         className="rounded-rectangle shadow-sm hover-zoom"
                                         src="\src\assets\images\hmloan.jpg"
@@ -111,7 +111,7 @@ console.log(type,"loan Type>>>>>>>>>");
                             <CNavItem >
                             {/*                                <CNavLink to={`/loanTypes/personalLoan/${params.id}`} as={NavLink}>
                                 */}
-                                 <CNavLink to={`/checkCustomer`} as={NavLink}>
+                                 <CNavLink to={`/customerForm`} as={NavLink}>
 
                                  <CCardImage
                                         className="rounded-rectangle shadow-sm hover-zoom"
@@ -134,7 +134,7 @@ console.log(type,"loan Type>>>>>>>>>");
                     <CCol md={4} className="ml-6 mr-6 mr-7 mb-4 text-start">
                         <div className="mx-3" style={{ padding: '3px 3px', listStyle: 'none' }}>
                             <CNavItem >
-                            <CNavLink to={`/checkCustomer`} as={NavLink}>
+                            <CNavLink to={`/customerForm`} as={NavLink}>
 
                                 {/*  <CNavLink to={`/loanTypes/educationalLoan/${params.id}`} as={NavLink}>*/}
                                     <CCardImage
@@ -158,7 +158,7 @@ console.log(type,"loan Type>>>>>>>>>");
                     <CCol md={6}  className="ml-6 mr-6 mr-7 mb-4 text-end">
                         <div className="mx-3" style={{ padding: '3px 3px', listStyle: 'none' }}>
                             <CNavItem >
-                            <CNavLink to={`/checkCustomer`} as={NavLink}>
+                            <CNavLink to={`/customerForm`} as={NavLink}>
 
                                 {/*  <CNavLink to={`/loanTypes/vehicalLoan/${params.id}`} as={NavLink}>*/}
                                     <CCardImage
@@ -181,7 +181,7 @@ console.log(type,"loan Type>>>>>>>>>");
                     <CCol md={6} className="ml-6 mr-6 mr-7 mb-4">
                         <div className="mx-3 " style={{ padding: '3px 3px', listStyle: 'none' }}>
                             <CNavItem >
-                            <CNavLink to={`/checkCustomer`} as={NavLink}>
+                            <CNavLink to={`/customerForm`} as={NavLink}>
 
                                {/*   <CNavLink to={`/loanTypes/mortageLoan/${params.id}`} as={NavLink}>*/}
                                     <CCardImage

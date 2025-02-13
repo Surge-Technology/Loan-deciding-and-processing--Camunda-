@@ -223,6 +223,14 @@ console.log("---url---",URL);
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+
+    // const userConfirmed = window.confirm("Do you want to proceed with the submission?");
+  
+    // if (!userConfirmed) {
+    //   navigate("/home");
+    //   return;
+    // }
+    try {
     const emailId = personalData?.contactInfo?.email || ''
     const filesMetadata1 = formData.otherFiles.map((file, index) => ({
       name: file.name,
@@ -287,6 +295,9 @@ console.log("---url---",URL);
     console.log('fullData------------1>', fullData)
 
     if (response.status == 200) {
+      const processInstanceId= localStorage.setItem("processId",   response.data.processInstanceId);
+
+    
       Swal.fire({
         text: 'Your account has been created successfully!',
         icon: 'success',
@@ -302,10 +313,92 @@ console.log("---url---",URL);
         confirmButtonText: 'Retry',
       })
     }
-
+  }catch (error) {
+    console.error("Error submitting form:", error);
+    alert("An error occurred. Please try again later.");
+  }
     // console.log("Form Data Submitted: ", dataToSubmit);
     // alert("Form submitted successfully!");
   }
+const handleSubmit1 = async (event) => {
+  event.preventDefault();
+
+  Swal.fire({
+    title: "Are you sure?",
+    text: "Do you want to proceed with the submission?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, Submit",
+    cancelButtonText: "No",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: "Submitting...",
+        text: "Please wait while we process your application.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });      try {
+        const emailId = personalData?.contactInfo?.email || "";
+        const filesMetadata = ["idProof", "drivingLicense", "aadharCard", "panCard", "taxProof"]
+          .map((field) => files[field] ? { documentCategory: field, file: files[field] } : null)
+          .filter((file) => file !== null); // Remove null entries
+
+        const fullData = {
+          personalData,
+          employmentData,
+          bankDetails,
+          assetsDetail,
+          houseHold,
+          liabilities,
+          Files: {
+            isFirstConsentChecked: formData.isFirstConsentChecked,
+            isSecondConsentChecked: formData.isSecondConsentChecked,
+          },
+        };
+
+        console.log("Full Data to Submit:", fullData, emailId);
+
+        const response = await axios.post(`${URL}/saveApplicantDetails`, fullData, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.status === 200) {
+          Swal.fire({
+            text: "Your application has been submitted successfully!",
+            icon: "success",
+            confirmButtonText: "OK",
+          }).then(() => {
+            navigate("/home");
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: "Failed to submit application. Please try again.",
+            icon: "error",
+            confirmButtonText: "Retry",
+          });
+        }
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        Swal.fire({
+          title: "Submission Failed!",
+          text: "An error occurred. Please try again later.",
+          icon: "error",
+        });
+      }
+    } else {
+      Swal.close();
+    }
+  });
+};
 
   const handlePrevious = () => {
     navigate(-1)
@@ -563,7 +656,7 @@ console.log("---url---",URL);
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} id="documentUploadForm">
+        <form onSubmit={handleSubmit1} id="documentUploadForm">
           <form style={{ marginLeft: '245px' }}>
            {['idProof', 'drivingLicense', 'aadharCard', 'panCard'].map((field) => (
   <div className="row mt-3" key={field}>

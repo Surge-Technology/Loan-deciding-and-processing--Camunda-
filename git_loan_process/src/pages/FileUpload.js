@@ -44,20 +44,27 @@ const FileUpload = () => {
   }, [])
 
   useEffect(() => {
-    if (clarificationData) {
-      formik.setFieldValue('Clarification', clarificationData)
+    if (clarificationData && Object.keys(clarificationData).length > 0) {
+      formik.setValues({
+        applicationNo: clarificationData.loanAccountNumber || "",
+        loanType: clarificationData.loanType || "",
+        comments: "",
+        files: [],
+        Clarification: clarificationData.clarificationDetails || "",
+      });
     }
-  }, [clarificationData])
+  }, [clarificationData]); 
   const [uploadStatus, setUploadStatus] = useState('')
 
   const formik = useFormik({
     initialValues: {
-      applicationNo: 'ACI08924123',
-      loanType: 'Home loan',
-      comments: '',
+      applicationNo: "",
+      loanType: "",
+      comments: "",
       files: [],
-      Clarification: clarificationData,
+      Clarification: "",
     },
+   
     onSubmit: async (values) => {
       try {
         // Convert files to Base64
@@ -83,7 +90,7 @@ const FileUpload = () => {
         }
 
         // Send the JSON payload
-        const response = await axios.post(`${URL}/customerReply`, payload, {
+        const response = await axios.post(`${URL}/customerClarificationReply?processInstanceId=${processInstance}`, payload, {
           headers: {
             'Content-Type': 'application/json',
             // 'Content-Type': 'multipart/form-data',
@@ -130,7 +137,9 @@ window.close();
     event.target.value = null // Reset file input
   }
 
-
+  const processInstance = localStorage.getItem('processId');
+  console.log("process Instance id retrived",processInstance);
+  
   const handleFileUpload = async () => {
     for (const [index, fileObj] of files.entries()) {
       if (fileObj.status === 'uploaded') continue
@@ -138,7 +147,7 @@ window.close();
       if (files.length === 0) return
 
       try {
-        const emailResponse = await fetch(`${URL}/getEmail`, {
+        const emailResponse = await fetch(`${URL}/getEmailId?processInstanceId=${processInstance}`, {
           method: 'GET',
         })
 
@@ -228,7 +237,7 @@ window.close();
     }
   }
   const handleRemoveFile1 = async (documentCategory) => {
-    const emailResponse = await fetch(`${URL}/getEmail`, {
+    const emailResponse = await fetch(`${URL}/getEmailId`, {
       method: 'GET',
     })
 
@@ -294,7 +303,7 @@ window.close();
 
   //file upload->get email
   const getEmail = async () => {
-    const emailResponse = await fetch(`${URL}/getEmail`, {
+    const emailResponse = await fetch(`${URL}/getEmailId`, {
       method: 'GET',
     })
 
@@ -324,6 +333,7 @@ window.close();
                 type="text"
                 id="applicationNo"
                 name="applicationNo"
+                disabled
                 className="form-control"
                 value={formik.values.applicationNo}
                 onChange={formik.handleChange}
@@ -351,6 +361,7 @@ window.close();
               id="clarification"
               name="clarification"
               className="form-control"
+              disabled
               value={formik.values.Clarification}
               onChange={formik.handleChange}
             />

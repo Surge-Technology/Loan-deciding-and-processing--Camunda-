@@ -19,7 +19,7 @@ const LegalApprover = () => {
   const URL = import.meta.env.VITE_BASE_URL
   const navigate = useNavigate()
   const [creditScore, setCreditScore] = useState(null)
-  
+  const[downloadMessage,setDownloadMessage]=useState("");
   const [clarification,setClarification] = useState('')
   const [downloadFiles,setDownloadedfiles] = useState([]);
 
@@ -27,7 +27,9 @@ const LegalApprover = () => {
 
   const globalToast = (message) => { toast.error(message)}
   const successToast = () => { toast.success("Files Downloaded Sucessfully")}
-
+  const processInstance = localStorage.getItem('processId');
+  console.log("process Instance id retrived",processInstance);
+  
   useEffect(() => {
     const fetchLoanDetails = async () => {
       try {
@@ -103,7 +105,7 @@ const LegalApprover = () => {
   }
 
   const handleDownloadDocs = () => {
-
+    setDownloadMessage("");
     axios
       .get(`${URL}/download-all-Files`, {
         responseType: 'blob', // Important for file downloads
@@ -111,6 +113,7 @@ const LegalApprover = () => {
       .then((response) => {
        
         console.log("Response...", response);
+        setDownloadMessage("Files downloaded successfully.");
         Swal.fire({
             position: 'center',
             icon: 'success',
@@ -119,25 +122,7 @@ const LegalApprover = () => {
             timer: 1500,
           })
         console.log("File downloaded successfully", response.data);
-        {/*  if (response.status === 200) {
-          axios
-            .get(`${URL}/fileMetadata?emailId=camerongre1@gmail.com`)
-            .then((response) => {
-              console.log("Metadata Response:", response.data);
-              setDownloadedfiles(response.data);
-              // successToast('Files downloaded successfully!'); // Notify user of success
-            })
-            .catch((error) => {
-              console.error('Error fetching file metadata:', error.message)
-              //globalToast('Failed to fetch file metadata. Please try again later.')
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to process request. Try again!',
-                confirmButtonColor: '#d33',
-              })
-            })
-        }  */}
+      
       })
       .catch((error) => {
         console.error('Error downloading file:', error.message)
@@ -163,15 +148,20 @@ const LegalApprover = () => {
     }
 
     const requestPayload = {   
-      [storedUser]: {
-        incomeVerificationStatus: incomeStatus,
-        collateralStatus: collateralStatus,
-        legalReviewStatus: legalReviewStatus,
-      },
+      incomeVerificationStatus: incomeStatus,
+      collateralStatus: collateralStatus,
+      LegalApprover: legalReviewStatus,
+   
+      // [storedUser]:
+      //  {
+      //   incomeVerificationStatus: incomeStatus,
+      //   collateralStatus: collateralStatus,
+      //   LegalApprover: legalReviewStatus,
+      // },
     }
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}`, requestPayload)
+      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}`, requestPayload)
       console.log('API Response:', response.data)
       if(response.data === "Loan approval process completed successfully."){
         axios.post(`${URL}/CustomerMail`)
@@ -266,58 +256,30 @@ const LegalApprover = () => {
               </CCardBody>
             </CCard>
           </CCol>
-
-          {/* Right - Credit Score Gauge */}
-          <CCol md="6" className="d-flex justify-content-center align-items-center">
-            <div className="text-center">
-              <h6>
-                <strong>Credit Score</strong>
-              </h6>
-              {creditScore !== null ? (
-                <RadialGauge
-                  width={250}
-                  height={150} // Semi-circle shape
-                  minValue={300}
-                  maxValue={850}
-                  value={creditScore} // Ensure this is a number
-                  majorTicks={['300', '400', '500', '600', '700', '800', '850']}
-                  highlights={[
-                    { from: 300, to: 599, color: 'red' },
-                    { from: 600, to: 699, color: 'yellow' },
-                    { from: 700, to: 850, color: 'green' },
-                  ]}
-                  needleCircleSize={10}
-                  needleCircleOuter={true}
-                  needleCircleInner={false}
-                  animationDuration={1500}
-                />
-              ) : (
-                <p>Loading CIBIL Score...</p> // Show loading text while fetching data
-              )}
-            </div>
-          </CCol>
+          <CCol md="6">
+          <CCard className="shadow-sm p-3">
+            <CCardHeader className="bg-light">
+              <strong>Legal Approver</strong>
+            </CCardHeader>
+            <CCardBody>
+              <CFormSelect
+                value={legalReviewStatus}
+                onChange={(e) => setLegalReviewStatus(e.target.value)}
+              >
+                <option value="">Select Status</option>
+                <option value="Approved">Approved</option>
+                <option value="Reject">Reject</option>
+                <option value="needClarification">Need Clarification</option>
+              </CFormSelect>
+            </CCardBody>
+          </CCard>
+        </CCol>
+          
         </CRow>
 
         <CRow className="mb-4">
           {/* Legal Review Status */}
-          <CCol md="6">
-            <CCard className="shadow-sm p-3">
-              <CCardHeader className="bg-light">
-                <strong>Legal Review Status</strong>
-              </CCardHeader>
-              <CCardBody>
-                <CFormSelect
-                  value={legalReviewStatus}
-                  onChange={(e) => setLegalReviewStatus(e.target.value)}
-                >
-                  <option value="">Select Status</option>
-                  <option value="Completed">✅ Completed</option>
-                  <option value="Pending">⌛ Pending</option>
-                  <option value="Rejected">❌ Rejected</option>
-                </CFormSelect>
-              </CCardBody>
-            </CCard>
-          </CCol>
+         
 
           {/* Collateral Status */}
           <CCol md="6">
@@ -371,6 +333,8 @@ const LegalApprover = () => {
                   <CloudDownloadIcon className="me-2"  />
                   Download Files
                 </CButton>
+                    {downloadMessage && <p className="mt-2 text-muted">{downloadMessage}</p>}
+
               </CCol>
             </CRow>
           {/*   <div style={{ marginTop: "12px",marginRight:'50px' }}>

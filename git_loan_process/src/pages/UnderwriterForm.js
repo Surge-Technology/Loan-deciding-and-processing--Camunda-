@@ -10,6 +10,7 @@ import {
   CButton,
   CFormSelect,
   CFormTextarea,
+  CSpinner,
 } from '@coreui/react'
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload'
 import Swal from 'sweetalert2'
@@ -31,84 +32,84 @@ const UnderwriterForm = () => {
   const [loanDetails, setLoanDetails] = useState(null)
 
   const [downloadFiles, setDownloadedfiles] = useState([])
+  const [creditScoreLoading, setCreditScoreLoading] = useState(false);
 
   const navigate = useNavigate()
-  //   useEffect(() => {
-  //     const fetchLoanDetails = async () => {
-  //       try {
-  //         const email = localStorage.getItem("emailId");
-  //         console.log("Fetching details for email:", email);
-
-  //         const response = await axios.get(`${URL}/getApplicantData/${email}`);
-
-  //         if (response.data) {
-  //             console.log("response".response.data);
-
-  //           setLoanDetails(response.data);
-  //         }
-  //       } catch (error) {
-  //         console.error("Error fetching loan details:", error);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };    fetchLoanDetails();
-  // }, []);
+ 
   const storedUser = localStorage.getItem('username')
-
+  const processInstance = localStorage.getItem('processId');
+  console.log("process Instance id retrived",processInstance);
+  
   useEffect(() => {
     const fetchLoanDetails = async () => {
       try {
-        const storedUser = localStorage.getItem('username') // Get logged-in user role
-        console.log('Fetching loan details for:', storedUser)
-
-        const response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`)
-
+        const storedUser = localStorage.getItem('username'); // Get logged-in user role
+        console.log('Fetching loan details for:', storedUser);
+    
+        const response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`);
+    
         if (response.data.length > 0) {
-          // Extract the first relevant loan application
-          const formattedLoans = response.data.flatMap((task) =>
-            Object.values(task.rootNode).map((loanData) => ({
-              loanAccountNumber: loanData.loanAccountNumber,
-              applicantName: loanData.applicantName,
-              loanType: loanData.loanType,
-              loanStatus: loanData.loanStatus,
-              loanAmount: loanData.loanAmount,
-            })),
-          )
-          if (formattedLoans.length > 0) {
-            console.log('Loan Details Extracted:', formattedLoans[0])
-            setLoanDetails(formattedLoans[0]) // Store the first loan record
-            //setDecision(formattedLoans[0].loanStatus) // Set the loan status in the dropdown
-          } else {
-            console.warn('No loans found for this user.')
-          }
+            // Extract relevant loan applications
+            const formattedLoans = response.data.map((task) => {
+                const loan = task.loanDetails; // Extracting loanDetails object
+    
+                if (!loan) return null; // Skip if no loan details
+    
+                return {
+                    loanAccountNumber: loan.loanAccountNumber,
+                    applicantName: loan.applicantName,
+                    loanType: loan.loanType,
+                    loanStatus: loan.loanStatus,
+                    loanAmount: loan.loanAmount,
+                };
+            }).filter(Boolean); // Remove null entries
+    
+            if (formattedLoans.length > 0) {
+                console.log('Loan Details Extracted:', formattedLoans[0]);
+                setLoanDetails(formattedLoans[0]); // Store the first loan record
+            } else {
+                console.warn('No loans found for this user.');
+            }
         } else {
-          console.warn('No response data found.')
+            console.warn('No response data found.');
         }
-      } catch (error) {
-        console.error('Error fetching loan details:', error)
-      } finally {
-        setLoading(false)
+    } catch (error) {
+        console.error('Error fetching loan details:', error);
+    }
+    
+      
+      finally {
+        setLoanLoading(false);
       }
     }
 
-    const fetchCreditScore = async () => {
-      try {
-        const response = await axios.get(`${URL}/calculateCibilScore`)
-        console.log('CIBIL Score API Response:', response.data)
-
-        if (response.data && response.data) {
-          setCreditScore(Number(response.data)) // Ensure it's a number
-        } else {
-          console.warn('Invalid CIBIL Score response:', response.data)
-        }
-      } catch (error) {
-        console.error('Error fetching credit score:', error)
-      }
-    }
-
+   
     fetchLoanDetails()
-    fetchCreditScore()
   }, [])
+  const fetchCreditScore = async () => {
+    // setLoading(true); // Show spinner
+    setCreditScoreLoading(true);
+    setShowCreditScore(false);
+
+    try {
+      const response = await axios.get(`${URL}/calculateCibilScore`);
+      console.log("CIBIL Score API Response:", response.data);
+
+      if (response.data) {
+        setTimeout(() => {
+          setCreditScore(Number(response.data)); // Ensure it's a number
+          setCreditScoreLoading(false);
+          setShowCreditScore(true);
+        }, 1000); // Delay to show spinner
+      } else {
+        console.warn("Invalid CIBIL Score response:", response.data);
+        setCreditScoreLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching credit score:", error);
+      setCreditScoreLoading(false);
+    }
+  };
 
   const handleRiskChange = (event) => {
     const { value, checked } = event.target
@@ -205,7 +206,8 @@ const UnderwriterForm = () => {
     }
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}`, requestPayload)
+      //  const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstance}`
+      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}`, requestPayload)
       console.log('API Response:', response.data)
 
       // Show success message
@@ -361,7 +363,20 @@ const UnderwriterForm = () => {
       alert('Error sending email. Please try again.')
     }
   }
+  const [showCreditScore, setShowCreditScore] = useState(false);
+  const [loanLoading, setLoanLoading] = useState(true);
 
+  const handleClick = () => {
+    setLoading(true);
+    setShowCreditScore(false); // Hide previous gauge
+    setCreditScore(null); // Reset previous score
+
+    setTimeout(() => {
+      setLoading(false);
+      setShowCreditScore(true);
+      // setCreditScore(Math.floor(Math.random() * (850 - 300 + 1)) + 300); // Simulate API response
+    }, 2000);
+  };
   return (
     <CCard className="shadow-lg mt-4">
       <CCardHeader
@@ -388,7 +403,7 @@ const UnderwriterForm = () => {
                 <strong>Loan Details</strong>
               </CCardHeader>
               <CCardBody>
-                {loading ? (
+                {loanLoading  ? (
                   <p>Loading Loan Details...</p>
                 ) : loanDetails ? (
                   <CRow>
@@ -412,35 +427,41 @@ const UnderwriterForm = () => {
             </CCard>
           </CCol>
 
-          {/* Right - Credit Score Gauge */}
-          <CCol md="6" className="d-flex justify-content-center align-items-center">
-            <div className="text-center">
-              <h6>
-                <strong>Credit Score</strong>
-              </h6>
-              {creditScore !== null ? (
-                <RadialGauge
-                  width={250}
-                  height={150} // Semi-circle shape
-                  minValue={300}
-                  maxValue={850}
-                  value={creditScore} // Ensure this is a number
-                  majorTicks={['300', '400', '500', '600', '700', '800', '850']}
-                  highlights={[
-                    { from: 300, to: 599, color: 'red' },
-                    { from: 600, to: 699, color: 'yellow' },
-                    { from: 700, to: 850, color: 'green' },
-                  ]}
-                  needleCircleSize={10}
-                  needleCircleOuter={true}
-                  needleCircleInner={false}
-                  animationDuration={1500}
-                />
-              ) : (
-                <p>Loading CIBIL Score...</p> // Show loading text while fetching data
-              )}
-            </div>
-          </CCol>
+        
+          <CCol md="6" className="d-flex flex-column align-items-center">
+        {/* Button to Get Credit Score */}
+        <CButton color="primary" size="lg" className="mb-3" onClick={fetchCreditScore}>
+          Get Credit Score
+        </CButton>
+
+        {/* Show Spinner While Loading Credit Score */}
+        {creditScoreLoading && <CSpinner color="primary" style={{ width: "3rem", height: "3rem" }} />}
+
+        {/* Show Credit Score Chart After Loading */}
+        {showCreditScore && !creditScoreLoading && (
+          <div className="text-center">
+            <h6><strong>Credit Score</strong></h6>
+            <RadialGauge
+              width={250}
+              height={150}
+              minValue={300}
+              maxValue={850}
+              value={creditScore}
+              majorTicks={["300", "400", "500", "600", "700", "800", "850"]}
+              highlights={[
+                { from: 300, to: 599, color: "red" },
+                { from: 600, to: 699, color: "yellow" },
+                { from: 700, to: 850, color: "green" },
+              ]}
+              needleCircleSize={10}
+              needleCircleOuter={true}
+              needleCircleInner={false}
+              animationDuration={1500}
+            />
+            <h5 className="mt-3"><strong>{creditScore}</strong></h5>
+          </div>
+        )}
+      </CCol>
         </CRow>
 
         {/* Risk Assessment */}
@@ -477,7 +498,7 @@ const UnderwriterForm = () => {
                 <CFormSelect value={decision} onChange={(e) => setDecision(e.target.value)}>
                   <option value="">Select Decision</option>
                   <option value="Approved">Approve</option>
-                  <option value="needClarification">Pending</option>
+                  <option value="needClarification">Clarify</option>
                   <option value="Rejected">Reject</option>
                 </CFormSelect>
               </CCol>
