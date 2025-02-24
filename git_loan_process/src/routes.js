@@ -5,6 +5,7 @@ import MortageLoan from './views/applyLoan/loanTypes/MortageLoan'
 import { reach } from 'yup'
 
 
+
 const Home = React.lazy(() => import('./views/dashboard/Home'))
 const CreateCustomer = React.lazy(() => import ('./views/createCustomer/CreateCustomer'))
 const CustomerDetailsForm = React.lazy(() => import ('./views/createCustomer/CustomerDetailsForm'))
@@ -33,9 +34,8 @@ const milestones= React.lazy(()=>import('../src/milestone/milestone'))
 const InitialApproverForm = React.lazy(() => import ('../src/pages/InitialApproverForm'))
 const LoanApproverDashboard = React.lazy(() => import ('../src/pages/LoanApproverDashboard'))
 const ApplicantDashboard = React.lazy(() => import ('../src/views/dashboard/ApplicantDashboard'))
-const UnderwriterForm = React.lazy(() => import ('d:/loan-ui-updateCode/loan-process/src/pages/UnderWriterForm'))
 const LegalApprover = React.lazy(() => import ('../src/pages/LegalApprover'))
-
+const UnderWriter = React.lazy(() => import ('../src/pages/UnderWriter'))
 //Loan Request
 const LoanRequest = React.lazy(() => import ('./views/applyLoan/LoanRequest'))
 const BasicDetails = React.lazy(() => import ('./views/applyLoan/BasicDetails'))
@@ -60,7 +60,7 @@ const routes = [
   { path: '/customerDetailsForm', name: 'CustomerDetailsForm', element: CustomerDetailsForm},
   { path: '/customerForm', name: 'CustomerForm', element: CustomerForm},
 
-{path:'/underwriterForm',name:'UnderwriterForm',element:UnderwriterForm},
+
 {path:'/userRegistration',name:'UserRegistration',element:UserRegistration},
 {path:'/loginPage',name:'SignInPage',element:SignInPage},
 {path:'/companyDetailsForm',name:'CompanyDetailsForm',element:CompanyDetailsForm},
@@ -79,6 +79,7 @@ const routes = [
 {path:'/applicantdashboard',name:'ApplicantDashboard', element: ApplicantDashboard},
 {path:'/initialApprover',name:'InitialApproverForm', element:InitialApproverForm} ,
 {path:'/legalApprover',name:'LegalApprover', element:LegalApprover} ,
+{path:'/underwriterForm',name:'UnderWriter', element:UnderWriter} ,
 
 {path:'/loanApproval',name:'LoanApplicationForm', element:LoanApplicationForm} ,
 {path:'/loanDisbursementForm',name:'LoanDisbursementForm', element:LoanDisbursementForm} ,

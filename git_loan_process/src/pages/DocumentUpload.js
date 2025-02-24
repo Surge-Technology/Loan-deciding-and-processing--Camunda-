@@ -371,6 +371,7 @@ const handleSubmit1 = async (event) => {
         });
 
         if (response.status === 200) {
+          localStorage.setItem('pId',response.data.processInstanceId);
           Swal.fire({
             text: "Your application has been submitted successfully!",
             icon: "success",

@@ -30,18 +30,33 @@ const FileUpload = () => {
   const notifyDeleteSuccess = () => toast.success("All files removed successfully!");
   const URL = import.meta.env.VITE_BASE_URL;
 
+  // const [clarificationData, setClarificationData] = useState({});
+  const [taskId, setTaskId] = useState(""); // Store taskId in state
+  const [uploadStatus, setUploadStatus] = useState("");
+  // const URL = "your_api_url"; // Replace with actual URL
+
   useEffect(() => {
     const fetchClarification = async () => {
       try {
-        const response = await axios.get(`${URL}/clarification`)
-        console.log('API Response Data:', response.data)
-        setClarificationData(response.data)
+        const response = await axios.get(`${URL}/clarification`);
+        console.log("API Response Data:", response.data);
+
+        setClarificationData(response.data);
+
+        // Ensure taskIds is an array and extract the first taskId
+        if (response.data.taskIds && response.data.taskIds.length > 0) {
+          setTaskId(response.data.taskIds[0]); // Store taskId in state
+          console.log("Task ID:", response.data.taskIds[0]);
+        } else {
+          console.log("No active tasks found");
+        }
       } catch (error) {
-        console.error('Error fetching clarification data:', error)
+        console.error("Error fetching clarification data:", error);
       }
-    }
-    fetchClarification()
-  }, [])
+    };
+
+    fetchClarification();
+  }, []);
 
   useEffect(() => {
     if (clarificationData && Object.keys(clarificationData).length > 0) {
@@ -53,8 +68,7 @@ const FileUpload = () => {
         Clarification: clarificationData.clarificationDetails || "",
       });
     }
-  }, [clarificationData]); 
-  const [uploadStatus, setUploadStatus] = useState('')
+  }, [clarificationData]);
 
   const formik = useFormik({
     initialValues: {
@@ -64,39 +78,24 @@ const FileUpload = () => {
       files: [],
       Clarification: "",
     },
-   
     onSubmit: async (values) => {
       try {
-        // Convert files to Base64
-        // const encodedFiles = await Promise.all(
-        //   files.map((file) => {
-        //     return new Promise((resolve, reject) => {
-        //       const reader = new FileReader()
-        //       reader.onload = () =>
-        //         resolve({ name: file.name, type: file.type, data: reader.result })
-        //       reader.onerror = reject
-        //       reader.readAsDataURL(file)
-        //     })
-        //   }),
-        // )
-
-        // Prepare JSON payload
         const payload = {
           applicationNo: values.applicationNo,
           loanType: values.loanType,
           comments: values.comments,
-          // files: encodedFiles,
           Clarification: values.Clarification,
+        };
+
+        if (!taskId) {
+          console.error("No taskId available, cannot submit data.");
+          return;
         }
 
-        // Send the JSON payload
-        const response = await axios.post(`${URL}/customerClarificationReply?processInstanceId=${processInstance}`, payload, {
-          headers: {
-            'Content-Type': 'application/json',
-            // 'Content-Type': 'multipart/form-data',
-          },
-        })
-
+        const response = await axios.post(
+          `${URL}/clarification/${taskId}`,
+          payload
+        );
         if (response) {
           Swal.fire({
             text: 'Thanks for your submitting!',
@@ -123,9 +122,11 @@ window.close();
           confirmButtonText: 'Retry',
         })
       }
-      console.log('form', values)
+
+        console.log("Clarification Submitted:", response.data);
+     
     },
-  })
+  });
   
   const handleFileChange = (event) => {
     const selectedFiles = Array.from(event.target.files).map((file) => ({
@@ -147,8 +148,8 @@ window.close();
       if (files.length === 0) return
 
       try {
-        const emailResponse = await fetch(`${URL}/getEmailId?processInstanceId=${processInstance}`, {
-          method: 'GET',
+         await axios.post(`${URL}/upload`, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         })
 
         if (!emailResponse.ok) {

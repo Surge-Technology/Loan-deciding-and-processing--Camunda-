@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { RadialGauge } from 'react-canvas-gauges' // Using a semi-circle gauge
-const URL = import.meta.env.VITE_BASE_URL
+// const URL = import.meta.env.VITE_BASE_URL
 
 const LegalApprover = () => {
   const [incomeStatus, setIncomeStatus] = useState('') // Income Verification
@@ -36,7 +36,7 @@ const LegalApprover = () => {
         const storedUser = localStorage.getItem('username') // Get logged-in user role
         console.log('Fetching loan details for:', storedUser)
 
-        const response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`)
+        const response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`)
 
         if (response.data.length > 0) {
           // Extract the first relevant loan application
@@ -65,44 +65,12 @@ const LegalApprover = () => {
       }
     }
 
-    const fetchCreditScore = async () => {
-      try {
-        const response = await axios.get(`${URL}/calculateCibilScore`)
-        console.log('CIBIL Score API Response:', response.data)
-
-        if (response.data && response.data) {
-          setCreditScore(Number(response.data)) // Ensure it's a number
-        } else {
-          console.warn('Invalid CIBIL Score response:', response.data)
-        }
-      } catch (error) {
-        console.error('Error fetching credit score:', error)
-      }
-    }
-
+  
     fetchLoanDetails()
-    fetchCreditScore()
   }, [])
 
   const [loanDetails, setLoanDetails] = useState(null)
 
-  const handleDownload = (fileName) => {
-    axios
-      .get(`${URL}/downloadFile/${fileName}`, {
-        responseType: 'blob',
-      })
-      .then((response) => {
-        const link = document.createElement('a')
-        link.href = window.URL.createObjectURL(new Blob([response.data]))
-        link.setAttribute('download', fileName)
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      })
-      .catch((error) => {
-        console.error('Error downloading file:', error)
-      })
-  }
 
   const handleDownloadDocs = () => {
     setDownloadMessage("");
@@ -136,58 +104,136 @@ const LegalApprover = () => {
       })
   }
 
+  // const handleSubmit = async () => {
+  //   if (!incomeStatus || !collateralStatus || !legalReviewStatus) {
+  //     Swal.fire({
+  //       icon: 'error',
+  //       title: 'Error',
+  //       text: 'Please fill in all the fields!',
+  //       confirmButtonColor: '#d33',
+  //     })
+  //     return
+  //   }
+
+  //   const requestPayload = {   
+  //     // incomeVerificationStatus: incomeStatus,
+  //     // collateralStatus: collateralStatus,
+  //     Decision: legalReviewStatus,
+   
+  //     // [storedUser]:
+  //     //  {
+  //     //   incomeVerificationStatus: incomeStatus,
+  //     //   collateralStatus: collateralStatus,
+  //     //   LegalApprover: legalReviewStatus,
+  //     // },
+  //   }
+  //   const loanId = localStorage.getItem('selectedLoanId');
+  //   const taskId = localStorage.getItem(`taskId_${loanId}`);
+  //   console.log(taskId, '***********taskIds------');
+ 
+  //   try {
+  //     const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`, requestPayload)
+  //     console.log('API Response:', response.data)
+  //     // if(response.data === "Loan approval process completed successfully."){
+  //     //   axios.post(`${URL}/CustomerMail`)
+  //     // }
+
+  //     Swal.fire({
+  //       icon: 'success',
+  //       title: 'Success',
+  //       text: 'Legal review submitted successfully!',
+  //       confirmButtonColor: '#28a745',
+  //     }).then(() => {
+  //       // if (legalReviewStatus === "Pending") {
+  //       //   sendClarificationEmail();
+  //       // }
+  //       if (response.status === 200) {
+  //         if (storedUser === "LegalApprover" && actionType.toLowerCase() === "approved") {
+  //             try {
+  //                 const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
+  //                 console.log("Status updated:", statusUpdateResponse.data);
+  //             } catch (statusUpdateError) {
+  //                 console.error("Error updating status for LegalApprover:", statusUpdateError);
+  //             }
+  //         }
+  //     } else {
+  //         console.error(`${actionType} action failed`);
+  //     }
+  //       navigate('/loanApproverDashboard');
+  //     });
+  //   }
+    
+    
+  //   catch (error) {
+  //     console.error('Error submitting legal review:', error)
+  //     Swal.fire({
+  //       icon: 'error',
+  //       title: 'Error',
+  //       text: 'Failed to process request. Try again!',
+  //       confirmButtonColor: '#d33',
+  //     })
+  //   }
+  // }
   const handleSubmit = async () => {
     if (!incomeStatus || !collateralStatus || !legalReviewStatus) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Please fill in all the fields!',
-        confirmButtonColor: '#d33',
-      })
-      return
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Please fill in all the fields!',
+            confirmButtonColor: '#d33',
+        });
+        return;
     }
 
     const requestPayload = {   
-      incomeVerificationStatus: incomeStatus,
-      collateralStatus: collateralStatus,
-      LegalApprover: legalReviewStatus,
-   
-      // [storedUser]:
-      //  {
-      //   incomeVerificationStatus: incomeStatus,
-      //   collateralStatus: collateralStatus,
-      //   LegalApprover: legalReviewStatus,
-      // },
-    }
+        Decision: legalReviewStatus
+    };
+
+    const loanId = localStorage.getItem('selectedLoanId');
+    const taskId = localStorage.getItem(`taskId_${loanId}`);
+    
+    console.log(taskId, '***********taskIds------');
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}`, requestPayload)
-      console.log('API Response:', response.data)
-      if(response.data === "Loan approval process completed successfully."){
-        axios.post(`${URL}/CustomerMail`)
-      }
+        const response = await axios.post(
+            `${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`, 
+            requestPayload
+        );
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Legal review submitted successfully!',
-        confirmButtonColor: '#28a745',
-      }).then(() => {
-        if (legalReviewStatus === "Pending") {
-          sendClarificationEmail();
-        }
-        navigate('/loanApproverDashboard');
-      });
+        console.log('API Response:', response.data);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Legal review submitted successfully!',
+            confirmButtonColor: '#28a745',
+        }).then(async () => {
+            // ✅ Call 2nd API only if storedUser is LegalApprover & decision is "Approved"
+            if (response.status === 200) {
+                if (storedUser === "LegalApprover" && legalReviewStatus.toLowerCase() === "approved") {
+                    try {
+                        const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
+                        console.log("Status updated:", statusUpdateResponse.data);
+                    } catch (statusUpdateError) {
+                        console.error("Error updating status for LegalApprover:", statusUpdateError);
+                    }
+                }
+            } else {
+                console.error(`Legal review action failed`);
+            }
+
+            navigate('/loanApproverDashboard');
+        });
     } catch (error) {
-      console.error('Error submitting legal review:', error)
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to process request. Try again!',
-        confirmButtonColor: '#d33',
-      })
+        console.error('Error submitting legal review:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to process request. Try again!',
+            confirmButtonColor: '#d33',
+        });
     }
-  }
+};
 
   const handlePrevious = () => {
     navigate(-1)
@@ -363,10 +409,10 @@ const LegalApprover = () => {
         {/* Submit & Cancel Buttons */}
         <div className="mt-4 text-end">
           <CButton className="m-4" color="primary" type="submit" onClick={handleSubmit}>
-            Submit
+            Approve
           </CButton>
           <CButton color="danger" type="submit" onClick={handlePrevious}>
-            Cancel
+            Reject
           </CButton>
         </div>
       </CCardBody>

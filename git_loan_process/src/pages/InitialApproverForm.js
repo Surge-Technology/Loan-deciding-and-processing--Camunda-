@@ -17,8 +17,9 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import Swal from 'sweetalert2'
-
-const InitialApproverForm = () => {
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+const InitialApproverForm = (loan) => {
   const [loanData, setLoanData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [openSections, setOpenSections] = useState({})
@@ -26,23 +27,42 @@ const InitialApproverForm = () => {
   const [currentDate] = useState(new Date().toISOString().split('T')[0])
   const URL = import.meta.env.VITE_BASE_URL
   const navigate = useNavigate()
-
+  const [id, setId] = useState(null);
+  const [loanId, setLoanId] = useState(null);
+  const [taskId, setTaskId] = useState(null);
+  const [processId, setProcessId] = useState(null);
   const [decision, setDecision] = useState({
     // creditScore: 750, // Default Score
     eligibility: '',
     comments: '',
     approvalStatus: '',
   })
-  const processInstance = localStorage.getItem('processId');
- console.log("process Instance id retrived",processInstance);
- 
+  // const processInstance = localStorage.getItem('processId')
+  // console.log('process Instance id retrived', processInstance)
 
   useEffect(() => {
+    const loanId = localStorage.getItem('selectedLoanId');
+const taskId = localStorage.getItem(`taskId_${loanId}`);
+console.log(taskId, '***********taskIds------');
+
+    // const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
+
+    // console.log(taskIds, "***********taskIds------");
+    const processInstance = localStorage.getItem('processId')
+    console.log('process Instance id retrived', processInstance)
+    // const taskIds = localStorage.getItem(`processId_${taskId}`); // Get processId using loanId
+// alert(taskIds);
+    const storedId = localStorage.getItem('selectedId');
+    const storedLoanId = localStorage.getItem('selectedLoanId');
+    console.log('load id',storedLoanId);
+    
+    const storedTaskId = localStorage.getItem('selectedTaskId');
+    const storedProcessId = localStorage.getItem('selectedProcessId');
+ 
     const fetchLoanDetails = async () => {
       try {
         const email = localStorage.getItem('emailId')
         console.log('1234567', email)
- 
 
         // const email = "camerongre1@gmail.com"; // Replace with dynamic email
 
@@ -57,7 +77,10 @@ const InitialApproverForm = () => {
         setLoading(false)
       }
     }
-
+    setId(storedId);
+    setLoanId(storedLoanId);
+    setTaskId(storedTaskId);
+    setProcessId(storedProcessId);
     fetchLoanDetails()
   }, [])
 
@@ -65,56 +88,68 @@ const InitialApproverForm = () => {
     setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }))
   }
 
-  const handleSubmit = () => {
-    console.log('Final Decision Submitted:', decision)
-    alert('Decision Submitted Successfully!')
-  }
+ 
   const storedUser = localStorage.getItem('username')
-  const handleApprove = async (loanId) => {
-    const approve = {
-      [storedUser]: 'Approved', // Use an appropriate key for the backend
-      // approver: storedUser // Store the approver’s username
+
+  const handleAction = async ( actionType) => {
+    
+    const storedUser = localStorage.getItem('username'); // Retrieve username
+    const taskId = localStorage.getItem(`taskId_${loanId}`);
+console.log(taskId, '***********taskIds------');
+
+    // console.log(taskIds, "----------taskIds");
+    if (!taskId) {
+        console.error("taskId is undefined");
+        return;
     }
+
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`); 
+    console.log("2345678",processInstanceId);
+   
+    if (!processInstanceId) {
+        console.error(`No processId found for Loan ID: ${loanId}`);
+        return;
+    }
+
+    console.log("Retrieved Process Instance ID:", processInstanceId);
+    console.log("Retrieved Task ID:", taskId);
+  //   const approve = JSON.stringify({
+  //     [storedUser]: "Approved"
+  // });
+    const actionPayload = JSON.stringify({
+        [storedUser]: actionType,
+    });  
+console.log("action type",actionType);
+console.log("1234567",actionPayload);
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}`, approve)
-      console.log('Handle Approve Response:', response.data)
-      // toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: "top-right" });
-      // Show success message
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: `Approved`,
-        confirmButtonColor: '#28a745',
-      })
-      navigate('/loanApproverDashboard')
+        // const response = await axios.post(
+        //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+        //     actionPayload
+        // );
+        const response = await axios.post(
+          `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+          actionPayload,
+          {
+              headers: { 'Content-Type': 'application/json' }
+          }
+      );
+        console.log(`Handle ${actionType} Response:`, response.data);
+        toast.success(`Loan ID ${loanId} has been ${actionType} `, { position: 'top-right' });
+
+        if (response.status === 200) {
+            // window.location.reload(); // Reload after success
+            navigate('/loanApproverDashboard')
+        } else {
+            console.error(`${actionType} action failed`);
+        }
     } catch (error) {
-      console.error('Error approving task:', error)
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: `Error`,
-        confirmButtonColor: '#d33',
-      })
+        console.error(`Error performing ${actionType} action:`, error);
     }
+};
+ 
 
-    // alert(`Loan ID ${loanId} has been Approved`);
-  }
-
-  const handleReject = (loanId) => {
-
-    
-    const reject = {
-      [storedUser]: 'Reject',
-      // approver: storedUser
-    }
-
-    const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstance}`, reject)
-    console.log('handle reject', response)
-    // toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: "top-right" });
-    navigate('/loanApproverDashboard')
-    // alert(`Loan ID ${loanId} has been Rejected`);
-  }
+ 
 
   const renderSection = (title, data) => {
     if (!data) return null
@@ -336,11 +371,20 @@ const InitialApproverForm = () => {
                   </CRow>
 
                   <div className="mt-4 text-end">
-                    <CButton className="m-4" color="primary" type="submit" onClick={handleApprove}>
+                    <CButton
+                      className="m-4"
+                      color="primary"
+                      type="submit"
+                      onClick={() => handleAction('Approved')}
+                    >
                       Approve
                     </CButton>
 
-                    <CButton color="danger" type="submit" onClick={handleReject}>
+                    <CButton
+                      color="danger"
+                      type="submit"
+                      onClick={() => handleAction('Rejected')}
+                    >
                       Reject
                     </CButton>
                   </div>

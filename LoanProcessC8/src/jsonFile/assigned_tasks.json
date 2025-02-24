@@ -1,0 +1,64 @@
+[ {
+  "id" : "4503599748990606",
+  "name" : "Under Writer / Legal Approver",
+  "processName" : "Loan Application C8  v1",
+  "processDefinitionId" : "2251799934430421",
+  "assignee" : "UnderWriter",
+  "creationTime" : "2025-02-24T08:52:21.711+0000",
+  "taskState" : "CREATED",
+  "candidateGroups" : null,
+  "sortValues" : [ "1740387141711", "4503599748990606" ],
+  "isFirst" : true,
+  "variables" : [ {
+    "id" : "4503599748990379-InitialApprover",
+    "name" : "InitialApprover",
+    "value" : "Approved",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990379-applicantName",
+    "name" : "applicantName",
+    "value" : "Manju Nisha",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990600-assignee",
+    "name" : "assignee",
+    "value" : "UnderWriter",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990379-assigneeList",
+    "name" : "assigneeList",
+    "value" : [ "UnderWriter", "LegalApprover" ],
+    "type" : "LIST"
+  }, {
+    "id" : "4503599748990379-emailId",
+    "name" : "emailId",
+    "value" : "manjulamanjula3150@gmail.com",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990379-loanAccountNumber",
+    "name" : "loanAccountNumber",
+    "value" : "6829",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990379-loanAmount",
+    "name" : "loanAmount",
+    "value" : 30000000,
+    "type" : "NUMBER"
+  }, {
+    "id" : "4503599748990379-loanStatus",
+    "name" : "loanStatus",
+    "value" : "Pending",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990379-loanType",
+    "name" : "loanType",
+    "value" : "homeLoan",
+    "type" : "STRING"
+  }, {
+    "id" : "4503599748990600-loopCounter",
+    "name" : "loopCounter",
+    "value" : 1,
+    "type" : "NUMBER"
+  } ],
+  "formKey" : null
+} ]

@@ -29,7 +29,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import Swal from 'sweetalert2'
 import DisbursementForm from './DisbursementForm'
 // import '../css/Model.css';
-const LoanApproverDashboard = () => {
+const LoanApproverDashboard = (loan) => {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,7 +51,8 @@ const LoanApproverDashboard = () => {
 
       if (storedUser !== 'Manager') {
         try {
-          response = await axios.get(`${URL}/getTaskBasedOnUser?user=${storedUser}`)
+          response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`)
+          // response =await axios.get(`${URL}/getAssignedTask/Loan Application C8  v1/${storedUser}`)
           console.log('API Response for User Tasks:', response.data) // Debugging Step 1
 
           // Ensure response.data is an array
@@ -69,12 +70,20 @@ const LoanApproverDashboard = () => {
                 loanAccountNumber: item.loanDetails.loanAccountNumber,
                 processId:item.loanDetails.processInstanceId,
                 id: item.loanDetails.id,
+                taskId:item.taskId
             }));
             setFilterLoans(formattedLoans);
             formattedLoans.forEach((loan) => {
-              console.log(`Storing processId: ${loan.processId} for Loan ID: ${loan.loanId}`);
-
+              console.log(`Storing processId: ${loan.processId} for Loan ID: ${loan.taskId}`);
         localStorage.setItem(`processId_${loan.loanId}`, loan.processId);
+        // localStorage.setItem(`taskId_${loan.taskId}`, loan.taskId);
+        localStorage.setItem(`taskId_${loan.loanId}`, loan.taskId);
+
+        // const taskIds = localStorage.getItem(`taskId_${taskId}`);
+        const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
+
+        console.log(taskIds, "----------taskIds------");
+        
     });
 
     console.log("Filtered Loans:", formattedLoans);
@@ -107,7 +116,7 @@ const LoanApproverDashboard = () => {
           : []
 
           setFilterLoans(formattedLoans);
-          console.log('Formatted Loans:', formattedLoans,filterLoans)  // Debugging Step 4
+          console.log('Formatted Loans:', formattedLoans,filterLoans)  
       }
 
       // Updating state
@@ -118,117 +127,181 @@ const LoanApproverDashboard = () => {
       setLoading(false)
     }
   }
-  // const processInstanceId = localStorage.getItem("processId");
-  const handleApprove = async (loanId) => {
+   const processId = localStorage.getItem("pId");
+   const handleAction = async (loanId, taskId, actionType) => {
+    
     const storedUser = localStorage.getItem('username'); // Retrieve username
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
+    const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
 
+    console.log(taskIds, "----------taskIds");
+    if (!taskId) {
+        console.error("taskId is undefined");
+        return;
+    }
+
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`); 
+    console.log("2345678",processInstanceId);
+    
+    // Get processId using loanId
+   // const taskIds = localStorage.getItem(`processId_${taskId}`); // Get processId using loanId
+ 
     if (!processInstanceId) {
         console.error(`No processId found for Loan ID: ${loanId}`);
         return;
     }
+
     console.log("Retrieved Process Instance ID:", processInstanceId);
+    console.log("Retrieved Task ID:", taskId);
   
-    const approve = {
-      [storedUser]: 'Approved',
-      // processInstanceId: processInstanceId,
-      // processInstance:processInstanceId;
-      // approver: storedUser // Store the approver’s username
-    }
+    // const actionPayload = JSON.stringify({
+    //     [storedUser]: actionType,
+    // });  
+    const actionPayload = storedUser === "InitialApprover" 
+        ? JSON.stringify({ [storedUser]: actionType }) 
+        : JSON.stringify({ "Decision": actionType });
+console.log("action type",actionType);
+console.log("1234567",actionPayload);
 
     try {
-      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstanceId}`, approve)
-      console.log('Handle Approve Response:', response.data)
-      toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: 'top-right' })
-      if (statusCode==200) {
-        window.location.reload(); // Reload the page after successful API call
-      } else {
-        console.error(` failed`);
-      }
+        // const response = await axios.post(
+        //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+        //     actionPayload
+        // );
+      //   const response = await axios.post(
+      //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+      //     actionPayload,
+      //     {
+      //         headers: { 'Content-Type': 'application/json' }
+      //     }
+      // );
+      //   console.log(`Handle ${actionType} Response:`, response.data);
+      //   toast.success(`Loan ID ${loanId} has been ${actionType} `, { position: 'top-right' });
+
+      //   if (response.status === 200) {
+      //     if (storedUser === "LegalApprover") {
+      //       try {
+      //           const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
+      //           console.log("Status updated:", statusUpdateResponse.data);
+      //       } catch (statusUpdateError) {
+      //           console.error("Error updating status for LegalApprover:", statusUpdateError);
+      //       }
+      //   }
+      //       //  window.location.reload(); // Reload after success
+      //   } else {
+      //       console.error(`${actionType} action failed`);
+      //   }
+      try {
+        const response = await axios.post(
+            `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+            actionPayload,
+            {
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
+    
+        console.log(`Handle ${actionType} Response:`, response.data);
+        toast.success(`Loan ID ${loanId} has been ${actionType}`, { position: 'top-right' });
+    
+        if (response.status === 200) {
+            if (storedUser === "LegalApprover" && actionType.toLowerCase() === "approved") {
+                try {
+                    const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
+                    console.log("Status updated:", statusUpdateResponse.data);
+                } catch (statusUpdateError) {
+                    console.error("Error updating status for LegalApprover:", statusUpdateError);
+                }
+            }
+        } else {
+            console.error(`${actionType} action failed`);
+        }
     } catch (error) {
-      console.error('Error approving task:', error)
+        console.error(`Error handling ${actionType}:`, error);
     }
+    
+    } catch (error) {
+        console.error(`Error performing ${actionType} action:`, error);
+    }
+};
 
-    // alert(`Loan ID ${loanId} has been Approved`);
-  }
+   //working
+  // const handleApprove = async (loanId) => {
+  //   const storedUser = localStorage.getItem('username'); // Retrieve username
+    
+  //   // const processId = localStorage.getItem(`processId`);
+  //   const processInstanceId = localStorage.getItem(`processId_${taskId}`);
 
-  const handleReject = (loanId) => {
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
+  //   if (!processInstanceId) {
+  //       console.error(`No processId found for Loan ID: ${loanId}`);
+  //       return;
+  //   }
+  //   console.log("Retrieved Process Instance ID:", processInstanceId);
+  //   console.log("Retrieved ------- taskId ID:", taskId);
+  
+  //   const approve = {
+  //     [storedUser]: 'Approved',
+  //     // processInstanceId: processInstanceId,
+  //     // processInstance:processInstanceId;
+  //     // approver: storedUser // Store the approver’s username
+  //   }
 
-    if (!processInstanceId) {
-        console.error(`No processId found for Loan ID: ${loanId}`);
+  //   try {
+  //     const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`, approve)
+  //     console.log('Handle Approve Response:', response.data)
+  //     toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: 'top-right' })
+  //     if (statusCode==200) {
+  //       window.location.reload(); // Reload the page after successful API call
+  //     } else {
+  //       console.error(` failed`);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error approving task:', error)
+  //   }
+
+  //   // alert(`Loan ID ${loanId} has been Approved`);
+  // }
+
+
+  const handleView = (id, loanId, taskId, processId, loanStatus) => {
+    // alert(45678)
+    const taskIds = localStorage.getItem(`taskId_${loanId}`);
+console.log(taskIds,"----------taskIds------");
+
+    localStorage.setItem('selectedLoanId', loanId);
+    localStorage.setItem('selectedTaskId', taskId);
+    console.log(`Viewing Loan ID: ${id}`);
+    console.log(`LoanStatus for ${id} is ${loanStatus}`);
+
+    if (!processId) {
+        console.error('Process Instance ID is undefined or null');
         return;
     }
-    console.log("Retrieved Process Instance ID:", processInstanceId);
-  
-    const reject = {
-      [storedUser]: 'Reject',
-      // processInstanceId: processInstanceId,
-      // approver: storedUser
+
+    console.log(`Viewing Process Instance ID: ${processId}`);
+    console.log(`LoanStatus for Process Instance ID ${processId} is ${loanStatus}`);
+
+    localStorage.setItem('emailId', id);
+    localStorage.setItem('processId', processId);
+
+    const storedUser = localStorage.getItem('username');
+
+    switch (storedUser) {
+        case 'InitialApprover':
+            navigate('/initialApprover');
+            break;
+        case 'UnderWriter':
+            navigate('/underwriterForm');
+            break;
+        case 'LegalApprover':
+            navigate('/legalApprover');
+            break;
+        case 'Manager':
+            navigate('/managerForm'); // Corrected spelling
+            break;
+        default:
+            navigate('/applicantDashboard');
+            break;
     }
-
-    const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstanceId}`, reject)
-    console.log('handle reject', response)
-    toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: 'top-right' })
-    if (response.ok) {
-      window.location.reload(); // Reload the page after successful API call
-    } else {
-      console.error(` failed`);
-    }
-    // alert(`Loan ID ${loanId} has been Rejected`);
-  }
-
-  // const handleView = (id) => {
-
-  //   console.log(
-  //   `Viewing Loan ID: ${id}`);
-  //   localStorage.setItem('emailId',id);
-
-  //   navigate('/initialApprover')
-  // };
-
-  // Loan Statistics
-
-  const handleView = (id,processId, loanStatus) => {
-    console.log(`Viewing Loan ID: ${id}`)
-    console.log(`LoanStatus for ${id} is ${loanStatus}`)
-    if (!processId) {
-      console.error('Process Instance ID is undefined or null');
-      return;
-  }
-
-  console.log(`Viewing Process Instance ID: ${processId}`);
-
-  
-  console.log(`LoanStatus for Process Instance ID ${processId} is ${loanStatus}`);
-
-    
-    // Store emailId in localStorage
-    localStorage.setItem('emailId', id)
-    localStorage.setItem('processId',processId)
-    
-
-    // Retrieve stored user role
-    const storedUser = localStorage.getItem('username')
-    // const storedUser = localStorage.getItem('username')
-
-    // Navigate based on user role
-    if (storedUser === 'InitialApprover') {
-      navigate('/initialApprover')
-    } else if (storedUser === 'UnderWriter') {
-      navigate('/underwriterForm')
-    } else if (storedUser === 'LegalApprover') {
-      navigate('/legalApprover')
-    } else if (storedUser === 'Manager') {
-      navigate('/mangerForm')
-      // } else {
-      //   navigate('/applicantDashboard')
-    } else {
-      //console.warn('Unknown user role, staying on the same page')
-      navigate('/applicantDashboard')
-    }
-  }
-
+};
   const totalLoans = filterLoans.length
   const pendingLoans = filterLoans.filter((loan) => loan.loanStatus === 'Pending').length
   const approvedLoans = filterLoans.filter((loan) => loan.loanStatus === 'Approved').length
@@ -463,7 +536,9 @@ const filteredLoans = loans.filter((loan) => {
                                       color="success"
                                       size="sm"
                                       className="me-2"
-                                      onClick={() => handleApprove(loan.loanId)}
+                                      // onClick={() => handleApprove(loan.loanId, loan.taskId, "Approved")}
+                                         onClick={() => handleAction(loan.loanId, loan.taskId, "Approved")}
+
                                     >
                                       Approve
                                     </CButton>
@@ -471,15 +546,16 @@ const filteredLoans = loans.filter((loan) => {
                                       color="danger"
                                       size="sm"
                                       className="me-2"
-                                      onClick={() => handleReject(loan.loanId)}
+                                      onClick={() => handleAction(loan.loanId, loan.taskId, "Rejected")}
                                     >
                                       Reject
                                     </CButton>
                                     <CButton
                                       color="info"
                                       size="sm"
-                                      onClick={() => handleView(loan.id,loan.processId, loan.loanStatus)}
-                                    >
+                                      // onClick={() => handleView(loan.id,loan.loadId,loan.taskId,loan.processId, loan.loanStatus)}
+                                   onClick={() => handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)}
+                                      >
                                       View
                                     </CButton>
                                     {/* <CButton

@@ -28,188 +28,83 @@ const LoanAmountDetails = (props) => {
     const URL = import.meta.env.VITE_BASE_URL;
 const navigate=useNavigate();
  
-    // useEffect(() => {
  
-    //     axios.get(
-    //         `http://localhost:8080/getJsonDataByEmail?emailId=${userIdFromStorage}`
-    //       );
-    //       const data = response.data; // Get the data from the response
- 
-    //       setResponses(data); // Update the state with the fetched data
-    //       console.log("Response:-------------------", data);
- 
-    //       // Set the form values with fetched data using formik.setValues
-    //       formik.setValues({
-    //         firstName: data.personalData.personalInfo.firstName || "",
-    //         lastName: data.personalData.personalInfo.lastName || "",
-    //         legalFullName: data.personalData.personalInfo.legalFullName || "",
-    //         birthDate: data.personalData.personalInfo.dob || "",
-    //         maritalStatus: data.personalData.personalInfo.maritalStatus || "",
-    //         spouseName: data.personalData.personalInfo.spouseName || "",
-    //         gender: data.personalData.personalInfo.gender || "",
-    //         email: data.personalData.contactInfo.email || "",
-    //         phone: data.personalData.contactInfo.phone || "",
-    //         streetAddress: data.personalData.addressInfo.streetLine1 || "",
-    //         streetAddress2: data.personalData.addressInfo.streetLine2 || "",
-    //         city: data.personalData.addressInfo.city || "",
-    //         state: data.personalData.addressInfo.state || "",
-    //         zipCode: data.personalData.addressInfo.zip || "",
-    //         howLongAtAddress: data.personalData.addressInfo.yearsAtAddress || "",
-    //       });
- 
-    //       // Set the userId in the component's state
-    //       setStoredUserId(userIdFromStorage);
-    //     } catch (error) {
-    //       console.error("Error fetching user data:", error);
-    //     }
- 
-    // }, []);
- 
-    const formik = useFormik({
-        initialValues: {
-            loanType: "homeLoan",
-                loanAmount: '650000',
-            priority: "high",
-            currency: "INR",
-            repayLoan: "6 months",
-            intrestRate: '7%',
-            expectedDate: "2027-10-19",
-            emiAmount: '6000',
-            // otherComments: '10-11-2030',
-            repayDuration: '4years',
-            purposeofLoan: '',
-        },
-    })
- 
-    const handleActionChange = (event) => {
-        setSelectedAction(event.target.value);
- 
-        // If the selected action is 'NeedClarification', set query field to be displayed
-        if (event.target.value === 'NeedClarification') {
-            setQuery('');
-        }
-    };
- 
+   
     const [isAcknowledged, setIsAcknowledged] = useState(false);
-    const handleSubmit = async () => {
-        if (!isAcknowledged) {
-          alert("Please acknowledge before submitting!");
-          return;
+  const[loanData,setLoanData]=useState(null);
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/calculateTenureInterest")
+      .then((response) => {
+        setLoanData(response.data); // Store API response
+        if (response.data.taskIds && response.data.taskIds.length > 0) {
+          const idTask = response.data.taskIds[0];
+          console.log(idTask, "idTask");
+          localStorage.setItem("id", idTask); // Store in localStorage
         }
-    
-        const payload = { Customer: "Approved" };
-    
-        try {
-          const response = await axios.post(`${URL}/customerAcknowledgement`, payload);
-          console.log("Submit API Response:", response.data);
-          //alert("Your Loan is Approved");
-          window.close();
-          if (response) {
-           Swal.fire({
-                   position: 'center',
-                   icon: 'success',
-                   title: `Thanks`,
-                   confirmButtonText: "OK",
-                   showConfirmButton: true,
-                   timer: 1500,
-                 }).then(() => {
-                window.close();
-            });
-      
-          } else {
-            Swal.fire({
-              title: "Error!",
-              text: "Failed to submit application. Please try again.",
-              icon: "error",
-              confirmButtonText: "Retry",
-            });
-          }
-        //   alert("Form submitted successfully!");
-        } catch (error) {
-          console.error("Error during submission:", error);
-        //   alert("Submission failed. Please try again.");
+      })
+      .catch((error) => console.error("Error fetching data:", error));
+}, []);
 
-        }
-      };
     
-      // Handle Cancel Action
-      const handleCancel = async () => {
-        const payload = { customer: "rejected" };
+      const formik = useFormik({
+        enableReinitialize: true, // Allows updating initial values dynamically
+        initialValues: {
+          loanType: loanData?.customerReply?.loanType || "",
+          loanAmount: loanData?.loanAmount || "",
+          loanAccountNumber:loanData?.loanAccountNumber||"",
+          applicantName:loanData?.applicantName||"",
+          repayLoan: "4 month",
+          emiAmount: "6000",
+          intrestRate: loanData?.interestRate || "",
+          expectedDate: "2027-10-19",
+          repayDuration: loanData?.tenure || "",
+          taskId:loanData?.taskIds[0]
+        },
+        onSubmit: (values) => {
+          console.log("Submitted Data:", values);
+        //   axios
+        //     .post("http://localhost:8080/customerAcknowledgement/${loanData.taskIds[0]}", values)
+        //     .then((response) => console.log("Response:", response.data))
+        //     .catch((error) => console.error("Error submitting form:", error));
+        },
+      });
     
-        try {
-          const response = await axios.post(`${URL}/customerApproval`, payload);
-          console.log("Cancel API Response:", response.data);
-          alert("Your Loan Process is cancelled");
-          window.close();
-        //   if (response) {
-        //     Swal({
-        //       text: "Your Loan Process is cancelled",
-             
-        //       confirmButtonText: "OK",
-        //     }).then(() => {
-        //         window.close();
-        //     });
-      
-        //   }
-        //  alert("Form canceled successfully!");
-        } catch (error) {
-        //   console.error("Error during cancellation:", error);
-        //   alert("Cancellation failed. Please try again.");
-        }
-      };
-    
+    //   useEffect(() => {
+    //     if (loanData?.taskIds?.[0]) {
+    //         localStorage.setItem("taskId", loanData.taskIds[0]);
+    //     }
+    // }, [loanData]);
  
  
- 
-    // const handleLoadData = () => {
-    //     const jsonData = {
-    //         loanType: "Home Loan",
-    //         loanAmount: "4,00,000",
-    //         priority: "high",
-    //         currency: "INR",
-    //         repayLoan: "6months",
-    //         intrestRate: "9%",
-    //         expectedDate: "20/12/28",
-    //         emiAmount: "50000",
-    //         otherComments: "NA",
-    //         repayDuration: "4years",
-    //         purposeofLoan: "construction",
- 
-    //     };
- 
-    //     formik.setValues({
-    //         ...formik.values,
-    //         loanType: jsonData.loanType,
-    //         loanAmount: jsonData.loanAmount,
-    //         priority: jsonData.priority,
-    //         currency: jsonData.currency,
-    //         repayLoan: jsonData.repayLoan,
-    //         intrestRate: jsonData.intrestRate,
-    //         expectedDate: jsonData.expectedDate,
-    //         emiAmount: jsonData.emiAmount,
-    //         repayDuration: jsonData.repayDuration,
-    //         purposeofLoan: jsonData.purposeofLoan,
-    //     });
-    // };
     const processInstance = localStorage.getItem('processId');
     console.log("process Instance id retrived",processInstance);
     
  
     const handleApprove = async (loanId) => {
+        const getTaskId = localStorage.getItem("id");
+        console.log(getTaskId);
+        alert("getTaskId",getTaskId)
+        
+    if (!getTaskId) {
+        console.error("Task ID is missing.");
+        return;
+    }
+        // const taskId = localStorage.getItem("taskId");
         const approve = {
-          Customer: 'Approved', // Use an appropriate key for the backend
+          customer: 'Approved', // Use an appropriate key for the backend
           // approver: storedUser // Store the approver’s username
         }
     
         try {
-          const response = await axios.post(`${URL}/customerAcknowledgement?processInstanceId=${processInstance}`, approve)
+          const response = await axios.post(`${URL}/customerAcknowledgement/${getTaskId}`, approve)
           console.log('Handle Approve Response:', response.data)
           // toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: "top-right" });
           // Show success message
           Swal.fire({
             icon: 'success',
-            title: 'Success',
-            text: `Loan has been Approved`,
+            title: 'Approved',
+            // text: `Loan has been Approved`,
             confirmButtonColor: '#28a745',
           })
           navigate('/home')
@@ -227,14 +122,14 @@ const navigate=useNavigate();
       }
     
       const handleReject = (loanId) => {
-    
+        const taskId = localStorage.getItem("taskId");
         
         const reject = {
          Customer: 'Reject',
           // approver: storedUser
         }
     
-        const response = axios.post(` ${URL}/customerAcknowledgement?processInstanceId=${processInstance}`, reject)
+        const response = axios.post(` ${URL}/customerAcknowledgement/${taskId}`, reject)
         console.log('handle reject', response)
         // toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: "top-right" });
         navigate('/home')
@@ -284,23 +179,18 @@ const navigate=useNavigate();
                             </div>
                             {/* Loan Amount */}
                             <div className="col-md-6">
-                                <label htmlFor="loanAmount" className="form-label">
-                                    Loan Amount
-                                </label>
-                                <input
-                                    type="text"
-                                    className={`form-control ${formik.touched.loanAmount && formik.errors.loanAmount ? 'is-invalid' : ''}`}
-                                    id="loanAmount"
-                                    disabled
-                                    name="loanAmount"
-                                    value={formik.values.loanAmount}
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                />
-                                {formik.touched.loanAmount && formik.errors.loanAmount && (
-                                    <div className="invalid-feedback">{formik.errors.loanAmount}</div>
-                                )}
-                            </div>
+            <label htmlFor="loanAmount">Loan Amount</label>
+            <input
+              type="text"
+              className="form-control"
+              id="loanAmount"
+              disabled
+              name="loanAmount"
+              value={formik.values.loanAmount}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+          </div>
                         </div>
                         {/* <div className="form-section mt-2"> */}
                             {/* RepayLoan, IntrestRate and Emi-Amount*/}
@@ -428,13 +318,20 @@ const navigate=useNavigate();
                       <div className="mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
         <button
           className="btn btn-primary "
-          onClick={handleApprove}
+        //   type='submit'
+        onClick={() => handleApprove()}
+        //   onClick={handleApprove(loanData?.loanId)}
         //   disabled={!isAcknowledged} // Disable button if not acknowledged
         >
-          Submit
+          Approve
         </button>
-        <button className="btn btn-danger" onClick={handleReject}>
-          Cancel
+        <button className="btn btn-danger"
+        // type='submit'
+      onClick={() => handleReject()}
+
+        //  onClick={handleReject(loanData?.loanId)}
+        >
+          Reject
         </button>
       </div>
                     </div>

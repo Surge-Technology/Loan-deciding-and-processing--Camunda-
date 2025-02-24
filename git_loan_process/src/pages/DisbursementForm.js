@@ -21,7 +21,7 @@ const DisbursementForm = ({ loanAccountNumber, loanAmount, onClose, onSuccess })
   
   useEffect(() => {
     axios
-      .post(`${URL}/calculateTenureInterest`, { loanAccountNumber })
+      .get(`${URL}/calculateTenureInterest`, { loanAccountNumber })
       .then((res) => {
         setState({
           loanAccountNumber: res.data.loanAccountNumber,
@@ -39,9 +39,30 @@ const DisbursementForm = ({ loanAccountNumber, loanAmount, onClose, onSuccess })
   const processInstance = localStorage.getItem('processId');
   console.log("process Instance id retrived",processInstance);
   
+  // const submitForm = () => {
+  //   axios
+  //     .get(`${URL}/ManagerEnd`
+  //     )
+  //       // { loanAccountNumber: state.loanAccountNumber })
+  //     .then(() => {
+  //       Swal.fire({
+  //         icon: 'success',
+  //         title: 'Disbursement Successful!',
+  //         text: 'Loan has been successfully disbursed.',
+  //       }).then(() => {
+  //         onSuccess();
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       Swal.fire('Error', err.response?.data?.message || 'Please try again later.', 'error');
+  //     });
+  // };
   const submitForm = () => {
     axios
-      .post(`${URL}/ManagerEnd?processInstanceId=${processInstance}`, { loanAccountNumber: state.loanAccountNumber })
+      .get(`${URL}/ManagerEnd`)  // First API call
+      .then(() => {
+        return axios.get(`${URL}/updateStatusDisbursed`);  // Second API call
+      })
       .then(() => {
         Swal.fire({
           icon: 'success',
@@ -54,7 +75,7 @@ const DisbursementForm = ({ loanAccountNumber, loanAmount, onClose, onSuccess })
       .catch((err) => {
         Swal.fire('Error', err.response?.data?.message || 'Please try again later.', 'error');
       });
-  };
+};
 
   return (
     <CModal visible onClose={onClose} size="lg" centered>
