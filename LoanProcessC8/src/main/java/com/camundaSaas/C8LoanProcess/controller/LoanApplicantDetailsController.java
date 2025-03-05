@@ -108,6 +108,9 @@ public class LoanApplicantDetailsController {
 
 	@Autowired
 	AppConfig appConfig;
+
+	@Autowired
+	private LoanDetailsService loanDetailsService;
 	
 	private Path uploadDirectory;
 
@@ -119,8 +122,6 @@ public class LoanApplicantDetailsController {
 		uploadDirectory = Paths.get(appConfig.getFileSystemPath());
 	}
 
-	@Autowired
-	LoanDetailsService loanDetailsService;
 	@Value("${camunda-env}")
 	private String environment;
 
@@ -1573,6 +1574,17 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
  
 	    return ResponseEntity.ok(taskDTOs);
 	}
- 
- 
+
+	@CrossOrigin
+	@GetMapping("/loan/accountNumber/{accountNumber}")
+	public ResponseEntity<Loan> getLoanByAccountNumber(@PathVariable String accountNumber) {
+		Loan loan = loanDetailsService.getLoanByAccountNumber(accountNumber);
+		return ResponseEntity.status(HttpStatus.OK).body(loan);
+	}
+	@PostMapping("/loan/saveLoan")
+	public ResponseEntity<Loan> saveLoan(@RequestBody Loan loan) {
+		Loan savedLoan = loanDetailsService.saveLoan(loan);
+		return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
+	}
+
 }
