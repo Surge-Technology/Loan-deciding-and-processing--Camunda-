@@ -1043,7 +1043,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@CrossOrigin
 	@PostMapping("/emailSenderApproval")
 	public String emailSenderApproval() {
-		System.out.println("Sending email to: " + emailId);
+		System.out.println("Sending email to: " + emailService);
 		String to = emailId;
 		String subject = "Loan Approval Confirmation";
 		String body = "Congratulations! Your application has been deemed eligible for a loan. "
