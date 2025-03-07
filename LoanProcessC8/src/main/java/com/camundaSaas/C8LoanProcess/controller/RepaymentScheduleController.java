@@ -16,10 +16,8 @@ import java.util.List;
 
 @RestController
 public class RepaymentScheduleController {
-
     @Autowired
     private RepaymentScheduleService repaymentScheduleService;
-
     @Autowired
     private EmailService emailService;
 
@@ -40,6 +38,7 @@ public class RepaymentScheduleController {
 
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
+
     @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
     public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) {
         List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);

@@ -50,11 +50,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.camundaSaas.C8LoanProcess.AppConfig;
 import com.camundaSaas.C8LoanProcess.JsonFileWriter;
 import com.camundaSaas.C8LoanProcess.Repository.LoanApplicantRepository;
-import com.camundaSaas.C8LoanProcess.Repository.LoantransactionDetailsRepository;
+import com.camundaSaas.C8LoanProcess.Repository.LoanTransactionDetailsRepository;
 import com.camundaSaas.C8LoanProcess.model.FileEntity;
 import com.camundaSaas.C8LoanProcess.model.Loan;
 import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
-import com.camundaSaas.C8LoanProcess.model.LoantransactionDetails;
+import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
 import com.camundaSaas.C8LoanProcess.model.TaskDTO;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.FileService;
@@ -115,7 +115,7 @@ public class LoanApplicantDetailsController {
 	private Path uploadDirectory;
 
 	@Autowired
-	LoantransactionDetailsRepository loantransactionDetailsRepository;
+	LoanTransactionDetailsRepository loantransactionDetailsRepository;
 
 	@PostConstruct
 	public void init() {
@@ -272,10 +272,10 @@ public class LoanApplicantDetailsController {
 	@CrossOrigin
 		@GetMapping("/getAllTransaction")
 		public List<Map<String, Object>> getAllTransaction() {
-			List<LoantransactionDetails> loantransactionDetails = loantransactionDetailsRepository.findAll();
+			List<LoanTransactionDetails> loantransactionDetails = loantransactionDetailsRepository.findAll();
 			List<Map<String, Object>> transactionList = new ArrayList<>();
 	 
-			for (LoantransactionDetails details : loantransactionDetails) {
+			for (LoanTransactionDetails details : loantransactionDetails) {
 				Map<String, Object> map = new HashMap<>();
 				map.put("accountNumber", details.getLoanAccountNumber());
 				map.put("balanceAmount", details.getBalanceAmount());
@@ -1206,13 +1206,13 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 
 	@CrossOrigin
 	@PostMapping("/save")
-	public LoantransactionDetails saveTranscation(@RequestBody LoantransactionDetails obj,
-			@RequestParam String loanAccountNumber) {
+	public LoanTransactionDetails saveTranscation(@RequestBody LoanTransactionDetails obj,
+												  @RequestParam String loanAccountNumber) {
 
 		System.out.println(loanAccountNumber);
 		System.out.println("loan amount: " + obj.getDate());
 		System.out.println("account" + obj.getLoanAccountNumber());
-		LoantransactionDetails detail = new LoantransactionDetails();
+		LoanTransactionDetails detail = new LoanTransactionDetails();
 		detail.setDate(obj.getDate());
 		detail.setLoanAccountNumber(loanAccountNumber);
 		detail.setUanId(generateAccountNumber());

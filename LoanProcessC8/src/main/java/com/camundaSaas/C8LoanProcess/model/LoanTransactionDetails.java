@@ -1,5 +1,6 @@
 package com.camundaSaas.C8LoanProcess.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,19 +12,33 @@ import javax.persistence.Table;
 import javax.persistence.Version;
 @Entity
 @Table(name = "Loan_Transaction_Details")
-public class LoantransactionDetails {
+public class LoanTransactionDetails {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long loanId;
 	private String uanId;
 	private String transactionStatus;
-	private LocalDateTime date;
+	private LocalDate date;
 	private String loanAccountNumber;
 	private Long loanAmount;
 	private String paymentType;
 	private Long transactionAmount;
 	private Long balanceAmount;
-	
+	private String email;
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public LocalDate getDate() {
+		return date;
+	}
+
+	public void setDate(LocalDate date) {
+		this.date = date;
+	}
+
 	public Long getBalanceAmount() {
 		return balanceAmount;
 	}
@@ -49,12 +64,6 @@ public class LoantransactionDetails {
 	}
 	public void setTransactionStatus(String transactionStatus) {
 		this.transactionStatus = transactionStatus;
-	}
-	public LocalDateTime getDate() {
-		return date;
-	}
-	public void setDate(LocalDateTime date) {
-		this.date = date;
 	}
 	public Long getLoanAmount() {
 		return loanAmount;
@@ -89,13 +98,13 @@ public class LoantransactionDetails {
 		this.loanAccountNumber = loanAccountNumber;
 	}
  
-	public static List<LoantransactionDetails> findByLoanAccountNumber(String loanAccountNumber2) {
+	public static List<LoanTransactionDetails> findByLoanAccountNumber(String loanAccountNumber2) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	@Override
 	public String toString() {
-	    return "LoantransactionDetails{" +
+	    return "LoanTransactionDetails{" +
 	            "loanAccountNumber='" + loanAccountNumber + '\'' +
 	            ", date=" + date +
 	            ", paymentType='" + paymentType + '\'' +
