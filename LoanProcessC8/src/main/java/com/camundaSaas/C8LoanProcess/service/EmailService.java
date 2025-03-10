@@ -66,4 +66,21 @@ public class EmailService {
         System.out.println("Confirmation mail has been sent...!");
     }
 
+    public void sendTransactionEmail(String to, String subject, String body) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, true);  // 'true' indicates HTML content
+
+            mailSender.send(message);
+            System.out.println("Email sent successfully to " + to);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.out.println("Failed to send email: " + e.getMessage());
+        }
+    }
+
 }

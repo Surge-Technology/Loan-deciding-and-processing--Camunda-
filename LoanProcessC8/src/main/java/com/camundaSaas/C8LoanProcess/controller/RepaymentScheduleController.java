@@ -21,6 +21,7 @@ public class RepaymentScheduleController {
     @Autowired
     private EmailService emailService;
 
+    @CrossOrigin
     @PostMapping("/repaymentSchedule/save")
     public ResponseEntity<RepaymentSchedule> save(@RequestBody RepaymentSchedule repaymentSchedule){
 
@@ -28,6 +29,7 @@ public class RepaymentScheduleController {
         return ResponseEntity.status(HttpStatus.OK).body(repaymentScheduleCreated);
     }
 
+    @CrossOrigin
     @GetMapping("/repaymentSchedule/loanAccountNumber/{loanAccountNumber}")
     public ResponseEntity<List<RepaymentSchedule>> getRepaymentScheduleByLoanAccountNumber(@PathVariable String loanAccountNumber) {
         List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
@@ -39,6 +41,7 @@ public class RepaymentScheduleController {
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
 
+    @CrossOrigin
     @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
     public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) {
         List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
@@ -55,6 +58,7 @@ public class RepaymentScheduleController {
                 .body(pdfBytes);
     }
 
+    @CrossOrigin
     @GetMapping("/repaymentSchedule/sendEmailWithAttachment/{loanAccountNumber}")
     public String sendEmailWithPdf(@PathVariable String loanAccountNumber) {
         String to = "makandarshaukat786@gmail.com";
