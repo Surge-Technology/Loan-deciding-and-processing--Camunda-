@@ -1,16 +1,22 @@
 package com.camundaSaas.C8LoanProcess.service;
 
+import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
 import com.camundaSaas.C8LoanProcess.Repository.RepaymentScheduleRepository;
+import com.camundaSaas.C8LoanProcess.model.Loan;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
+import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RepaymentScheduleService {
@@ -18,12 +24,32 @@ public class RepaymentScheduleService {
     @Autowired
     private RepaymentScheduleRepository repaymentScheduleRepository;
 
+    @Autowired
+    private LoanDetailsRepository loanDetailsRepository;
+
     public RepaymentSchedule saveRepaymentSchedule(RepaymentSchedule repaymentSchedule) {
         return repaymentScheduleRepository.save(repaymentSchedule);
     }
 
     public List<RepaymentSchedule> getRepaymentScheduleByLoanAccountNumber(String loanAccountNumber) {
-        return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
+         return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
+    }
+
+    public List<RepaymentScheduleDetailsDto> getRepaymentScheduleByLoanAccountNum(String loanAccountNumber) {
+        List<RepaymentSchedule> repaymentSchedules = repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
+        List<RepaymentScheduleDetailsDto> listData=new ArrayList<>();
+        ModelMapper modelMapper=new ModelMapper();
+        for(RepaymentSchedule repaymentSchedule : repaymentSchedules){
+
+            Optional<Loan> byLoanAccountNumber = loanDetailsRepository.findByLoanAccountNumber(repaymentSchedule.getLoanAccountNumber());
+            if(byLoanAccountNumber.isPresent()){
+                RepaymentScheduleDetailsDto dto = modelMapper.map(repaymentSchedule, RepaymentScheduleDetailsDto.class);
+                dto.setTenure(byLoanAccountNumber.get().getTenure());
+                listData.add(dto);
+            }
+        }
+
+        return listData;
     }
 
     public byte[] generatePdf(List<RepaymentSchedule> schedules) {

@@ -1,6 +1,7 @@
 package com.camundaSaas.C8LoanProcess.controller;
 
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
+import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.RepaymentScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,8 @@ public class RepaymentScheduleController {
 
     @CrossOrigin
     @GetMapping("/repaymentSchedule/loanAccountNumber/{loanAccountNumber}")
-    public ResponseEntity<List<RepaymentSchedule>> getRepaymentScheduleByLoanAccountNumber(@PathVariable String loanAccountNumber) {
-        List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+    public ResponseEntity<List<RepaymentScheduleDetailsDto>> getRepaymentScheduleByLoanAccountNumber(@PathVariable String loanAccountNumber) {
+        List<RepaymentScheduleDetailsDto> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNum(loanAccountNumber);
 
         if (schedules.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

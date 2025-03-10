@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -103,4 +104,25 @@ public class LoanTransactionDetailsController {
         return "Transaction confirmation email sent successfully.";
     }
 
+    @CrossOrigin
+    @GetMapping("/loanTransaction/loanId/{id}")
+    public ResponseEntity<LoanTransactionDetails> getTransactionByLoanId(@PathVariable String id) {
+        LoanTransactionDetails transaction = loanTransactionDetailsService.getTransactionByLoanId(Long.valueOf(id));
+        return ResponseEntity.ok(transaction);
+    }
+
+
+    @CrossOrigin
+    @GetMapping("/loanTransaction/download/loanId/{loanId}")
+    public ResponseEntity<byte[]> downloadTransactionByLoanId(@PathVariable String loanId) {
+        LoanTransactionDetails transaction = loanTransactionDetailsService.getTransactionByLoanId(Long.valueOf(loanId));
+        List<LoanTransactionDetails> loanTransactionDetails = Arrays.asList(transaction);
+
+        byte[] pdfBytes = loanTransactionDetailsService.generateTransactionPdf(loanTransactionDetails);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=transaction_details.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
 }

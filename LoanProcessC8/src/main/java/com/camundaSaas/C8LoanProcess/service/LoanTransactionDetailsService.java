@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class LoanTransactionDetailsService {
@@ -19,6 +20,11 @@ public class LoanTransactionDetailsService {
     @Autowired
     private LoanTransactionDetailsRepository loanTransactionDetailsRepository;
     public LoanTransactionDetails saveLoanTransaction(LoanTransactionDetails loanTransactionDetails) {
+
+        String uanId= "UAN"+UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        loanTransactionDetails.setUanId(uanId);
+        loanTransactionDetails.setTransactionStatus("Success");
+
         return loanTransactionDetailsRepository.save(loanTransactionDetails);
     }
 
@@ -29,6 +35,11 @@ public class LoanTransactionDetailsService {
     public List<LoanTransactionDetails> getTransactionByAccountLoanNumber(String id) {
         return loanTransactionDetailsRepository.findByLoanAccountNumber(id)
                 .orElseThrow(() -> new ResourceNotFoundException("LoanTransaction with AccountLoanNumber: " + id + " not found"));
+    }
+
+    public LoanTransactionDetails getTransactionByLoanId(Long id) {
+        return loanTransactionDetailsRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("LoanTransaction with Loan Id: " + id + " not found"));
     }
 
     public List<LoanTransactionDetails> getTransactionByEmail(String email) {
