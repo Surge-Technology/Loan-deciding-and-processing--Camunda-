@@ -1,10 +1,12 @@
 package com.camundaSaas.C8LoanProcess.worker;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpEntity;
@@ -129,7 +131,43 @@ public class LoanWorker {
 	            HttpEntity<String> entity = new HttpEntity<>(headers);
 	            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
 	            Map<String, Object> responseBody = response.getBody();
-	            if (responseBody != null) {
+
+				String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
+
+				int month=4;
+				Integer installmentNo=1;
+				Double closingPrincipal=40000.0;
+				for(int i=0; i<5 ; i++){
+
+					RepaymentSchedule repaymentSchedule=new RepaymentSchedule();
+					LocalDate date = LocalDate.of(2024, month, 11);
+					repaymentSchedule.setInstallmentNo(installmentNo);
+					repaymentSchedule.setInstallmentDate(date);
+					repaymentSchedule.setInstallmentAmount(10000.0);
+					repaymentSchedule.setPrincipal(500000.0);
+					repaymentSchedule.setInterest(500.0);
+					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+
+					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+					HttpHeaders headers1 = new HttpHeaders();
+					headers.setContentType(MediaType.APPLICATION_JSON);
+					HttpEntity<String> entity1 = new HttpEntity<>(headers);
+
+					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+					Map body = mapResponseEntity.getBody();
+
+					month+=month;
+					installmentNo+=installmentNo;
+					closingPrincipal=closingPrincipal-10000.0;
+
+					if(body!=null){
+						System.out.println("RepaymentSchedule record has been saved");
+					}
+				}
+
+
+				if (responseBody != null) {
 	                client.newCompleteCommand(job.getKey())
 	                        .variables(responseBody)
 	                        .send()
