@@ -131,7 +131,7 @@ public class LoanWorker {
 	            HttpEntity<String> entity = new HttpEntity<>(headers);
 	            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
 	            Map<String, Object> responseBody = response.getBody();
-
+				System.out.println("Loan has been saved...!");
 				String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
 
 				int month=4;
@@ -149,20 +149,21 @@ public class LoanWorker {
 					repaymentSchedule.setClosingPrincipal(closingPrincipal);
 					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
 
+					System.out.println("repaymentSchedule : "+repaymentSchedule);
 					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
 					HttpHeaders headers1 = new HttpHeaders();
 					headers.setContentType(MediaType.APPLICATION_JSON);
-					HttpEntity<String> entity1 = new HttpEntity<>(headers);
+					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers);
 
 					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
 					Map body = mapResponseEntity.getBody();
 
-					month+=month;
-					installmentNo+=installmentNo;
+					month += 1;
+					installmentNo += 1;
 					closingPrincipal=closingPrincipal-10000.0;
 
 					if(body!=null){
-						System.out.println("RepaymentSchedule record has been saved");
+						System.out.println("RepaymentSchedule has been saved");
 					}
 				}
 

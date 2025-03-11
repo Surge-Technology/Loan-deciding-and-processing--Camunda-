@@ -89,4 +89,18 @@ public class RepaymentSchedule {
     public void setLoanAccountNumber(String loanAccountNumber) {
         this.loanAccountNumber = loanAccountNumber;
     }
+
+    @Override
+    public String toString() {
+        return "RepaymentSchedule{" +
+                "repaymentScheduleId=" + repaymentScheduleId +
+                ", installmentNo=" + installmentNo +
+                ", installmentDate=" + installmentDate +
+                ", installmentAmount=" + installmentAmount +
+                ", principal=" + principal +
+                ", interest=" + interest +
+                ", closingPrincipal=" + closingPrincipal +
+                ", loanAccountNumber='" + loanAccountNumber + '\'' +
+                '}';
+    }
 }
