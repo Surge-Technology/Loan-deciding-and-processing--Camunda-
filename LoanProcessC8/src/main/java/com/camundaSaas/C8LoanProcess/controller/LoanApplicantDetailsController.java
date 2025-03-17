@@ -430,7 +430,7 @@ public class LoanApplicantDetailsController {
 	@CrossOrigin
 	@GetMapping("/getActiveTask")
 	public ResponseEntity<List<TaskDTO>> getActiveTask(@RequestParam String user) throws TaskListException {
-	    // Authenticate with Camunda Tasklist API
+	    
 		System.out.println("user"+user);
 	    SaasAuthentication sa = new SaasAuthentication(
 	        "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
@@ -443,40 +443,35 @@ public class LoanApplicantDetailsController {
 	        .authentication(sa)
 	        .build();
 
-	    // Fetch tasks assigned to the specified user
 	    List<Task> userTasks = client.getTasks(
-	        true, // Use filters
-	        TaskState.CREATED, // Only fetch created (active) tasks
-	        50, // Limit results
-	        true // Include task variables
+	        true, 
+	        TaskState.CREATED, 
+	        50, 
+	        true 
 	    ).stream()
-	    .filter(task -> user.equals(task.getAssignee())) // Filter tasks by assignee
+	    .filter(task -> user.equals(task.getAssignee()))
 	    .collect(Collectors.toList());
 	    System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
 
 	    List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
-	        // Retrieve processInstanceId from the task
-	     //   String processInstanceId = task.getProcessInstanceId(); // Ensure this is correct
-
-	        // Retrieve associated LoanApplicantDetails data based on processInstanceId
+	      
 	        LoanApplicantDetails loanDetails = loanApplicantRepository
 	                .findByProcessInstanceId(processInstanceId);
 
 	        if (loanDetails == null) {
 	            System.out.println("No loan details found for processInstanceId: " + processInstanceId);
-	            loanDetails = new LoanApplicantDetails(); // Avoid null references
+	            loanDetails = new LoanApplicantDetails(); 
 	        } else {
 	            System.out.println("Loan details found: " + loanDetails);
 	        }
 
-	        // Create TaskDTO with all details
 	        return new TaskDTO(
-	                task.getId(),              // Task ID
-	                task.getName(),            // Task Name
-	                task.getAssignee(),        // Assignee
-	                processInstanceId,         // Process Instance ID
-	                task.getCreationTime(),    // Task creation timestamp
-	                loanDetails                // LoanApplicantDetails object
+	                task.getId(),            
+	                task.getName(),        
+	                task.getAssignee(),     
+	                processInstanceId,      
+	                task.getCreationTime(), 
+	                loanDetails       
 	        );
 	    }).collect(Collectors.toList());
 
