@@ -169,9 +169,9 @@ public class LoanWorker {
 
 				int month = 4;
 				Integer installmentNo = 1;
-				Double loanAmount = 500000.0; // Total Loan Amount
+				Double loanAmount = 50000.0; // Total Loan Amount
 				Double installmentAmount = 10000.0; // Fixed Installment Amount
-				Double interestRate = 0.01; // Assuming 1% Monthly Interest Rate
+				Double interestRate = 11.45; // Assuming 1% Monthly Interest Rate
 				Double closingPrincipal = loanAmount;
 
 				for (int i = 0; i < 5; i++) {
