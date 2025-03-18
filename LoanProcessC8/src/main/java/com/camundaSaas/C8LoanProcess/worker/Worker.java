@@ -173,7 +173,6 @@ public class Worker {
 
 		LoanTransactionDetails transaction = new LoanTransactionDetails();
 		transaction.setLoanAccountNumber(loanAccountNumber);
-		transaction.setBalanceAmount(0L);
 
 		loanTransactionDetailsRepository.save(transaction);
 		System.out.println("Transaction persisted successfully: " + transaction);

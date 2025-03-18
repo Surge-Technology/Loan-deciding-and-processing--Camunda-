@@ -35,8 +35,9 @@ public class MessageEventController {
 
 	@Autowired
 	private ZeebeClient zeebeClient;
-	
+
 	private String taskId;
+	private String processInstanceId;
 
 	@Value("${camunda-env}")
 	private String environment;
@@ -67,15 +68,17 @@ public class MessageEventController {
 	@GetMapping("/startMessage")
 	public String test(@RequestBody Map<String, Object> variables) {
 		System.out.println(variables);
-		zeebeClient.newPublishMessageCommand()
-				.messageName("messageStart").correlationKey("").variables(variables).send().join();
-		
-		return "process Instance Created";
+
+		zeebeClient.newPublishMessageCommand().messageName("messageStart").correlationKey("").variables(variables)
+				.send().join();
+
+		return "Process returned Successfully";
 	}
+
 	@GetMapping("/getActivedTasks")
 
 	public List<Task> getActivedTaskList1() throws TaskListException {
-		
+
 		String user = "FieldOfficer";
 
 		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
@@ -91,25 +94,24 @@ public class MessageEventController {
 		System.out.println(taskdtoList.get(0));
 		Task task = taskdtoList.get(0);
 		taskId = task.getId();
-		
+
 		return client.getTasks(true, TaskState.CREATED, 50, true);
 	}
-	
+
 	@GetMapping("/completeTask")
-	public String completeTask(@RequestBody String fieldVisit,@RequestParam String processInstanceId) throws TaskListException, JsonMappingException, JsonProcessingException {
-		 
-	    ObjectMapper objectMapper = new ObjectMapper();
-	    JsonNode rootNode = objectMapper.readTree(fieldVisit);
+	public String completeTask(@RequestBody String fieldVisit, @RequestParam String processInstanceId)
+			throws TaskListException, JsonMappingException, JsonProcessingException {
 
-	    String assignee = rootNode.path("fieldVisit").asText().trim();
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(fieldVisit);
 
-	    System.out.println("Assignee: " + assignee);
+		String assignee = rootNode.path("fieldVisit").asText().trim();
 
-	    zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-	            .variables(Map.of("fieldVisit", assignee))
-	            .send()
-	            .join();
-	    System.out.println("Process variable 'fieldVisit' set successfully.");
+		System.out.println("Assignee: " + assignee);
+
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(Map.of("fieldVisit", assignee))
+				.send().join();
+		System.out.println("Process variable 'fieldVisit' set successfully.");
 		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
 
 				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
@@ -120,13 +122,11 @@ public class MessageEventController {
 
 				.shouldReturnVariables().authentication(sa).build();
 
-		Map<String,Object> map = new HashMap<>();
-		client.completeTask(taskId,map);
+		Map<String, Object> map = new HashMap<>();
+		client.completeTask(taskId, map);
 		return "task Completed";
 	}
-	
-	
-	
+
 //	@CrossOrigin
 //	@GetMapping("/getActiveTask")
 //	public ResponseEntity<List<TaskDTO>> getActiveTask(@RequestParam String user) throws TaskListException {
