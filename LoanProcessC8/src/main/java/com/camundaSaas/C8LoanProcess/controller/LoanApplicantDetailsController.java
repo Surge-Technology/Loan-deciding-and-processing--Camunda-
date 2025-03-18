@@ -1038,14 +1038,14 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@CrossOrigin
 	@PostMapping("/emailSenderApproval")
 	public String emailSenderApproval() {
-		System.out.println("Sending email to: " + emailService);
+		System.out.println("Sending email to: " + emailId);
 		String to = emailId;
 		String subject = "Loan Approval Confirmation";
 		String body = "Congratulations! Your application has been deemed eligible for a loan. "
 				+ "We have attached the disbursement details in the form. Once you acknowledge, we can proceed with account generation."
 				+ "http://localhost:3003/#/LoanAmountDetails";
 		System.out.println(body);
-//		emailService.sendSimpleEmail(to, subject, body);
+		emailService.sendSimpleEmail(to, subject, body);
 		return "Email Sent Successfully";
 	}
 
@@ -1234,7 +1234,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 
 		System.out.println("to--" + to);
 		System.out.println("subject" + subject);
-		//emailService.sendSimpleEmail(to, subject, body);
+		// emailService.sendSimpleEmail(to, subject, body);
 
 		System.out.println("Email sent to: " + to);
 		return loantransactionDetailsRepository.save(detail);
@@ -1245,7 +1245,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	private static final String BASE_NUMBER = "22507000000000";
 	private long lastGeneratedNumber = Long.parseLong(BASE_NUMBER);
 
-	private synchronized String generateAccountNumber() { 
+	private synchronized String generateAccountNumber() { // Make thread-safe
 		lastGeneratedNumber += 1;
 		uanNumber = String.format("%014d", lastGeneratedNumber);
 		return uanNumber;
