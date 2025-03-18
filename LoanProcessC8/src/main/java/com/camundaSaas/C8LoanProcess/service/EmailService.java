@@ -66,6 +66,17 @@ public class EmailService {
         System.out.println("Confirmation mail has been sent...!");
     }
 
+    public void sendAutoPayFailure(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom("shaukatmakandar786@gmail.com");
+
+        mailSender.send(message);
+        System.out.println("AutoPay Failure mail has been sent...!");
+    }
+
     public void sendTransactionEmail(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

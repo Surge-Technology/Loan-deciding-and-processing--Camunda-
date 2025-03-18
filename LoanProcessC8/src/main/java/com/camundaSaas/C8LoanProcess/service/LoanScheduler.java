@@ -29,6 +29,9 @@ public class LoanScheduler {
 
     @Value("${loan.email.scheduled.minute}")
     private int scheduledMinutes;
+
+    @Value("${autoPayFailure}")
+    private boolean isAutoPayFail;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @PostConstruct
@@ -38,6 +41,11 @@ public class LoanScheduler {
     }
 
     private void scheduleTask() {
+
+        if(isAutoPayFail==true){
+            scheduleTaskForAutoPayFailure();
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextRun = now.withHour(scheduledHour).withMinute(scheduledMinutes).withSecond(0);
 
@@ -100,6 +108,43 @@ public class LoanScheduler {
                         + "To avoid late fees, please complete your payment before the due date.\n\n";
 
                 emailService.sendPaymentConfirmationEmail(to, subject, body);
+            }
+
+        }, delay, TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);
+    }
+
+    private void scheduleTaskForAutoPayFailure() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nextRun = now.withHour(scheduledHour).withMinute(scheduledMinutes).withSecond(0);
+
+        if (now.isAfter(nextRun)) {
+            // If current time is already past the scheduled hour, schedule for next day
+            nextRun = nextRun.plusDays(1);
+        }
+
+        long delay = Duration.between(now, nextRun).toMillis();
+
+        scheduler.scheduleAtFixedRate(() -> {
+
+            LocalDate today = LocalDate.now();
+            List<Loan> loansDueToday = loanDetailsRepository.findByBillDate(today);
+
+            for (Loan loan : loansDueToday) {
+
+                String to = "makandarshaukat786@gmail.com";
+                String subject = "AutoPay Failure Notification - Payment Bounced";
+                String body = "Dear Customer,\n\n"
+                        + "We regret to inform you that your recent loan payment attempt via AutoPay has failed due to a bounced transaction.\n\n"
+                        + "Payment Details:\n"
+                        // + "- Amount Attempted: " + amountAttempted + "\n"   // Uncomment and use dynamic values if available
+                        // + "- Payment Date: " + paymentDate + "\n"
+                        + "- Loan Account Number: " + loan.getLoanAccountNumber() + "\n\n"
+                        + "To avoid any penalties or service disruptions, we kindly request you to make the payment manually at your earliest convenience.\n\n"
+                        + "You can review your loan details and make a payment by visiting the following link: http://localhost:3003/#/file\n\n"
+                        + "If you believe this is an error, please contact our support team immediately.\n\n"
+                        + "Best Regards,\nLoan Management Team";
+
+                emailService.sendAutoPayFailure(to, subject, body);
             }
 
         }, delay, TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS);

@@ -134,39 +134,88 @@ public class LoanWorker {
 				System.out.println("Loan has been saved...!");
 				String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
 
-				int month=4;
-				Integer installmentNo=1;
-				Double closingPrincipal=40000.0;
-				for(int i=0; i<5 ; i++){
+//				int month=4;
+//				Integer installmentNo=1;
+//				Double closingPrincipal=40000.0;
+//				for(int i=0; i<5 ; i++){
+//
+//					RepaymentSchedule repaymentSchedule=new RepaymentSchedule();
+//					LocalDate date = LocalDate.of(2024, month, 11);
+//					repaymentSchedule.setInstallmentNo(installmentNo);
+//					repaymentSchedule.setInstallmentDate(date);
+//					repaymentSchedule.setInstallmentAmount(10000.0);
+//					repaymentSchedule.setPrincipal(500000.0);
+//					repaymentSchedule.setInterest(500.0);
+//					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+//					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+//
+//					System.out.println("repaymentSchedule : "+repaymentSchedule);
+//					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+//					HttpHeaders headers1 = new HttpHeaders();
+//					headers.setContentType(MediaType.APPLICATION_JSON);
+//					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers);
+//
+//					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+//					Map body = mapResponseEntity.getBody();
+//
+//					month += 1;
+//					installmentNo += 1;
+//					closingPrincipal=closingPrincipal-10000.0;
+//
+//					if(body!=null){
+//						System.out.println("RepaymentSchedule has been saved");
+//					}
+//				}
 
-					RepaymentSchedule repaymentSchedule=new RepaymentSchedule();
+				int month = 4;
+				Integer installmentNo = 1;
+				Double loanAmount = 500000.0; // Total Loan Amount
+				Double installmentAmount = 10000.0; // Fixed Installment Amount
+				Double interestRate = 0.01; // Assuming 1% Monthly Interest Rate
+				Double closingPrincipal = loanAmount;
+
+				for (int i = 0; i < 5; i++) {
+					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+
+					// Set Installment Date
 					LocalDate date = LocalDate.of(2024, month, 11);
 					repaymentSchedule.setInstallmentNo(installmentNo);
 					repaymentSchedule.setInstallmentDate(date);
-					repaymentSchedule.setInstallmentAmount(10000.0);
-					repaymentSchedule.setPrincipal(500000.0);
-					repaymentSchedule.setInterest(500.0);
+					repaymentSchedule.setInstallmentAmount(installmentAmount);
+
+					// Calculate Interest (assuming simple interest on remaining balance)
+					Double interest = closingPrincipal * interestRate;
+					repaymentSchedule.setInterest(interest);
+
+					// Calculate Principal as Installment Amount - Interest
+					Double principal = installmentAmount - interest;
+					repaymentSchedule.setPrincipal(principal);
+
+					// Update Closing Principal
+					closingPrincipal -= principal;
 					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+
 					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
 
-					System.out.println("repaymentSchedule : "+repaymentSchedule);
+					System.out.println("RepaymentSchedule : " + repaymentSchedule);
+
+					// API Call
 					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
 					HttpHeaders headers1 = new HttpHeaders();
-					headers.setContentType(MediaType.APPLICATION_JSON);
-					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers);
+					headers1.setContentType(MediaType.APPLICATION_JSON);
+					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
 
 					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
 					Map body = mapResponseEntity.getBody();
 
+					// Increment for Next Installment
 					month += 1;
 					installmentNo += 1;
-					closingPrincipal=closingPrincipal-10000.0;
 
-					if(body!=null){
+					if (body != null) {
 						System.out.println("RepaymentSchedule has been saved");
 					}
 				}
-
 
 				if (responseBody != null) {
 	                client.newCompleteCommand(job.getKey())
