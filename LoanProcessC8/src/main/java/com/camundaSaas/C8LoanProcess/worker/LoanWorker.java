@@ -171,7 +171,8 @@ public class LoanWorker {
 				Integer installmentNo = 1;
 				Double loanAmount = 50000.0; // Total Loan Amount
 				Double installmentAmount = 10000.0; // Fixed Installment Amount
-				Double interestRate = 11.45; // Assuming 1% Monthly Interest Rate
+				Double annualInterestRate = 11.45; // Annual Interest Rate
+				Double monthlyInterestRate = annualInterestRate / (100 * 12); // Convert to Monthly Interest Rate
 				Double closingPrincipal = loanAmount;
 
 				for (int i = 0; i < 5; i++) {
@@ -183,16 +184,22 @@ public class LoanWorker {
 					repaymentSchedule.setInstallmentDate(date);
 					repaymentSchedule.setInstallmentAmount(installmentAmount);
 
-					// Calculate Interest (assuming simple interest on remaining balance)
-					Double interest = closingPrincipal * interestRate;
+					// Calculate Interest on Remaining Balance
+					Double interest = closingPrincipal * monthlyInterestRate;
 					repaymentSchedule.setInterest(interest);
 
 					// Calculate Principal as Installment Amount - Interest
 					Double principal = installmentAmount - interest;
+					if (principal < 0) {
+						principal = 0.0; // Avoid negative principal
+					}
 					repaymentSchedule.setPrincipal(principal);
 
 					// Update Closing Principal
 					closingPrincipal -= principal;
+					if (closingPrincipal < 0) {
+						closingPrincipal = 0.0; // Ensure no negative balance
+					}
 					repaymentSchedule.setClosingPrincipal(closingPrincipal);
 
 					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
@@ -216,6 +223,7 @@ public class LoanWorker {
 						System.out.println("RepaymentSchedule has been saved");
 					}
 				}
+
 
 				if (responseBody != null) {
 	                client.newCompleteCommand(job.getKey())
