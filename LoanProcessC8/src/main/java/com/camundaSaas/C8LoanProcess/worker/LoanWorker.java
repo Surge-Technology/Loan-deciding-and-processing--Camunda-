@@ -175,7 +175,7 @@ public class LoanWorker {
 				Double monthlyInterestRate = annualInterestRate / (100 * 12); // Convert to Monthly Interest Rate
 				Double closingPrincipal = loanAmount;
 
-				for (int i = 0; i < 5; i++) {
+				for (int i = 0; i < 6; i++) {
 					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
 
 					// Set Installment Date
