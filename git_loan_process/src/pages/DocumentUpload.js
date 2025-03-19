@@ -221,105 +221,6 @@ console.log("---url---",URL);
     }
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    // const userConfirmed = window.confirm("Do you want to proceed with the submission?");
-  
-    // if (!userConfirmed) {
-    //   navigate("/home");
-    //   return;
-    // }
-    try {
-    const emailId = personalData?.contactInfo?.email || ''
-    const filesMetadata1 = formData.otherFiles.map((file, index) => ({
-      name: file.name,
-      fileType: file.type,
-      //  fileIndex: `file_${index}`,
-    }))
-    const filesMetadata = ['idProof', 'drivingLicense', 'aadharCard', 'panCard', 'taxProof']
-      .map((field) => {
-        if (files[field]) {
-          return {
-            documentCategory: field,
-            file: files[field], // Include the actual file object
-          }
-        }
-        return null
-      })
-      .filter((file) => file !== null) // Remove null entries
-    const fullData = {
-      personalData,
-      employmentData,
-      bankDetails,
-      assetsDetail,
-      houseHold,
-      liabilities,
-      Files: {
-        //   selectedTypes: formData.selectedTypes,
-        //   comments: formData.comments,
-        //  otherFiles: filesMetadata,
-        isFirstConsentChecked: formData.isFirstConsentChecked,
-        isSecondConsentChecked: formData.isSecondConsentChecked,
-      },
-    }
-
-    console.log('Full Data to Submit:', fullData, emailId)
-    // formDataToSubmit.append('fullData', fullData); // Add fullData as JSON string
-
-    const sendFormData = new FormData()
-
-    sendFormData.append('personalData', JSON.stringify(fullData.personalData))
-    sendFormData.append('employmentData', JSON.stringify(fullData.employmentData))
-    sendFormData.append('bankDetails', JSON.stringify(fullData.bankDetails))
-    sendFormData.append('assetsDetail', JSON.stringify(fullData.assetsDetail))
-    sendFormData.append('houseHold', JSON.stringify(fullData.houseHold))
-    sendFormData.append('liabilities', JSON.stringify(fullData.liabilities))
-
-    const jsonData = JSON.stringify(fullData, null, 2)
-
-    // const blob = new Blob([jsonData], { type: 'application/json' });
-
-    // const link = document.createElement('a');
-    // link.href = URL.createObjectURL(blob);
-    // link.download = 'payload.json';
-
-    // link.click();
-    // console.log("fulldata------->1 before post:", fullData);
-
-    const response = await axios.post(`${URL}/saveApplicantDetails`, fullData, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    console.log('fullData------------1>', fullData)
-
-    if (response.status == 200) {
-      const processInstanceId= localStorage.setItem("processId",   response.data.processInstanceId);
-
-    
-      Swal.fire({
-        text: 'Your account has been created successfully!',
-        icon: 'success',
-        confirmButtonText: 'OK',
-      }).then(() => {
-        navigate('/home')
-      })
-    } else {
-      Swal.fire({
-        title: 'Error!',
-        text: 'Failed to submit application. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'Retry',
-      })
-    }
-  }catch (error) {
-    console.error("Error submitting form:", error);
-    alert("An error occurred. Please try again later.");
-  }
-    // console.log("Form Data Submitted: ", dataToSubmit);
-    // alert("Form submitted successfully!");
-  }
 const handleSubmit1 = async (event) => {
   event.preventDefault();
 
@@ -579,18 +480,7 @@ const handleSubmit1 = async (event) => {
   }
 
   const handleRemoveFile1 = async (documentCategory) => {
-    // const emailResponse = await fetch('http://localhost:8080/getEmail', {
-    //   method: 'GET',
-    // })
-
-    // if (!emailResponse.ok) {
-    //   console.error('Failed to fetch email:', emailResponse.statusText)
-    //   return
-    // }
-
-    // const emailId = await emailResponse.text() // Assuming the response is plain text
-    // console.log('Email ID:', emailId)
-
+    
     try {
       // Make an API call to remove all files of the given documentCategory
       const response = await axios.delete(`${URL}/deleteMultiple`, {

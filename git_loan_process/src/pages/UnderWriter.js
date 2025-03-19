@@ -1,25 +1,23 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState } from 'react'
 import {
+  CButton,
   CCard,
   CCardBody,
   CCardHeader,
-  CRow,
   CCol,
   CFormCheck,
-  CButton,
   CFormSelect,
   CFormTextarea,
+  CRow,
   CSpinner,
 } from '@coreui/react'
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload'
-import Swal from 'sweetalert2'
-import { RadialGauge } from 'react-canvas-gauges' // Using a semi-circle gauge
 import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import { RadialGauge } from 'react-canvas-gauges' // Using a semi-circle gauge
 import { FaArrowLeft } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
-import { Input } from '@mui/material'
+import Swal from 'sweetalert2'
 const UnderWriter = (loan) => {
   //   const [creditScore] = useState(720); // Static value (Fetch dynamically if needed)
   const [riskFactors, setRiskFactors] = useState([])
@@ -30,165 +28,123 @@ const UnderWriter = (loan) => {
   const [creditScore, setCreditScore] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loanDetails, setLoanDetails] = useState(null)
+  const [emailId, setEmailId] = useState('')
+  const [annualIncome, setAnnualIncome] = useState('')
+  const [age, setAge] = useState('')
 
   const [downloadFiles, setDownloadedfiles] = useState([])
-  const [creditScoreLoading, setCreditScoreLoading] = useState(false);
+  const [creditScoreLoading, setCreditScoreLoading] = useState(false)
 
   const navigate = useNavigate()
- 
+
   const storedUser = localStorage.getItem('username')
-  const processInstance = localStorage.getItem('processId');
-  console.log("process Instance id retrived",processInstance);
-  
+  const processInstance = localStorage.getItem('processId')
+  console.log('process Instance id retrived', processInstance)
+
   useEffect(() => {
-    const loanId = localStorage.getItem('selectedLoanId');
-const taskId = localStorage.getItem(`taskId_${loanId}`);
-console.log(taskId, '***********taskIds------');
+    const loanId = localStorage.getItem('selectedLoanId')
+    const taskId = localStorage.getItem(`taskId_${loanId}`)
+    console.log(taskId, '***********taskIds------')
     const fetchLoanDetail = async () => {
       try {
-        const storedUser = localStorage.getItem('username'); // Get logged-in user role
-        console.log('Fetching loan details for:', storedUser);
-    
-        const response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`);
-    
+        const storedUser = localStorage.getItem('username') // Get logged-in user role
+        console.log('Fetching loan details for:', storedUser)
+
+        const response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`)
+
         if (response.data.length > 0) {
-            // Extract relevant loan applications
-            const formattedLoans = response.data.map((task) => {
-                const loan = task.loanDetails; // Extracting loanDetails object
-    
-                if (!loan) return null; // Skip if no loan details
-    
-                return {
-                    loanAccountNumber: loan.loanAccountNumber,
-                    applicantName: loan.applicantName,
-                    loanType: loan.loanType,
-                    loanStatus: loan.loanStatus,
-                    loanAmount: loan.loanAmount,
-                };
-            }).filter(Boolean); // Remove null entries
-    
-            if (formattedLoans.length > 0) {
-                console.log('Loan Details Extracted:', formattedLoans[0]);
-                setLoanDetails(formattedLoans[0]); // Store the first loan record
-            } else {
-                console.warn('No loans found for this user.');
-            }
+          // Extract relevant loan applications
+          const formattedLoans = response.data
+            .map((task) => {
+              const loan = task.loanDetails // Extracting loanDetails object
+              const cibilCheck = task
+
+              if (!loan) return null // Skip if no loan details
+
+              return {
+                loanAccountNumber: loan.loanAccountNumber,
+                applicantName: loan.applicantName,
+                loanType: loan.loanType,
+                loanStatus: loan.loanStatus,
+                loanAmount: loan.loanAmount,
+                emailId: loan.emailId,
+                age: cibilCheck.age,
+                annualIncome: cibilCheck.annualIncome,
+              }
+            })
+            .filter(Boolean)
+
+          if (formattedLoans.length > 0) {
+            console.log('Loan Details Extracted:', formattedLoans)
+            setLoanDetails(formattedLoans[0])
+            setEmailId(formattedLoans[0].emailId)
+            setAnnualIncome(formattedLoans[0].annualIncome)
+            setAge(formattedLoans[0].age)
+            console.log('check', formattedLoans[0].annualIncome)
+          } else {
+            console.warn('No loans found for this user.')
+          }
         } else {
-            console.warn('No response data found.');
+          console.warn('No response data found.')
         }
-    } catch (error) {
-        console.error('Error fetching loan details:', error);
-    }
-    
-      
-      finally {
-        setLoanLoading(false);
+      } catch (error) {
+        console.error('Error fetching loan details:', error)
+      } finally {
+        setLoanLoading(false)
       }
     }
 
-   
     fetchLoanDetail()
   }, [])
   const fetchCreditScore = async () => {
     // setLoading(true); // Show spinner
-    setCreditScoreLoading(true);
-    setShowCreditScore(false);
+    setCreditScoreLoading(true)
+    setShowCreditScore(false)
+    console.log(annualIncome, '234')
+    console.log(age, '123456')
 
     try {
-      const response = await axios.get(`${URL}/calculateCibilScore`);
-      console.log("CIBIL Score API Response:", response.data);
+      const response = await axios.get(
+        `${URL}/calculateCibilScore?age=${age}&annualIncome=${annualIncome}`,
+      )
+      console.log('CIBIL Score API Response:', response.data)
 
       if (response.data) {
         setTimeout(() => {
-          setCreditScore(Number(response.data)); // Ensure it's a number
-          setCreditScoreLoading(false);
-          setShowCreditScore(true);
-        }, 1000); // Delay to show spinner
+          setCreditScore(Number(response.data)) // Ensure it's a number
+          setCreditScoreLoading(false)
+          setShowCreditScore(true)
+        }, 1000) // Delay to show spinner
       } else {
-        console.warn("Invalid CIBIL Score response:", response.data);
-        setCreditScoreLoading(false);
+        console.warn('Invalid CIBIL Score response:', response.data)
+        setCreditScoreLoading(false)
       }
     } catch (error) {
-      console.error("Error fetching credit score:", error);
-      setCreditScoreLoading(false);
+      console.error('Error fetching credit score:', error)
+      setCreditScoreLoading(false)
     }
-  };
+  }
 
   const handleRiskChange = (event) => {
     const { value, checked } = event.target
     setRiskFactors((prev) => (checked ? [...prev, value] : prev.filter((item) => item !== value)))
   }
+
   const handleDownload = async () => {
-    try {
-      // First API Call: Get the email ID
-      const emailResponse = await fetch(`${URL}/getEmail`, {
-        method: 'GET',
-      })
-
-      if (!emailResponse.ok) {
-        console.error('Failed to fetch email:', emailResponse.statusText)
-        return
-      }
-
-      const emailId = await emailResponse.text() // Assuming the response is plain text
-      console.log('Email ID:', emailId)
-
-      // Second API Call: Use email ID as a parameter
-      const downloadResponse = await fetch(`${URL}/downloadEmail?emailId=${emailId}`, {
-        method: 'GET',
-      })
-      if (downloadFiles) {
-        setTimeout(() => {
-          setMessage('Files downloaded') // Update the message after download
-        }, 1000)
-
-        // Using Axios to make the file metadata request
-        try {
-          const metadataResponse = await axios.get(`${URL}/fileMetadata?emailId=${emailId}`, {
-            headers: {
-              'Content-Type': 'multipart/form-data', // Set the header for multipart/form-data
-            },
-          })
-
-          // Check if the response is successful
-          if (metadataResponse.status === 200) {
-            const metadata = metadataResponse.data // Assuming the response is JSON
-            setFileMetadata(metadata) // Store file metadata to render
-          } else {
-            console.error('Failed to fetch file metadata:', metadataResponse.statusText)
-          }
-        } catch (error) {
-          console.error('Error fetching file metadata:', error)
-        }
-      } else {
-        console.error('Failed to download file:', downloadResponse.statusText)
-        return
-      }
-    } catch (error) {
-      console.error('Error in API calls:', error)
+    const downloadResponse = await fetch(`${URL}/downloadEmail?emailId=${emailId}`, {
+      method: 'GET',
+    })
+    if (downloadResponse == 200) {
     }
   }
-
-  const handleFileDownload = async (fileId) => {
-    try {
-      const response = await axios.get(`${URL}/download/${fileId}`, {
-        responseType: 'blob', // Important to handle binary file responses
-      })
-
-      // Extract the file name from the response or metadata if necessary
-      const fileName = `file_${fileId}.png` // This can be dynamic, use the response or metadata to set it
-
-      // Use saveAs function to trigger download
-      saveAs(response.data, fileName)
-    } catch (error) {
-      console.error('Error downloading file:', error)
-      alert('Failed to download the file')
-    }
+  const handleCancel = () => {
+    navigate('/loanApproverDashboard')
   }
+  const [loadingAction, setLoadingAction] = useState(false)
   const handleSubmit = async () => {
     if (!Decision) {
       Swal.fire({
-        icon: 'error',
+        icon: 'warning',
         // title: 'Error',
         text: 'Please fill Underwriter Decision!',
         confirmButtonColor: '#d33',
@@ -203,18 +159,21 @@ console.log(taskId, '***********taskIds------');
 
     const storedUser = localStorage.getItem('username')
     // const taskId = localStorage.getItem(`taskId_${loanId}`);
-    const loanId = localStorage.getItem('selectedLoanId');
-    const taskId = localStorage.getItem(`taskId_${loanId}`);
-    console.log(taskId, '***********taskIds------');
+    const loanId = localStorage.getItem('selectedLoanId')
+    const taskId = localStorage.getItem(`taskId_${loanId}`)
+    console.log(taskId, '***********taskIds------')
     // Construct requestPayload as a local variable
     const requestPayload = {
       Decision: Decision,
       ...(Decision === 'needClarification' && { clarificationDetails: clarification }), // Add only if needed
     }
-
+    setLoadingAction(true)
     try {
       //  const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstance}`
-      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`, requestPayload)
+      const response = await axios.post(
+        `${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`,
+        requestPayload,
+      )
       console.log('API Response:', response.data)
 
       // Show success message
@@ -233,6 +192,8 @@ console.log(taskId, '***********taskIds------');
       //     text: 'Failed to process request. Try again!',
       //     confirmButtonColor: '#d33',
       //   })
+    } finally {
+      setLoadingAction(false) // Reset loading after API call
     }
   }
 
@@ -240,117 +201,9 @@ console.log(taskId, '***********taskIds------');
     navigate(-1)
   }
 
-  const handleApprove = async (loanId) => {
-    const storedUser = localStorage.getItem('username'); // Retrieve username
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
-
-    if (!processInstanceId) {
-        console.error(`No processId found for Loan ID: ${loanId}`);
-        return;
-    }
-    console.log("Retrieved Process Instance ID:", processInstanceId);
-  
-    const approve = {
-      [storedUser]: 'Approved',
-      // processInstanceId: processInstanceId,
-      // processInstance:processInstanceId;
-      // approver: storedUser // Store the approver’s username
-    }
-
-    try {
-      const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstanceId}`, approve)
-      console.log('Handle Approve Response:', response.data)
-      toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: 'top-right' })
-      if (statusCode==200) {
-        window.location.reload(); // Reload the page after successful API call
-      } else {
-        console.error(` failed`);
-      }
-    } catch (error) {
-      console.error('Error approving task:', error)
-    }
-
-    // alert(`Loan ID ${loanId} has been Approved`);
-  }
-  const handleReject = (loanId) => {
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
-
-    if (!processInstanceId) {
-        console.error(`No processId found for Loan ID: ${loanId}`);
-        return;
-    }
-    console.log("Retrieved Process Instance ID:", processInstanceId);
-  
-    const reject = {
-      [storedUser]: 'Reject',
-      // processInstanceId: processInstanceId,
-      // approver: storedUser
-    }
-
-    const response = axios.post(` ${URL}/${storedUser}?processInstanceId=${processInstanceId}`, reject)
-    console.log('handle reject', response)
-    toast.success(`Loan ID ${loanId} has been Rejected ❌`, { position: 'top-right' })
-    if (response.ok) {
-      window.location.reload(); // Reload the page after successful API call
-    } else {
-      console.error(` failed`);
-    }
-    // alert(`Loan ID ${loanId} has been Rejected`);
-  }
-  // const handleApprove = async (loanId) => {
-  //   const approve = {
-  //     [storedUser]: 'Approved', // Use an appropriate key for the backend
-  //     // approver: storedUser // Store the approver’s username
-  //   }
-
-  //   try {
-  //     const response = await axios.post(`${URL}/${storedUser}`, approve)
-  //     console.log('Handle Approve Response:', response.data)
-  //     //toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: "top-right" });
-  //     Swal.fire({
-  //       position: 'center',
-  //       icon: 'success',
-  //       title: `Loan has been Approved `,
-  //       showConfirmButton: false,
-  //       timer: 1500,
-  //     })
-  //     navigate('/loanApproverDashboard')
-  //   } catch (error) {
-  //     console.error('Error approving task:', error)
-  //     Swal.fire({
-  //       icon: 'error',
-  //       title: 'Error',
-  //       text: 'Error approving Task!',
-  //       confirmButtonColor: '#d33',
-  //     })
-  //   }
-
-  //   // alert(`Loan ID ${loanId} has been Approved`);
-  // }
-
-  // const handleReject = (loanId) => {
-  //   const reject = {
-  //     [storedUser]: 'Reject',
-  //     // approver: storedUser
-  //   }
-
-  //   const response = axios.post(` ${URL}/${storedUser}`, reject)
-  //   console.log('handle reject', response)
-  //   //toast.success(`Loan has been Rejected ❌`, { position: 'top-right' })
-  //   Swal.fire({
-  //     position: 'center',
-  //     icon: 'success',
-  //     title: `Loan has been Rejected`,
-  //     showConfirmButton: false,
-  //     timer: 1500,
-  //   })
-  //   navigate('/loanApproverDashboard')
-  //   // alert(`Loan ID ${loanId} has been Rejected`);
-  // }
-
   const handleDownloadDocs = () => {
     axios
-      .get(`${URL}/download-all-Files`, {
+      .get(`${URL}/downloadEmail?emailId=${emailId}`, {
         responseType: 'blob', // Important for file downloads
       })
       .then((response) => {
@@ -364,25 +217,6 @@ console.log(taskId, '***********taskIds------');
         })
         console.log('File downloaded successfully', response.data)
         {
-          /*  if (response.status === 200) {
-          axios
-            .get(`${URL}/fileMetadata?emailId=camerongre1@gmail.com`)
-            .then((response) => {
-              console.log('Metadata Response:', response.data)
-              setDownloadedfiles(response.data)
-              // successToast('Files downloaded successfully!'); // Notify user of success
-            })
-            .catch((error) => {
-              console.error('Error fetching file metadata:', error.message)
-              //globalToast('Failed to fetch file metadata. Please try again later.')
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to process request. Try again!',
-                confirmButtonColor: '#d33',
-              })
-            })
-        }  */
         }
       })
       .catch((error) => {
@@ -397,51 +231,9 @@ console.log(taskId, '***********taskIds------');
       })
   }
 
-  // Function to send email content to API
-  const sendClarificationEmail = async () => {
-    if (!clarification.trim()) {
-      alert('Clarification content cannot be empty.')
-      return
-    }
+  const [showCreditScore, setShowCreditScore] = useState(false)
+  const [loanLoading, setLoanLoading] = useState(true)
 
-    const emailData = {
-      //   to: 'recipient@example.com',  // Replace with actual recipient email
-      //   subject: 'Clarification Request',
-      clarificationDetails: clarification,
-    }
-
-    console.log(emailData)
-
-    try {
-      const response = await axios.post(`${API_URL}/emailSenderClarification`, emailData, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-
-      if (response.status === 200) {
-        alert('Email sent successfully!')
-        setClarification('') // Clear the textarea after successful submission
-      } else {
-        alert('Failed to send email.')
-      }
-    } catch (error) {
-      console.error('Error sending email:', error)
-      alert('Error sending email. Please try again.')
-    }
-  }
-  const [showCreditScore, setShowCreditScore] = useState(false);
-  const [loanLoading, setLoanLoading] = useState(true);
-
-  const handleClick = () => {
-    setLoading(true);
-    setShowCreditScore(false); // Hide previous gauge
-    setCreditScore(null); // Reset previous score
-
-    setTimeout(() => {
-      setLoading(false);
-      setShowCreditScore(true);
-      // setCreditScore(Math.floor(Math.random() * (850 - 300 + 1)) + 300); // Simulate API response
-    }, 2000);
-  };
   return (
     <CCard className="shadow-lg mt-4">
       <CCardHeader
@@ -468,7 +260,7 @@ console.log(taskId, '***********taskIds------');
                 <strong>Loan Details</strong>
               </CCardHeader>
               <CCardBody>
-                {loanLoading  ? (
+                {loanLoading ? (
                   <p>Loading Loan Details...</p>
                 ) : loanDetails ? (
                   <CRow>
@@ -492,41 +284,46 @@ console.log(taskId, '***********taskIds------');
             </CCard>
           </CCol>
 
-        
           <CCol md="6" className="d-flex flex-column align-items-center">
-        {/* Button to Get Credit Score */}
-        <CButton color="primary" size="lg" className="mb-3" onClick={fetchCreditScore}>
-          Get Credit Score
-        </CButton>
+            {/* Button to Get Credit Score */}
+            <CButton color="primary" size="lg" className="mb-3" onClick={fetchCreditScore}>
+              Get Credit Score
+            </CButton>
 
-        {/* Show Spinner While Loading Credit Score */}
-        {creditScoreLoading && <CSpinner color="primary" style={{ width: "3rem", height: "3rem" }} />}
+            {/* Show Spinner While Loading Credit Score */}
+            {creditScoreLoading && (
+              <CSpinner color="primary" style={{ width: '3rem', height: '3rem' }} />
+            )}
 
-        {/* Show Credit Score Chart After Loading */}
-        {showCreditScore && !creditScoreLoading && (
-          <div className="text-center">
-            <h6><strong>Credit Score</strong></h6>
-            <RadialGauge
-              width={250}
-              height={150}
-              minValue={300}
-              maxValue={850}
-              value={creditScore}
-              majorTicks={["300", "400", "500", "600", "700", "800", "850"]}
-              highlights={[
-                { from: 300, to: 599, color: "red" },
-                { from: 600, to: 699, color: "yellow" },
-                { from: 700, to: 850, color: "green" },
-              ]}
-              needleCircleSize={10}
-              needleCircleOuter={true}
-              needleCircleInner={false}
-              animationDuration={1500}
-            />
-            <h5 className="mt-3"><strong>{creditScore}</strong></h5>
-          </div>
-        )}
-      </CCol>
+            {/* Show Credit Score Chart After Loading */}
+            {showCreditScore && !creditScoreLoading && (
+              <div className="text-center">
+                <h6>
+                  <strong>Credit Score</strong>
+                </h6>
+                <RadialGauge
+                  width={250}
+                  height={150}
+                  minValue={300}
+                  maxValue={850}
+                  value={creditScore}
+                  majorTicks={['300', '400', '500', '600', '700', '800', '850']}
+                  highlights={[
+                    { from: 300, to: 599, color: 'red' },
+                    { from: 600, to: 699, color: 'yellow' },
+                    { from: 700, to: 850, color: 'green' },
+                  ]}
+                  needleCircleSize={10}
+                  needleCircleOuter={true}
+                  needleCircleInner={false}
+                  animationDuration={1500}
+                />
+                <h5 className="mt-3">
+                  <strong>{creditScore}</strong>
+                </h5>
+              </div>
+            )}
+          </CCol>
         </CRow>
 
         {/* Risk Assessment */}
@@ -641,12 +438,18 @@ console.log(taskId, '***********taskIds------');
 
         {/* Submit & Cancel Buttons */}
         <div className="mt-4 text-end">
-          <CButton className="m-4" color="primary" type="submit" onClick={handleSubmit}>
-            Approve
+          <CButton
+            className="m-4"
+            color="primary"
+            type="submit"
+            onClick={handleSubmit}
+            disabled={loadingAction}
+          >
+            {loadingAction ? <CSpinner size="sm" /> : 'Submit'}
           </CButton>
 
-          <CButton color="danger" type="submit" onClick={handleSubmit}>
-            Reject
+          <CButton color="danger" type="submit" onClick={handleCancel}>
+            Cancel
           </CButton>
         </div>
       </CCardBody>

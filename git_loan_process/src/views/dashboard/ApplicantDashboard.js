@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { cilChevronRight } from '@coreui/icons'
+import { cilArrowBottom, cilArrowCircleRight, cilArrowRight, cilChevronRight } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import {
   CButton,
@@ -14,91 +14,75 @@ import {
   CTableDataCell,
   CTableHead,
   CTableHeaderCell,
-  CTableRow
+  CTableRow,
 } from '@coreui/react'
 import axios from 'axios'
 import React, { useState } from 'react'
 import { ModalBody } from 'react-bootstrap'
 import { FaPlusCircle } from 'react-icons/fa'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import './ApplicantDashboardStyles.css'
 import RepayPayment from './RepayPayment'
+import TransactionPopUp from '../../pages/transactionPopUp'
+import { FileDownload } from '@mui/icons-material'
 const URL = import.meta.env.VITE_BASE_URL
 
 const ApplicantDashboard = () => {
+  const { id } = useParams();
+
   const [applicants, setApplicants] = useState([])
   const [RepayModal, setRepayModal] = useState(false)
+  const [transactionModal, setTransactionModal] = useState(false)
+  const [transactionData, setTransactionData] = useState();
   const [selectedLoan, setSelectedLoan] = useState(null)
   const [loanDetails, setLoanDetails] = useState()
   const [data, setData] = useState([])
-
+  const [transaction, setTransaction] = useState()
   const [balanceAmount, setBalanceAmount] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All')
   const navigate = useNavigate()
+  const [showTransactions, setShowTransactions] = useState(false)
+  const [showLoans, setShowLoans] = useState(false)
+  const [activeTable, setActiveTable] = useState(null)
 
-  // const loadApplicants1 = () => {
-  //   getEmailId
-  //   const email = localStorage.getItem('email')
+  const email = localStorage.getItem("email");
 
-  //   axios
-  //     .get(`${URL}/ApplicantDashboard?emailId=${email}`)
-  //     .then((res) => {
-  //       console.log('response', res.data.loanDetails)
-  //       const formattedData = res.data.loanDetails.map((item, index) => ({
-  //         id: index + 1,
-  //         loanAccountNumber: item.accountNumber || '',
-  //         applicantName: item.applicantName || '',
-  //         createdDate: item.createdDate || '',
-  //         loanAmount: item.loanAmount || '',
-  //         balanceAmount: balanceAmount || '',
-  //         loanType: item.loanType || '',
-  //         loanStatus: item.loanStatus || '',
-  //         action:
-  //           item.loanStatus === 'Disbursed' ? (
-  //             <CButton
-  //               color="success"
-  //               className="repay"
-  //               onClick={() => modalHandleChange(item.accountNumber, item)}
-  //             >
-  //               Repay
-  //             </CButton>
-  //           ) : null,
-  //       }))
-  //       setData(formattedData)
-  //       console.log('formattedData', formattedData)
-  //     })
-  //     .catch((err) => {
-  //       console.log('Error fetching applicants:', err)
-  //     })
-  // }
+  const loadTransactions = () => {
+    setShowLoans(false)
+    setShowTransactions(true)
+    axios
+      .get(`http://localhost:8080/loanTransaction/email/${email}`)
+      .then((response) => {
+        console.log('Transaction Details:', response.data)
+        setTransaction(response.data)
+        setShowTransactions(true) // Show the table
+      })
+      .catch((error) => console.error('Error fetching transactions:', error))
+  }
 
   const loadApplicants = () => {
+    setShowLoans(true)
+    setShowTransactions(false)
     const email = localStorage.getItem('email')
 
     axios
       .get(`${URL}/ApplicantDashboard?emailId=${email}`)
-      // axios.get(`${URL}/ApplicantDashboard?emailId=camerongre1@gmail.com`)
       .then((loanRes) => {
         console.log('Loan Details Response:', loanRes.data.loanDetails)
         const loanData = loanRes.data.loanDetails
 
-        // Fetch Transaction Details API
         return axios.get(`${URL}/getAllTransaction`).then((transactionRes) => {
           console.log('Transaction Details Response:', transactionRes.data)
           const transactionData = transactionRes.data
 
-          // Create a map to store the latest balance amount for each accountNumber
           const balanceMap = {}
           transactionData.forEach((txn) => {
             balanceMap[txn.accountNumber] = txn.balanceAmount
           })
 
-          // ✅ Store balanceAmount in localStorage and merge data
           const formattedData = loanData.map((item, index) => {
-            // const latestBalance = balanceMap[item.accountNumber] ?? item.loanAmount
-            // localStorage.setItem(`balance_${item.accountNumber}`, latestBalance)
-            const latestBalance = balanceMap[item.accountNumber] ?? item.loanAmount;
-             localStorage.setItem(`balance_${item.accountNumber}`, latestBalance)
+            const latestBalance = balanceMap[item.accountNumber] ?? item.loanAmount
+            localStorage.setItem(`balance_${item.accountNumber}`, latestBalance)
 
             return {
               id: index + 1,
@@ -109,28 +93,30 @@ const ApplicantDashboard = () => {
               balanceAmount: latestBalance,
               loanType: item.loanType || '',
               loanStatus: item.loanStatus || '',
-              action:
-              <CButton
-              color={item.loanStatus === "Disbursed" && latestBalance > 0 ? "success" : "secondary"}
-              className="repay"
-              onClick={() => modalHandleChange(item.accountNumber, item)}
-              disabled={item.loanStatus !== "Disbursed" || latestBalance === 0}
-            >
-              {item.loanStatus === "Disbursed" && latestBalance === 0 ? "Paid" : "Repay"}
-            </CButton>
+              action: (
+                <CButton
+                  // color={item.loanStatus === "Disbursed" && latestBalance > 0 ? "success" : "secondary"}
+                  className="repay"
+                  onClick={() => modalHandleChange(item.accountNumber, item)}
+                  color={
+                    item.loanStatus === 'Disbursed' && latestBalance > 0 ? 'success' : 'secondary'
+                  }
+                  disabled={item.loanStatus !== 'Disbursed' || latestBalance === 0}
+
+                // disabled={item.loanStatus !== "Disbursed" || latestBalance === 0}
+                >
+                  {item.loanStatus === 'Disbursed' && latestBalance === 0 ? 'Paid' : 'Repay'}
+                </CButton>
+              ),
             }
           })
 
           setData(formattedData)
+          setShowLoans(true) // ✅ Ensure this is set
           console.log('Final Merged Data:', formattedData)
         })
       })
       .catch((err) => console.error('Error fetching data:', err))
-  }
-
-
-  const handleLoanRequest = () => {
-    navigate('/selectType')
   }
 
   const modalHandleChange = (loanId, loanDetails) => {
@@ -138,9 +124,10 @@ const ApplicantDashboard = () => {
     setRepayModal(true)
     setLoanDetails(loanDetails)
   }
-
-  const callBackmodelHandle = (data) => {
-    modalHandleChange(data)
+  const showTransactionModal = (uanId, transactionDetails) => {
+    console.log("onbutton clic view", uanId, transactionDetails);
+    setTransactionModal(true);
+    setTransactionData(transactionDetails);
   }
 
   const filteredData = data?.length
@@ -178,6 +165,29 @@ const ApplicantDashboard = () => {
         </ModalBody>
       </CModal>
 
+      <CModal
+        visible={transactionModal}
+        onClose={() => setTransactionModal(false)}
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+        centered
+      >
+        <CModalHeader
+          className="cardbg"
+          style={{ backgroundColor: 'rgb(51, 187, 255', color: 'white' }}
+        >
+          <b>Transaction Details :</b>
+        </CModalHeader>
+        <ModalBody style={{ height: '45%' }}>
+          <TransactionPopUp
+            transactionDetails={transactionData}
+            onClose={() => setTransactionModal(false)}
+            onSuccess={() => {
+              setTransactionModal(false) // Close the modal
+            }}
+          />
+        </ModalBody>
+      </CModal>
+
       <div style={{ backgroundColor: '#27445D', color: 'white', height: '100vh' }}>
         <h1 style={{ paddingLeft: '25px', marginLeft: '25px' }}>Applicant Dashboard</h1>
         <CCard
@@ -196,7 +206,10 @@ const ApplicantDashboard = () => {
                 Show Loans
                 <CIcon style={{ marginLeft: '4px' }} icon={cilChevronRight} title="Download file" />
               </CButton>
-
+              <CButton className="loanButton" size="lg" onClick={loadTransactions}>
+                Transaction
+                <CIcon style={{ marginLeft: '4px' }} icon={cilChevronRight} />
+              </CButton>
               <CRow className="filtersection">
                 <h5>Status Filters</h5>
                 <CButton
@@ -230,19 +243,11 @@ const ApplicantDashboard = () => {
               </CRow>
             </CCol>
             <CCol md={8}>
-             {/* <div className="flex justify-space-between">
-                <h2 className="text-xl font-bold flex items-center">
-                  <span>
-                    <FaPlusCircle
-                      className="text-blue-600 text-2xl cursor-pointer hover:text-blue-800 transition-transform hover:scale-110"
-                      style={{ cursor: 'pointer', marginLeft: '10px' }}
-                    />
-                  </span>
-                </h2>
-              </div>*/}
               <CRow>
                 <CCol md={10}>
-                  <h2 className="text-xl font-bold flex items-center w-full">Applicant Loans</h2>
+                  <h2 className="text-xl font-bold flex items-center w-full">
+                    New Loans <CIcon icon={cilArrowRight} />
+                  </h2>
                 </CCol>
                 <CCol
                   md={2}
@@ -256,39 +261,85 @@ const ApplicantDashboard = () => {
 
               <div className="table">
                 <CTable hover borderless>
-                  <CTableHead>
-                    <CTableRow>
-                      <CTableHeaderCell>S.No</CTableHeaderCell>
-                      <CTableHeaderCell>Account Number</CTableHeaderCell>
-                      <CTableHeaderCell>Applicant Name</CTableHeaderCell>
-                      <CTableHeaderCell>Loan Amount</CTableHeaderCell>
-                      <CTableHeaderCell>Balance</CTableHeaderCell>
-                      <CTableHeaderCell>Type</CTableHeaderCell>
-
-                      <CTableHeaderCell>Status</CTableHeaderCell>
-                      <CTableHeaderCell>Action</CTableHeaderCell>
-                    </CTableRow>
-                  </CTableHead>
                   <CTableBody>
-                    {filteredData.length > 0 ? (
-                      filteredData.map((item, index) => (
-                        <CTableRow key={index}>
-                          <CTableDataCell>{item.id}</CTableDataCell>
-                          <CTableDataCell>{item.loanAccountNumber}</CTableDataCell>
-                          <CTableDataCell>{item.applicantName}</CTableDataCell>
-                          <CTableDataCell>{item.loanAmount}</CTableDataCell>
-                          <CTableDataCell>{item.balanceAmount}</CTableDataCell>
-                          <CTableDataCell>{item.loanType}</CTableDataCell>
-                          <CTableDataCell>{item.loanStatus}</CTableDataCell>
-                          <CTableDataCell>{item.action}</CTableDataCell>
-                        </CTableRow>
-                      ))
-                    ) : (
-                      <CTableRow>
-                        <CTableDataCell colSpan="7" className="text-center">
-                          No records found
-                        </CTableDataCell>
-                      </CTableRow>
+                    {showLoans && (
+                      <div style={{ overflowX: 'auto', width: '100%' }}>
+                        <CTable hover borderless>
+                          <CTableHead>
+                            <h2 className="text-xl font-bold">Loans</h2>
+                            <CTableRow>
+                              <CTableHeaderCell>S.No</CTableHeaderCell>
+                              <CTableHeaderCell>Account Number</CTableHeaderCell>
+                              <CTableHeaderCell>Applicant Name</CTableHeaderCell>
+                              <CTableHeaderCell>Loan Amount</CTableHeaderCell>
+                              <CTableHeaderCell>Balance</CTableHeaderCell>
+                              <CTableHeaderCell>Type</CTableHeaderCell>
+                              <CTableHeaderCell>Status</CTableHeaderCell>
+                              <CTableHeaderCell>Action</CTableHeaderCell>
+                            </CTableRow>
+                          </CTableHead>
+                          <CTableBody>
+                            {filteredData.map((item, index) => (
+                              <CTableRow key={index}>
+                                <CTableDataCell>{item.id}</CTableDataCell>
+                                <CTableDataCell>{item.loanAccountNumber}</CTableDataCell>
+                                <CTableDataCell>{item.applicantName}</CTableDataCell>
+                                <CTableDataCell>{item.loanAmount}</CTableDataCell>
+                                <CTableDataCell>{item.balanceAmount}</CTableDataCell>
+                                <CTableDataCell>{item.loanType}</CTableDataCell>
+                                <CTableDataCell>{item.loanStatus}</CTableDataCell>
+                                <CTableDataCell>{item.action}</CTableDataCell>
+                              </CTableRow>
+                            ))}
+                          </CTableBody>
+                        </CTable>
+                      </div>
+                    )}
+
+                    {showTransactions && (
+                      <div className="table">
+                        <h2 className="text-xl font-bold">Transactions</h2>
+                        <div style={{ overflowX: 'auto', maxWidth: '100%', whiteSpace: 'nowrap' }}>
+                          <CTable hover borderless>
+                            <CTableHead>
+                              <CTableRow>
+                                <CTableHeaderCell>UAN ID</CTableHeaderCell>
+                                <CTableHeaderCell>Account Number</CTableHeaderCell>
+                                <CTableHeaderCell>Transaction Type</CTableHeaderCell>
+                                <CTableHeaderCell>Amount</CTableHeaderCell>
+                                <CTableHeaderCell>Date</CTableHeaderCell>
+                                <CTableHeaderCell>View </CTableHeaderCell>
+                              </CTableRow>
+                            </CTableHead>
+                            <CTableBody>
+                              {transaction?.length > 0 ? (
+                                transaction.map((txn, index) => (
+                                  <CTableRow key={index}>
+                                    <CTableDataCell>{txn.uanId}</CTableDataCell>
+                                    <CTableDataCell>{txn.loanAccountNumber}</CTableDataCell>
+                                    <CTableDataCell>{txn.paymentType}</CTableDataCell>
+                                    <CTableDataCell>{txn.loanAmount}</CTableDataCell>
+                                    <CTableDataCell>{txn.date}</CTableDataCell>
+                                    <CTableDataCell>
+                                      <CButton color="success" onClick={() => showTransactionModal(txn.uanId, txn)}>View</CButton>
+                                      {/* <CButton>
+                                        <FileDownload />
+                                      </CButton> */}
+                                      <CTableHeaderCell></CTableHeaderCell>
+                                    </CTableDataCell>
+                                  </CTableRow>
+                                ))
+                              ) : (
+                                <CTableRow>
+                                  <CTableDataCell colSpan="6" className="text-center">
+                                    No Transactions Available
+                                  </CTableDataCell>
+                                </CTableRow>
+                              )}
+                            </CTableBody>
+                          </CTable>
+                        </div>
+                      </div>
                     )}
                   </CTableBody>
                 </CTable>

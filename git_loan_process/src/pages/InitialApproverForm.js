@@ -1,22 +1,21 @@
 /* eslint-disable prettier/prettier */
 
-import React, { useEffect, useState } from 'react'
 import {
+  CButton,
   CCard,
   CCardBody,
   CCardHeader,
-  CRow,
   CCol,
-  CFormSelect,
-  CFormTextarea,
-  CButton,
-  CContainer,
   CCollapse,
+  CContainer,
+  CFormTextarea,
+  CRow,
+  CSpinner,
 } from '@coreui/react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
 import { FaArrowLeft } from 'react-icons/fa'
-import Swal from 'sweetalert2'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 const InitialApproverForm = (loan) => {
@@ -27,10 +26,10 @@ const InitialApproverForm = (loan) => {
   const [currentDate] = useState(new Date().toISOString().split('T')[0])
   const URL = import.meta.env.VITE_BASE_URL
   const navigate = useNavigate()
-  const [id, setId] = useState(null);
-  const [loanId, setLoanId] = useState(null);
-  const [taskId, setTaskId] = useState(null);
-  const [processId, setProcessId] = useState(null);
+  const [id, setId] = useState(null)
+  const [loanId, setLoanId] = useState(null)
+  const [taskId, setTaskId] = useState(null)
+  const [processId, setProcessId] = useState(null)
   const [decision, setDecision] = useState({
     // creditScore: 750, // Default Score
     eligibility: '',
@@ -41,9 +40,9 @@ const InitialApproverForm = (loan) => {
   // console.log('process Instance id retrived', processInstance)
 
   useEffect(() => {
-    const loanId = localStorage.getItem('selectedLoanId');
-const taskId = localStorage.getItem(`taskId_${loanId}`);
-console.log(taskId, '***********taskIds------');
+    const loanId = localStorage.getItem('selectedLoanId')
+    const taskId = localStorage.getItem(`taskId_${loanId}`)
+    console.log(taskId, '***********taskIds------')
 
     // const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
 
@@ -51,14 +50,14 @@ console.log(taskId, '***********taskIds------');
     const processInstance = localStorage.getItem('processId')
     console.log('process Instance id retrived', processInstance)
     // const taskIds = localStorage.getItem(`processId_${taskId}`); // Get processId using loanId
-// alert(taskIds);
-    const storedId = localStorage.getItem('selectedId');
-    const storedLoanId = localStorage.getItem('selectedLoanId');
-    console.log('load id',storedLoanId);
-    
-    const storedTaskId = localStorage.getItem('selectedTaskId');
-    const storedProcessId = localStorage.getItem('selectedProcessId');
- 
+    // alert(taskIds);
+    const storedId = localStorage.getItem('selectedId')
+    const storedLoanId = localStorage.getItem('selectedLoanId')
+    console.log('load id', storedLoanId)
+
+    const storedTaskId = localStorage.getItem('selectedTaskId')
+    const storedProcessId = localStorage.getItem('selectedProcessId')
+
     const fetchLoanDetails = async () => {
       try {
         const email = localStorage.getItem('emailId')
@@ -77,10 +76,10 @@ console.log(taskId, '***********taskIds------');
         setLoading(false)
       }
     }
-    setId(storedId);
-    setLoanId(storedLoanId);
-    setTaskId(storedTaskId);
-    setProcessId(storedProcessId);
+    setId(storedId)
+    setLoanId(storedLoanId)
+    setTaskId(storedTaskId)
+    setProcessId(storedProcessId)
     fetchLoanDetails()
   }, [])
 
@@ -88,68 +87,67 @@ console.log(taskId, '***********taskIds------');
     setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }))
   }
 
- 
   const storedUser = localStorage.getItem('username')
+  const [loadingAction, setLoadingAction] = useState({})
 
-  const handleAction = async ( actionType) => {
-    
-    const storedUser = localStorage.getItem('username'); // Retrieve username
-    const taskId = localStorage.getItem(`taskId_${loanId}`);
-console.log(taskId, '***********taskIds------');
+  const handleAction = async (actionType) => {
+    setLoadingAction((prev) => ({ ...prev, [actionType]: true }))
+    const storedUser = localStorage.getItem('username') // Retrieve username
+    const taskId = localStorage.getItem(`taskId_${loanId}`)
+    console.log(taskId, '***********taskIds------')
 
     // console.log(taskIds, "----------taskIds");
     if (!taskId) {
-        console.error("taskId is undefined");
-        return;
+      console.error('taskId is undefined')
+      return
     }
 
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`); 
-    console.log("2345678",processInstanceId);
-   
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`)
+    console.log('2345678', processInstanceId)
+
     if (!processInstanceId) {
-        console.error(`No processId found for Loan ID: ${loanId}`);
-        return;
+      console.error(`No processId found for Loan ID: ${loanId}`)
+      return
     }
 
-    console.log("Retrieved Process Instance ID:", processInstanceId);
-    console.log("Retrieved Task ID:", taskId);
-  //   const approve = JSON.stringify({
-  //     [storedUser]: "Approved"
-  // });
+    console.log('Retrieved Process Instance ID:', processInstanceId)
+    console.log('Retrieved Task ID:', taskId)
+    //   const approve = JSON.stringify({
+    //     [storedUser]: "Approved"
+    // });
     const actionPayload = JSON.stringify({
-        [storedUser]: actionType,
-    });  
-console.log("action type",actionType);
-console.log("1234567",actionPayload);
+      [storedUser]: actionType,
+    })
+    console.log('action type', actionType)
+    console.log('1234567', actionPayload)
 
     try {
-        // const response = await axios.post(
-        //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
-        //     actionPayload
-        // );
-        const response = await axios.post(
-          `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
-          actionPayload,
-          {
-              headers: { 'Content-Type': 'application/json' }
-          }
-      );
-        console.log(`Handle ${actionType} Response:`, response.data);
-        toast.success(`Loan ID ${loanId} has been ${actionType} `, { position: 'top-right' });
+      // const response = await axios.post(
+      //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+      //     actionPayload
+      // );
+      const response = await axios.post(
+        `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+        actionPayload,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+      console.log(`Handle ${actionType} Response:`, response.data)
+      toast.success(`Loan ID ${loanId} has been ${actionType} `, { position: 'top-right' })
 
-        if (response.status === 200) {
-            // window.location.reload(); // Reload after success
-            navigate('/loanApproverDashboard')
-        } else {
-            console.error(`${actionType} action failed`);
-        }
+      if (response.status === 200) {
+        // window.location.reload(); // Reload after success
+        navigate('/loanApproverDashboard')
+      } else {
+        console.error(`${actionType} action failed`)
+      }
     } catch (error) {
-        console.error(`Error performing ${actionType} action:`, error);
+      console.error(`Error performing ${actionType} action:`, error)
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [actionType]: false })) // ✅ Stop loading
     }
-};
- 
-
- 
+  }
 
   const renderSection = (title, data) => {
     if (!data) return null
@@ -376,16 +374,18 @@ console.log("1234567",actionPayload);
                       color="primary"
                       type="submit"
                       onClick={() => handleAction('Approved')}
+                      disabled={loadingAction['Approved']}
                     >
-                      Approve
+                      {loadingAction['Approved'] ? <CSpinner size="sm" /> : 'Approve'}
                     </CButton>
 
                     <CButton
                       color="danger"
                       type="submit"
                       onClick={() => handleAction('Rejected')}
+                      disabled={loadingAction['Rejected']}
                     >
-                      Reject
+                      {loadingAction['Rejected'] ? <CSpinner size="sm" /> : 'Reject'}
                     </CButton>
                   </div>
                 </CCardBody>

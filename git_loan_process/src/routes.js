@@ -53,6 +53,13 @@ const MortageLaon = React.lazy(()=> import ('./views/applyLoan/loanTypes/Mortage
 //Review Page
 const ReviewPage = React.lazy(() => import('./views/applyLoan/ReviewPage'))
 
+//payment
+const PaymentScheduleReport = React.lazy(() => import('../src/pages/PaymentScheduleReport'))
+const Payment = React.lazy(() => import('../src/pages/Payment'))
+const PaymentTransactionDetails = React.lazy(() => import('../src/pages/PaymentTransactionDetails'))
+
+
+
 const routes = [
   // { path: '/', exact: true, name: 'Home' },
   { path: '/home', name: 'Home', element: Home},
@@ -80,6 +87,12 @@ const routes = [
 {path:'/initialApprover',name:'InitialApproverForm', element:InitialApproverForm} ,
 {path:'/legalApprover',name:'LegalApprover', element:LegalApprover} ,
 {path:'/underwriterForm',name:'UnderWriter', element:UnderWriter} ,
+{path:'/PaymentScheduleReport',name:'PaymentScheduleReport', element:PaymentScheduleReport} ,
+{path:'/Payment',name:'Payment', element:Payment} ,
+{path:'/PaymentTransactionDetails',name:'PaymentTransactionDetails', element:PaymentTransactionDetails} ,
+
+
+
 
 {path:'/loanApproval',name:'LoanApplicationForm', element:LoanApplicationForm} ,
 {path:'/loanDisbursementForm',name:'LoanDisbursementForm', element:LoanDisbursementForm} ,

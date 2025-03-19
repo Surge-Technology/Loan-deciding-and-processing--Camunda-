@@ -1,14 +1,21 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState } from 'react'
-import { CCard, CCardBody, CCardHeader, CRow, CCol, CButton, CFormSelect, CFormTextarea } from '@coreui/react'
-import { FaArrowLeft } from 'react-icons/fa'
+import {
+  CButton,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CFormSelect,
+  CFormTextarea,
+  CRow,
+} from '@coreui/react'
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload'
-import Swal from 'sweetalert2'
-import { toast } from 'react-toastify';
 import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import { FaArrowLeft } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
-import { RadialGauge } from 'react-canvas-gauges' // Using a semi-circle gauge
-// const URL = import.meta.env.VITE_BASE_URL
+import { toast } from 'react-toastify'
+import Swal from 'sweetalert2'
 
 const LegalApprover = () => {
   const [incomeStatus, setIncomeStatus] = useState('') // Income Verification
@@ -19,19 +26,24 @@ const LegalApprover = () => {
   const URL = import.meta.env.VITE_BASE_URL
   const navigate = useNavigate()
   const [creditScore, setCreditScore] = useState(null)
-  const[downloadMessage,setDownloadMessage]=useState("");
-  const [clarification,setClarification] = useState('')
-  const [downloadFiles,setDownloadedfiles] = useState([]);
+  const [downloadMessage, setDownloadMessage] = useState('')
+  const [clarification, setClarification] = useState('')
+  const [downloadFiles, setDownloadedfiles] = useState([])
 
   const storedUser = localStorage.getItem('username')
+  const [loanLoading, setLoanLoading] = useState(true)
 
-  const globalToast = (message) => { toast.error(message)}
-  const successToast = () => { toast.success("Files Downloaded Sucessfully")}
-  const processInstance = localStorage.getItem('processId');
-  console.log("process Instance id retrived",processInstance);
-  
+  const globalToast = (message) => {
+    toast.error(message)
+  }
+  const successToast = () => {
+    toast.success('Files Downloaded Sucessfully')
+  }
+  const processInstance = localStorage.getItem('processId')
+  console.log('process Instance id retrived', processInstance)
+
   useEffect(() => {
-    const fetchLoanDetails = async () => {
+    const fetchLoanDetail = async () => {
       try {
         const storedUser = localStorage.getItem('username') // Get logged-in user role
         console.log('Fetching loan details for:', storedUser)
@@ -39,19 +51,30 @@ const LegalApprover = () => {
         const response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`)
 
         if (response.data.length > 0) {
-          // Extract the first relevant loan application
-          const formattedLoans = response.data.flatMap((task) =>
-            Object.values(task.rootNode).map((loanData) => ({
-              loanAccountNumber: loanData.loanAccountNumber,
-              applicantName: loanData.applicantName,
-              loanType: loanData.loanType,
-              loanAmount: loanData.loanAmount,
-            })),
-          )
+          // Extract relevant loan applications
+          const formattedLoans = response.data
+            .map((task) => {
+              const loan = task.loanDetails // Extracting loanDetails object
+
+              if (!loan) return null // Skip if no loan details
+
+              return {
+                loanAccountNumber: loan.loanAccountNumber,
+                applicantName: loan.applicantName,
+                loanType: loan.loanType,
+                loanStatus: loan.loanStatus,
+                loanAmount: loan.loanAmount,
+                emailId: loan.emailId,
+              }
+            })
+            .filter(Boolean) // Remove null entries
 
           if (formattedLoans.length > 0) {
             console.log('Loan Details Extracted:', formattedLoans[0])
             setLoanDetails(formattedLoans[0]) // Store the first loan record
+            setEmailId(formattedLoans[0].emailId) // Store email in state
+            console.log(formattedLoans[0].emailId, '234')
+            console.log(emailId, '234')
           } else {
             console.warn('No loans found for this user.')
           }
@@ -61,179 +84,108 @@ const LegalApprover = () => {
       } catch (error) {
         console.error('Error fetching loan details:', error)
       } finally {
-        setLoading(false)
+        setLoanLoading(false)
       }
     }
 
-  
-    fetchLoanDetails()
+    fetchLoanDetail()
   }, [])
 
   const [loanDetails, setLoanDetails] = useState(null)
-
+  const [emailId, setEmailId] = useState('')
 
   const handleDownloadDocs = () => {
-    setDownloadMessage("");
     axios
-      .get(`${URL}/download-all-Files`, {
+      .get(`${URL}/downloadEmail?emailId=${emailId}`, {
         responseType: 'blob', // Important for file downloads
       })
       .then((response) => {
-       
-        console.log("Response...", response);
-        setDownloadMessage("Files downloaded successfully.");
+        console.log('Response...', response)
         Swal.fire({
-            position: 'center',
-            icon: 'success',
-            title: `Files downloaded sucessfully `,
-            showConfirmButton: false,
-            timer: 1500,
-          })
-        console.log("File downloaded successfully", response.data);
-      
+          position: 'center',
+          icon: 'success',
+          title: `Files downloaded sucessfully `,
+          showConfirmButton: false,
+          timer: 1500,
+        })
+        console.log('File downloaded successfully', response.data)
+        {
+        }
       })
       .catch((error) => {
         console.error('Error downloading file:', error.message)
         //globalToast('Failed to download files. Please try again later.')
         Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to download files. Please try again later!',
-            confirmButtonColor: '#d33',
-          })
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to download files. Please try again later!',
+          confirmButtonColor: '#d33',
+        })
       })
   }
 
-  // const handleSubmit = async () => {
-  //   if (!incomeStatus || !collateralStatus || !legalReviewStatus) {
-  //     Swal.fire({
-  //       icon: 'error',
-  //       title: 'Error',
-  //       text: 'Please fill in all the fields!',
-  //       confirmButtonColor: '#d33',
-  //     })
-  //     return
-  //   }
-
-  //   const requestPayload = {   
-  //     // incomeVerificationStatus: incomeStatus,
-  //     // collateralStatus: collateralStatus,
-  //     Decision: legalReviewStatus,
-   
-  //     // [storedUser]:
-  //     //  {
-  //     //   incomeVerificationStatus: incomeStatus,
-  //     //   collateralStatus: collateralStatus,
-  //     //   LegalApprover: legalReviewStatus,
-  //     // },
-  //   }
-  //   const loanId = localStorage.getItem('selectedLoanId');
-  //   const taskId = localStorage.getItem(`taskId_${loanId}`);
-  //   console.log(taskId, '***********taskIds------');
- 
-  //   try {
-  //     const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`, requestPayload)
-  //     console.log('API Response:', response.data)
-  //     // if(response.data === "Loan approval process completed successfully."){
-  //     //   axios.post(`${URL}/CustomerMail`)
-  //     // }
-
-  //     Swal.fire({
-  //       icon: 'success',
-  //       title: 'Success',
-  //       text: 'Legal review submitted successfully!',
-  //       confirmButtonColor: '#28a745',
-  //     }).then(() => {
-  //       // if (legalReviewStatus === "Pending") {
-  //       //   sendClarificationEmail();
-  //       // }
-  //       if (response.status === 200) {
-  //         if (storedUser === "LegalApprover" && actionType.toLowerCase() === "approved") {
-  //             try {
-  //                 const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
-  //                 console.log("Status updated:", statusUpdateResponse.data);
-  //             } catch (statusUpdateError) {
-  //                 console.error("Error updating status for LegalApprover:", statusUpdateError);
-  //             }
-  //         }
-  //     } else {
-  //         console.error(`${actionType} action failed`);
-  //     }
-  //       navigate('/loanApproverDashboard');
-  //     });
-  //   }
-    
-    
-  //   catch (error) {
-  //     console.error('Error submitting legal review:', error)
-  //     Swal.fire({
-  //       icon: 'error',
-  //       title: 'Error',
-  //       text: 'Failed to process request. Try again!',
-  //       confirmButtonColor: '#d33',
-  //     })
-  //   }
-  // }
   const handleSubmit = async () => {
     if (!incomeStatus || !collateralStatus || !legalReviewStatus) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Please fill in all the fields!',
-            confirmButtonColor: '#d33',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Please fill in all the fields!',
+        confirmButtonColor: '#d33',
+      })
+      return
     }
 
-    const requestPayload = {   
-        Decision: legalReviewStatus
-    };
+    const requestPayload = {
+      Decision: legalReviewStatus,
+    }
+    // setLoadingAction(true)
+    const loanId = localStorage.getItem('selectedLoanId')
+    const taskId = localStorage.getItem(`taskId_${loanId}`)
 
-    const loanId = localStorage.getItem('selectedLoanId');
-    const taskId = localStorage.getItem(`taskId_${loanId}`);
-    
-    console.log(taskId, '***********taskIds------');
+    console.log(taskId, '***********taskIds------')
 
     try {
-        const response = await axios.post(
-            `${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`, 
-            requestPayload
-        );
+      const response = await axios.post(
+        `${URL}/${storedUser}?processInstanceId=${processInstance}&id=${taskId}`,
+        requestPayload,
+      )
 
-        console.log('API Response:', response.data);
+      console.log('API Response:', response.data)
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Legal review submitted successfully!',
-            confirmButtonColor: '#28a745',
-        }).then(async () => {
-            // ✅ Call 2nd API only if storedUser is LegalApprover & decision is "Approved"
-            if (response.status === 200) {
-                if (storedUser === "LegalApprover" && legalReviewStatus.toLowerCase() === "approved") {
-                    try {
-                        const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
-                        console.log("Status updated:", statusUpdateResponse.data);
-                    } catch (statusUpdateError) {
-                        console.error("Error updating status for LegalApprover:", statusUpdateError);
-                    }
-                }
-            } else {
-                console.error(`Legal review action failed`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Legal review submitted successfully!',
+        confirmButtonColor: '#28a745',
+      }).then(async () => {
+        if (response.status === 200) {
+          if (storedUser === 'LegalApprover' && legalReviewStatus.toLowerCase() === 'approved') {
+            try {
+              const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`)
+              console.log('Status updated:', statusUpdateResponse.data)
+            } catch (statusUpdateError) {
+              console.error('Error updating status for LegalApprover:', statusUpdateError)
             }
+          }
+        } else {
+          console.error(`Legal review action failed`)
+        }
 
-            navigate('/loanApproverDashboard');
-        });
+        navigate('/loanApproverDashboard')
+      })
     } catch (error) {
-        console.error('Error submitting legal review:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to process request. Try again!',
-            confirmButtonColor: '#d33',
-        });
-    }
-};
+      console.error('Error submitting legal review:', error)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to process request. Try again!',
+        confirmButtonColor: '#d33',
+      })
+    } 
+    // finally {
+    //   setLoadingAction(false)
+    // }
+  }
 
   const handlePrevious = () => {
     navigate(-1)
@@ -242,17 +194,17 @@ const LegalApprover = () => {
   // Function to send email content to API
   const sendClarificationEmail = async () => {
     if (!clarification.trim()) {
-      alert('Clarification content cannot be empty.');
-      return;
+      alert('Clarification content cannot be empty.')
+      return
     }
 
     const emailData = {
-    //   to: 'recipient@example.com',  // Replace with actual recipient email
-    //   subject: 'Clarification Request',
+      //   to: 'recipient@example.com',  // Replace with actual recipient email
+      //   subject: 'Clarification Request',
       clarificationDetails: clarification,
-    };
+    }
 
-    console.log(emailData);
+    console.log(emailData)
 
     // try {
     //   const response = await axios.post(`${API_URL}/send-email`, emailData, {
@@ -269,7 +221,7 @@ const LegalApprover = () => {
     //   console.error('Error sending email:', error);
     //   alert('Error sending email. Please try again.');
     // }
-  };
+  }
 
   return (
     <CCard className="shadow-lg mt-4">
@@ -303,29 +255,27 @@ const LegalApprover = () => {
             </CCard>
           </CCol>
           <CCol md="6">
-          <CCard className="shadow-sm p-3">
-            <CCardHeader className="bg-light">
-              <strong>Legal Approver</strong>
-            </CCardHeader>
-            <CCardBody>
-              <CFormSelect
-                value={legalReviewStatus}
-                onChange={(e) => setLegalReviewStatus(e.target.value)}
-              >
-                <option value="">Select Status</option>
-                <option value="Approved">Approved</option>
-                <option value="Reject">Reject</option>
-                <option value="needClarification">Need Clarification</option>
-              </CFormSelect>
-            </CCardBody>
-          </CCard>
-        </CCol>
-          
+            <CCard className="shadow-sm p-3">
+              <CCardHeader className="bg-light">
+                <strong>Legal Approver</strong>
+              </CCardHeader>
+              <CCardBody>
+                <CFormSelect
+                  value={legalReviewStatus}
+                  onChange={(e) => setLegalReviewStatus(e.target.value)}
+                >
+                  <option value="">Select Status</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Reject">Reject</option>
+                  <option value="needClarification">Need Clarification</option>
+                </CFormSelect>
+              </CCardBody>
+            </CCard>
+          </CCol>
         </CRow>
 
         <CRow className="mb-4">
           {/* Legal Review Status */}
-         
 
           {/* Collateral Status */}
           <CCol md="6">
@@ -349,23 +299,27 @@ const LegalApprover = () => {
         </CRow>
 
         {legalReviewStatus === 'Pending' ? (
-                  <>
-                    {/* Customer clarification */}
-                    <CCard className="shadow-sm p-3 mb-4">
-                      <CCardHeader className="bg-light">
-                        <strong>Need Clarification</strong>
-                      </CCardHeader>
-                      <CCardBody>
-                        <CRow className="mb-3">
-                          <CCol md="12">                    
-                          <CFormTextarea name="clarification" rows="3" placeholder="Enter clarification here..." 
-                          onChange={(e) => setClarification(e.target.value)}/>
-                          </CCol>
-                        </CRow>
-                      </CCardBody>
-                    </CCard>
-                  </>
-                ) : null}
+          <>
+            {/* Customer clarification */}
+            <CCard className="shadow-sm p-3 mb-4">
+              <CCardHeader className="bg-light">
+                <strong>Need Clarification</strong>
+              </CCardHeader>
+              <CCardBody>
+                <CRow className="mb-3">
+                  <CCol md="12">
+                    <CFormTextarea
+                      name="clarification"
+                      rows="3"
+                      placeholder="Enter clarification here..."
+                      onChange={(e) => setClarification(e.target.value)}
+                    />
+                  </CCol>
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </>
+        ) : null}
 
         {/* Files to Download */}
         <CCard className="shadow-sm p-3 mb-4">
@@ -376,14 +330,13 @@ const LegalApprover = () => {
             <CRow>
               <CCol md="6">
                 <CButton onClick={handleDownloadDocs} color="info" variant="outline" size="sm">
-                  <CloudDownloadIcon className="me-2"  />
+                  <CloudDownloadIcon className="me-2" />
                   Download Files
                 </CButton>
-                    {downloadMessage && <p className="mt-2 text-muted">{downloadMessage}</p>}
-
+                {downloadMessage && <p className="mt-2 text-muted">{downloadMessage}</p>}
               </CCol>
             </CRow>
-          {/*   <div style={{ marginTop: "12px",marginRight:'50px' }}>
+            {/*   <div style={{ marginTop: "12px",marginRight:'50px' }}>
             <h6 className="d-flex text-start">Downloaded Documents:</h6>
            {downloadedFiles && downloadedFiles.length > 0 ? (
               <ul>
@@ -409,10 +362,10 @@ const LegalApprover = () => {
         {/* Submit & Cancel Buttons */}
         <div className="mt-4 text-end">
           <CButton className="m-4" color="primary" type="submit" onClick={handleSubmit}>
-            Approve
+            Submit
           </CButton>
           <CButton color="danger" type="submit" onClick={handlePrevious}>
-            Reject
+            Cancel
           </CButton>
         </div>
       </CCardBody>

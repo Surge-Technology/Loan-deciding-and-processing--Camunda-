@@ -50,7 +50,7 @@ const SignInPage = () => {
         if (response.status === 200) {
         const userName= localStorage.setItem("username", response.data.userName);
         console.log(response.data.userName);
-        const approverRoles = ["InitialApprover", "UnderWriter", "LegalApprover", "Manager"];
+        const approverRoles = ["InitialApprover", "UnderWriter", "LegalApprover", "Manager","FieldOfficer"];
 
         if (approverRoles.includes(response.data.userName)) {
           navigate("/loanApproverDashboard");

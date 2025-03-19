@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useFormik } from 'formik'
 import axios from 'axios'
 import Swal from 'sweetalert2'
@@ -45,7 +45,10 @@ const FileUpload = () => {
 
         // Ensure taskIds is an array and extract the first taskId
         if (response.data.taskIds && response.data.taskIds.length > 0) {
-          setTaskId(response.data.taskIds[0]); // Store taskId in state
+          setTaskId(response.data.taskIds[0]); 
+          const mailId = response.data.emailId;
+          console.log(mailId, "Extracted Email ID");
+          setEmailId(mailId);
           console.log("Task ID:", response.data.taskIds[0]);
         } else {
           console.log("No active tasks found");
@@ -69,6 +72,7 @@ const FileUpload = () => {
       });
     }
   }, [clarificationData]);
+  const [mailId, setEmailId] = useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -97,6 +101,7 @@ const FileUpload = () => {
           payload
         );
         if (response) {
+         
           Swal.fire({
             text: 'Thanks for your submitting!',
             icon: 'success',
@@ -148,35 +153,47 @@ window.close();
       if (files.length === 0) return
 
       try {
-         await axios.post(`${URL}/upload`, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
 
-        if (!emailResponse.ok) {
-          console.error('Failed to fetch email:', emailResponse.statusText)
-          return
-        }
-
-        const emailId = await emailResponse.text() // Assuming the response is plain text
-        console.log('Email ID:', emailId)
-
-        const formData = new FormData()
+        const formData = new FormData();
 
         // Append files to the form data
         files.forEach((fileObj) => {
-          formData.append('file', fileObj.file, fileObj.file.name)
-        })
-
-        formData.append('documentCategory', 'others')
-        formData.append('emailId', emailId) // Assuming `emailId` is already set
-
-        // Send multiple files to backend for upload
-        const response = await axios.post(`${URL}/upload`, formData, {
+          formData.append('file', fileObj.file, fileObj.file.name);
+        });
+  
+        formData.append('documentCategory', 'others');
+        formData.append('emailId',mailId)
+  
+       const response=  await axios.post(`${URL}/upload`,formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
 
-        console.log('Upload response:', response.data)
+        // if (!emailResponse.ok) {
+        //   console.error('Failed to fetch email:', emailResponse.statusText)
+        //   return
+        // }
+
+        // const emailId = await emailResponse.text() // Assuming the response is plain text
+        console.log('Email ID:', mailId)
+
+        // const formData = new FormData()
+
+        // // Append files to the form data
+        // files.forEach((fileObj) => {
+        //   formData.append('file', fileObj.file, fileObj.file.name)
+        // })
+
+        // formData.append('documentCategory', 'others')
+        // formData.append('emailId', emailId) // Assuming `emailId` is already set
+
+        // Send multiple files to backend for upload
+        // const response = await axios.post(`${URL}/upload`, formData, {
+        //   headers: { 'Content-Type': 'multipart/form-data' },
+        // })
+
+        // console.log('Upload response:', response.data)
         if (response.status === 200) {
+        
           // Successful upload
           Swal.fire({
             text: 'Files uploaded successfully!',
@@ -237,55 +254,72 @@ window.close();
       })
     }
   }
+    const [uploadedFiles, setUploadedFiles] = useState([])
+  
   const handleRemoveFile1 = async (documentCategory) => {
-    const emailResponse = await fetch(`${URL}/getEmailId`, {
-      method: 'GET',
-    })
-
-    if (!emailResponse.ok) {
-      console.error('Failed to fetch email:', emailResponse.statusText)
-      return
-    }
-
-    const emailId = await emailResponse.text() // Assuming the response is plain text
-    console.log('Email ID:', emailId)
- 
+    
     try {
       // Make an API call to remove all files of the given documentCategory
       const response = await axios.delete(`${URL}/deleteMultiple`, {
         params: {
           documentCategory, // Pass the documentCategory as query parameter
-          emailId,          // Pass the emailId as query parameter
+          emailId:mailId, // Pass the emailId as query parameter
         },
         headers: {
           'Content-Type': 'application/json',
         },
-      });
-  
-      if (response.status === 200) {
-        console.log(`All files under category ${documentCategory} removed successfully.`);
-        setFiles([]);
-        notifyDeleteSuccess();
+      })
 
-        // Remove input fields and icons dynamically
-        const inputFields = document.querySelectorAll(`input[type="file"][id^="${documentCategory}-"]`);
+      if (response.status === 200) {
+        console.log(`All files under category ${documentCategory} removed successfully.`)
+        // setUploadedFiles([]) // Changed to uploadedFiles
+        setFiles((prevFiles) => prevFiles.filter(file => file.documentCategory !== documentCategory));
+        setUploadedFiles([]);
+        const inputFields = document.querySelectorAll(
+          `input[type="file"][id^="${documentCategory}-"]`,
+        )
         inputFields.forEach((input) => {
-          input.value = ''; // Clear the input field
-        });
-        removeFile();
-        alert("All files removed successfully!");
+          input.value = '' // Clear the input field
+        })
+        removeFile()
+        alert('All files removed successfully!')
       } else {
-        console.error('Error removing files:', response.data);
+        console.error('Error removing files:', response.data)
       }
     } catch (error) {
-      console.error('Failed to remove files:', error);
+      console.error('Failed to remove files:', error)
     }
-  };
-  // Remove a file from the list
-  const removeFile = (index) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
   }
+ 
+  // const removeFile = (index) => {
+  //   console.log("coming...");
+    
+  //       setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
+  // }
+    const inputRefs = useRef({})
+  
+  const removeFile = (fieldKey, field) => {
+    console.log('fieldKey:', fieldKey, 'field.....', field)
 
+    // Clear the file input field by resetting its value using the ref
+    if (inputRefs.current[fieldKey]) {
+      inputRefs.current[fieldKey].value = '' // Clear the input field
+    }
+
+    // Remove the file from state for the specific fieldKey
+    setFiles((prevFiles) => {
+      const newFiles = { ...prevFiles }
+      delete newFiles[fieldKey] // Remove the file from the files state
+      return newFiles
+    })
+
+    // Reset the upload status for the fieldKey
+    setUploadStatus((prevStatus) => {
+      const newStatus = { ...prevStatus }
+      newStatus[fieldKey] = 'notUploaded' // Reset the status for this field
+      return newStatus
+    })
+  }
   // Display uploaded files
   {
     files.length > 0 && (
@@ -302,21 +336,7 @@ window.close();
     )
   }
 
-  //file upload->get email
-  const getEmail = async () => {
-    const emailResponse = await fetch(`${URL}/getEmailId`, {
-      method: 'GET',
-    })
-
-    if (!emailResponse.ok) {
-      console.error('Failed to fetch email:', emailResponse.statusText)
-      return
-    }
-
-    const emailId = await emailResponse.text() // Assuming the response is plain text
-    console.log('Email ID:', emailId)
-  }
-
+ 
   return (
     <div className="container mt-4">
       <div className="card p-4">

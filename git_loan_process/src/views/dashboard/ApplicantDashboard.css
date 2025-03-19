@@ -1,0 +1,10 @@
+.transaction-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .transaction-table {
+    min-width: 900px; /* Adjust this based on your content */
+    white-space: nowrap;
+  }
+  

@@ -1,28 +1,27 @@
 /* eslint-disable prettier/prettier */
 import {
+  CButton,
   CCard,
   CCardBody,
   CCardHeader,
   CCol,
   CFormInput,
+  CModal,
   CRow,
+  CSpinner,
   CTable,
+  CTableBody,
+  CTableDataCell,
   CTableHead,
   CTableHeaderCell,
-  CTableRow,
-  CTableDataCell,
-  CTableBody,
-  CButton,
-  CModal,
-  CModalHeader,
+  CTableRow
 } from '@coreui/react'
 import axios from 'axios'
-import { Button } from 'bootstrap'
 import 'chart.js/auto'
 import React, { useEffect, useState } from 'react'
 import { ModalBody } from 'react-bootstrap'
 import { Pie } from 'react-chartjs-2'
-import { FaDownload, FaEnvelope, FaFileExport, FaUser } from 'react-icons/fa'
+import { FaEnvelope, FaFileExport, FaUser } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -38,7 +37,7 @@ const LoanApproverDashboard = (loan) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedLoan, setSelectedLoan] = useState()
   const URL = import.meta.env.VITE_BASE_URL
-  const [filterLoans,setFilterLoans] = useState([]);
+  const [filterLoans, setFilterLoans] = useState([]);
   useEffect(() => {
     fetchLoanApplications()
   }, [])
@@ -46,225 +45,195 @@ const LoanApproverDashboard = (loan) => {
 
   const fetchLoanApplications = async () => {
     try {
-      let response
-      let formattedLoans = []
-
-      if (storedUser !== 'Manager') {
+      let response;
+      let formattedLoans = [];
+  
+      if (storedUser === "FieldOfficer") {
         try {
-          response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`)
-          // response =await axios.get(`${URL}/getAssignedTask/Loan Application C8  v1/${storedUser}`)
-          console.log('API Response for User Tasks:', response.data) // Debugging Step 1
-
+          response = await axios.get(`${URL}/getActivedTasks`);
+          console.log('API Response for FieldOfficer:', response.data); // Debugging Step 1
+  
           // Ensure response.data is an array
           if (Array.isArray(response.data)) {
             const validTasks = response.data.filter((task) => task.assignee === storedUser);
-            console.log('Filtered Tasks for User:', validTasks[0]?.loanDetails); // Ensure safe access
-        
-            const formattedLoans = validTasks.map((item) => ({
-                loanId: item.loanDetails.loanAccountNumber, // Corrected object structure
-                loanType: item.loanDetails.loanType,
-                applicantName: item.loanDetails.applicantName,
-                loanAmount: item.loanDetails.loanAmount,
-                loanStatus: String(item.loanDetails.loanStatus || "").trim(), // Ensure loanStatus is a string before trimming
-                emailId: item.loanDetails.emailId,
-                loanAccountNumber: item.loanDetails.loanAccountNumber,
-                processId:item.loanDetails.processInstanceId,
-                id: item.loanDetails.id,
-                taskId:item.taskId
+            console.log('Filtered Tasks for FieldOfficer:', validTasks); // Debugging Step 2
+  
+            formattedLoans = validTasks.map((item) => ({
+              loanId: item.variables.find(v => v.name === "loanAccountNumber")?.value || "",
+              loanType: item.variables.find(v => v.name === "loanType")?.value || "",
+              applicantName: item.variables.find(v => v.name === "applicantName")?.value || "",
+              loanAmount: item.variables.find(v => v.name === "loanAmount")?.value || 0,
+              loanStatus: item.variables.find(v => v.name === "loanStatus")?.value?.trim() || "",
+              emailId: item.variables.find(v => v.name === "emailId")?.value || "",
+              loanAccountNumber: item.variables.find(v => v.name === "loanAccountNumber")?.value || "",
+              processId: item.processDefinitionId,
+              id: item.id,
+              taskId: item.id,
             }));
+  
             setFilterLoans(formattedLoans);
+  
             formattedLoans.forEach((loan) => {
               console.log(`Storing processId: ${loan.processId} for Loan ID: ${loan.taskId}`);
-        localStorage.setItem(`processId_${loan.loanId}`, loan.processId);
-        // localStorage.setItem(`taskId_${loan.taskId}`, loan.taskId);
-        localStorage.setItem(`taskId_${loan.loanId}`, loan.taskId);
-
-        // const taskIds = localStorage.getItem(`taskId_${taskId}`);
-        const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
-
-        console.log(taskIds, "----------taskIds------");
-        
-    });
-
-    console.log("Filtered Loans:", formattedLoans);
-
-// setProcessInstanceId(formattedLoans.processId);
-            // console.log("Filtered Loan Details:", filter);
-        }
-        
+              localStorage.setItem(`processId_${loan.loanId}`, loan.processId);
+              localStorage.setItem(`taskId_${loan.loanId}`, loan.taskId);
+              console.log(localStorage.getItem(`taskId_${loan.loanId}`), "----------taskIds------");
+            });
+  
+            console.log("Filtered Loans for FieldOfficer:", formattedLoans);
+          }
         } catch (error) {
-          console.error('Error fetching tasks:', error)
+          console.error('Error fetching tasks for FieldOfficer:', error);
         }
-      } else {
-        response = await axios.get(`${URL}/getApplicantDetails`)
-        console.log('API Response for Manager:', response.data) // Debugging Step 3
-
-        // Ensure response.data is an array
-        const formattedLoans = Array.isArray(response.data)
+      } 
+      else if (storedUser !== 'Manager') {
+        try {
+          response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`);
+          console.log('API Response for User Tasks:', response.data); // Debugging Step 3
+  
+          if (Array.isArray(response.data)) {
+            const validTasks = response.data.filter((task) => task.assignee === storedUser);
+            console.log('Filtered Tasks for User:', validTasks[0]?.loanDetails); // Debugging Step 4
+  
+            formattedLoans = validTasks.map((item) => ({
+              loanId: item.loanDetails.loanAccountNumber,
+              loanType: item.loanDetails.loanType,
+              applicantName: item.loanDetails.applicantName,
+              loanAmount: item.loanDetails.loanAmount,
+              loanStatus: String(item.loanDetails.loanStatus || "").trim(),
+              emailId: item.loanDetails.emailId,
+              loanAccountNumber: item.loanDetails.loanAccountNumber,
+              processId: item.loanDetails.processInstanceId,
+              id: item.loanDetails.id,
+              taskId: item.taskId
+            }));
+  
+            setFilterLoans(formattedLoans);
+  
+            formattedLoans.forEach((loan) => {
+              console.log(`Storing processId: ${loan.processId} for Loan ID: ${loan.taskId}`);
+              localStorage.setItem(`processId_${loan.loanId}`, loan.processId);
+              localStorage.setItem(`taskId_${loan.loanId}`, loan.taskId);
+              console.log(localStorage.getItem(`taskId_${loan.loanId}`), "----------taskIds------");
+            });
+  
+            console.log("Filtered Loans:", formattedLoans);
+          }
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+        }
+      } 
+      else {
+        response = await axios.get(`${URL}/getApplicantDetails`);
+        console.log('API Response for Manager:', response.data);
+  
+        formattedLoans = Array.isArray(response.data)
           ? response.data
-              .filter((loan) => loan.loanStatus?.trim().toLowerCase() !== 'pending')
-              .map((loanData) => ({
-                loanId: loanData.loanAccountNumber,
-                loanType: loanData.loanType,
-                applicantName: loanData.applicantName,
-                loanAmount: loanData.loanAmount,
-                loanStatus: loanData.loanStatus?.trim() || '',
-                emailId: loanData.emailId,
-                loanAccountNumber: loanData.loanAccountNumber,
-                id: loanData.id,
-              }))
-          : []
-
-          setFilterLoans(formattedLoans);
-          console.log('Formatted Loans:', formattedLoans,filterLoans)  
+            .filter((loan) => loan.loanStatus?.trim().toLowerCase() !== 'pending')
+            .map((loanData) => ({
+              loanId: loanData.loanAccountNumber,
+              loanType: loanData.loanType,
+              applicantName: loanData.applicantName,
+              loanAmount: loanData.loanAmount,
+              loanStatus: loanData.loanStatus?.trim() || '',
+              emailId: loanData.emailId,
+              loanAccountNumber: loanData.loanAccountNumber,
+              id: loanData.id,
+            }))
+          : [];
+  
+        setFilterLoans(formattedLoans);
+        console.log('Formatted Loans:', formattedLoans, filterLoans);
       }
-
+  
       // Updating state
-      setLoans(formattedLoans)
+      setLoans(formattedLoans);
     } catch (error) {
-      console.error('Error fetching loan applications:', error)
+      console.error('Error fetching loan applications:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-   const processId = localStorage.getItem("pId");
-   const handleAction = async (loanId, taskId, actionType) => {
-    
+  };
+  
+  const processId = localStorage.getItem("pId");
+
+  const [loadingAction, setLoadingAction] = useState({});
+  const handleAction = async (loanId, taskId, actionType) => {
+
     const storedUser = localStorage.getItem('username'); // Retrieve username
     const taskIds = localStorage.getItem(`taskId_${loan.loanId}`);
 
     console.log(taskIds, "----------taskIds");
     if (!taskId) {
-        console.error("taskId is undefined");
-        return;
+      console.error("taskId is undefined");
+      return;
     }
 
-    const processInstanceId = localStorage.getItem(`processId_${loanId}`); 
-    console.log("2345678",processInstanceId);
-    
+    const processInstanceId = localStorage.getItem(`processId_${loanId}`);
+    console.log("2345678", processInstanceId);
+
     // Get processId using loanId
-   // const taskIds = localStorage.getItem(`processId_${taskId}`); // Get processId using loanId
- 
+    // const taskIds = localStorage.getItem(`processId_${taskId}`); // Get processId using loanId
+
     if (!processInstanceId) {
-        console.error(`No processId found for Loan ID: ${loanId}`);
-        return;
+      console.error(`No processId found for Loan ID: ${loanId}`);
+      return;
     }
 
     console.log("Retrieved Process Instance ID:", processInstanceId);
     console.log("Retrieved Task ID:", taskId);
-  
+
     // const actionPayload = JSON.stringify({
     //     [storedUser]: actionType,
     // });  
-    const actionPayload = storedUser === "InitialApprover" 
-        ? JSON.stringify({ [storedUser]: actionType }) 
-        : JSON.stringify({ "Decision": actionType });
-console.log("action type",actionType);
-console.log("1234567",actionPayload);
+    const actionPayload = storedUser === "InitialApprover"
+      ? JSON.stringify({ [storedUser]: actionType })
+      : JSON.stringify({ "Decision": actionType });
+    console.log("action type", actionType);
+    console.log("1234567", actionPayload);
 
-    try {
-        // const response = await axios.post(
-        //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
-        //     actionPayload
-        // );
-      //   const response = await axios.post(
-      //     `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
-      //     actionPayload,
-      //     {
-      //         headers: { 'Content-Type': 'application/json' }
-      //     }
-      // );
-      //   console.log(`Handle ${actionType} Response:`, response.data);
-      //   toast.success(`Loan ID ${loanId} has been ${actionType} `, { position: 'top-right' });
-
-      //   if (response.status === 200) {
-      //     if (storedUser === "LegalApprover") {
-      //       try {
-      //           const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
-      //           console.log("Status updated:", statusUpdateResponse.data);
-      //       } catch (statusUpdateError) {
-      //           console.error("Error updating status for LegalApprover:", statusUpdateError);
-      //       }
-      //   }
-      //       //  window.location.reload(); // Reload after success
-      //   } else {
-      //       console.error(`${actionType} action failed`);
-      //   }
-      try {
-        const response = await axios.post(
-            `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
-            actionPayload,
-            {
-                headers: { 'Content-Type': 'application/json' }
-            }
-        );
-    
-        console.log(`Handle ${actionType} Response:`, response.data);
-        toast.success(`Loan ID ${loanId} has been ${actionType}`, { position: 'top-right' });
-    
-        if (response.status === 200) {
-            if (storedUser === "LegalApprover" && actionType.toLowerCase() === "approved") {
-                try {
-                    const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
-                    console.log("Status updated:", statusUpdateResponse.data);
-                } catch (statusUpdateError) {
-                    console.error("Error updating status for LegalApprover:", statusUpdateError);
-                }
-            }
-        } else {
-            console.error(`${actionType} action failed`);
+    setLoadingAction((prev) => ({ ...prev, [taskId]: true })); try {
+      const response = await axios.post(
+        `${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`,
+        actionPayload,
+        {
+          headers: { 'Content-Type': 'application/json' }
         }
+      );
+
+      console.log(`Handle ${actionType} Response:`, response.data);
+      toast.success(`Loan ID ${loanId} has been ${actionType}`, { position: 'top-right' });
+
+      if (response.status === 200) {
+        navigate(0);
+
+        if (storedUser === "LegalApprover" && actionType.toLowerCase() === "approved") {
+          try {
+            const statusUpdateResponse = await axios.get(`${URL}/updateStatusApproved`);
+            console.log("Status updated:", statusUpdateResponse.data);
+          } catch (statusUpdateError) {
+            console.error("Error updating status for LegalApprover:", statusUpdateError);
+          }
+        }
+      } else {
+        console.error(`${actionType} action failed`);
+      }
     } catch (error) {
-        console.error(`Error handling ${actionType}:`, error);
+      console.error(`Error handling ${actionType}:`, error);
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [taskId]: false }));
     }
-    
-    } catch (error) {
-        console.error(`Error performing ${actionType} action:`, error);
-    }
-};
 
-   //working
-  // const handleApprove = async (loanId) => {
-  //   const storedUser = localStorage.getItem('username'); // Retrieve username
-    
-  //   // const processId = localStorage.getItem(`processId`);
-  //   const processInstanceId = localStorage.getItem(`processId_${taskId}`);
 
-  //   if (!processInstanceId) {
-  //       console.error(`No processId found for Loan ID: ${loanId}`);
-  //       return;
-  //   }
-  //   console.log("Retrieved Process Instance ID:", processInstanceId);
-  //   console.log("Retrieved ------- taskId ID:", taskId);
-  
-  //   const approve = {
-  //     [storedUser]: 'Approved',
-  //     // processInstanceId: processInstanceId,
-  //     // processInstance:processInstanceId;
-  //     // approver: storedUser // Store the approver’s username
-  //   }
+  };
 
-  //   try {
-  //     const response = await axios.post(`${URL}/${storedUser}?processInstanceId=${processInstanceId}&id=${taskId}`, approve)
-  //     console.log('Handle Approve Response:', response.data)
-  //     toast.success(`Loan ID ${loanId} has been Approved ✅`, { position: 'top-right' })
-  //     if (statusCode==200) {
-  //       window.location.reload(); // Reload the page after successful API call
-  //     } else {
-  //       console.error(` failed`);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error approving task:', error)
-  //   }
 
-  //   // alert(`Loan ID ${loanId} has been Approved`);
-  // }
 
 
   const handleView = (id, loanId, taskId, processId, loanStatus) => {
     // alert(45678)
     const taskIds = localStorage.getItem(`taskId_${loanId}`);
-console.log(taskIds,"----------taskIds------");
+    console.log(taskIds, "----------taskIds------");
 
     localStorage.setItem('selectedLoanId', loanId);
     localStorage.setItem('selectedTaskId', taskId);
@@ -272,8 +241,8 @@ console.log(taskIds,"----------taskIds------");
     console.log(`LoanStatus for ${id} is ${loanStatus}`);
 
     if (!processId) {
-        console.error('Process Instance ID is undefined or null');
-        return;
+      console.error('Process Instance ID is undefined or null');
+      return;
     }
 
     console.log(`Viewing Process Instance ID: ${processId}`);
@@ -285,23 +254,25 @@ console.log(taskIds,"----------taskIds------");
     const storedUser = localStorage.getItem('username');
 
     switch (storedUser) {
-        case 'InitialApprover':
-            navigate('/initialApprover');
-            break;
-        case 'UnderWriter':
-            navigate('/underwriterForm');
-            break;
-        case 'LegalApprover':
-            navigate('/legalApprover');
-            break;
-        case 'Manager':
-            navigate('/managerForm'); // Corrected spelling
-            break;
-        default:
-            navigate('/applicantDashboard');
-            break;
+      case 'InitialApprover':
+        navigate('/initialApprover');
+        break;
+      case 'UnderWriter':
+        navigate('/underwriterForm');
+        break;
+      case 'LegalApprover':
+        navigate('/legalApprover');
+        break;
+      case 'Manager':
+        navigate('/managerForm'); // Corrected spelling
+        break;
+        case 'FieldOfficer':
+          navigate('/fieldOfficer')
+      default:
+        navigate('/applicantDashboard');
+        break;
     }
-};
+  };
   const totalLoans = filterLoans.length
   const pendingLoans = filterLoans.filter((loan) => loan.loanStatus === 'Pending').length
   const approvedLoans = filterLoans.filter((loan) => loan.loanStatus === 'Approved').length
@@ -320,27 +291,13 @@ console.log(taskIds,"----------taskIds------");
   }
 
   // Filter loans based on search term
-const [selectedStatus, setSelectedStatus] = useState(''); // State for status filter
+  const [selectedStatus, setSelectedStatus] = useState(''); // State for status filter
 
-const filteredLoans = loans.filter((loan) => {
-  const search = searchTerm.toLowerCase();
-  return (
-    (loan.loanAccountNumber.toLowerCase().includes(search) ||
-      loan.applicantName.toLowerCase().includes(search) ||
-      loan.loanType.toLowerCase().includes(search) ||
-      loan.loanStatus.toLowerCase().includes(search)) &&
-    (selectedStatus ? loan.loanStatus === selectedStatus : true)
-  );
-});
+
 
 
   const handleExportClick = () => {
-    // Swal.fire({
-    //   icon: 'info',
-    //   title: 'Exporting PDF Report',
-    //   text: 'Your report is being generated...',
-    //   confirmButtonColor: '#3085d6',
-    // })
+
     axios
       .get(`${URL}/loans/pdf`, {
         responseType: 'blob', // specify response type as blob
@@ -383,6 +340,39 @@ const filteredLoans = loans.filter((loan) => {
     setSelectedLoanAmount(loanAmount)
   }
 
+
+  const handleLegalAction = async (loanAccountNumber) => {
+    try {
+      console.log(loanAccountNumber );
+  
+      // Construct the payload with loanAccountNumber
+      const payload = {
+        // message: `Legal action initiated for Loan Account Number: ${loanAccountNumber}`,
+        loanAccountNumber: loanAccountNumber,
+      };
+  console.log(payload);
+  
+      // Make the API request
+      const response = await axios.post(`${URL}/startMessage`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+  
+      console.log('Legal Action API Response:', response.data);
+    } catch (error) {
+      console.error('Error initiating legal action:', error);
+    }
+  };
+  
+
+  const [ViewDetials, setViewDetails] = useState(false);
+
+  const handleViewAction = (loanAccountNumber, loanAmount) =>{
+    console.log({ loanAccountNumber, loanAmount })
+    setViewDetails(true)
+    setSelectedLoan(loanAccountNumber)
+    setSelectedLoanAmount(loanAmount)
+  }
+
   return (
     <>
       <CModal
@@ -390,7 +380,7 @@ const filteredLoans = loans.filter((loan) => {
         onClose={() => setShowModal(false)}
         // className="custom-modal"
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-        // centered
+      // centered
       >
         <ModalBody style={{ height: '45%' }}>
           <DisbursementForm
@@ -399,6 +389,27 @@ const filteredLoans = loans.filter((loan) => {
             onClose={() => setShowModal(false)}
             onSuccess={() => {
               setShowModal(false) // Close the modal
+              // Add logic to refresh the component (e.g., fetch updated data)
+              //fetchData() // Example: Fetch updated data
+            }}
+          />
+        </ModalBody>
+      </CModal>
+
+      <CModal
+        visible={ViewDetials}
+        onClose={() => setViewDetails(false)}
+        // className="custom-modal"
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      // centered
+      >
+        <ModalBody style={{ height: '45%' }}>
+          <DisbursementForm
+            loanAccountNumber={selectedLoan}
+            loanAmount={selectedLoanAmount}
+            onClose={() => setShowModal(false)}
+            onSuccess={() => {
+              setViewDetails(false) // Close the modal
               // Add logic to refresh the component (e.g., fetch updated data)
               //fetchData() // Example: Fetch updated data
             }}
@@ -497,7 +508,7 @@ const filteredLoans = loans.filter((loan) => {
                       <CTableHead className="table-light">
                         <CTableRow>
                           <CTableHeaderCell>#</CTableHeaderCell>
-                          <CTableHeaderCell>Loan Account No</CTableHeaderCell>
+                          <CTableHeaderCell>Application No</CTableHeaderCell>
                           <CTableHeaderCell>Name</CTableHeaderCell>
                           <CTableHeaderCell>Type</CTableHeaderCell>
                           <CTableHeaderCell>Amount</CTableHeaderCell>
@@ -517,7 +528,7 @@ const filteredLoans = loans.filter((loan) => {
                               <CTableDataCell>{loan.loanStatus}</CTableDataCell>
                               <CTableDataCell>
                                 {storedUser === 'Manager' ? (
-                                  <>
+                                  <div  className="d-flex">
                                     <CButton
                                       color="success"
                                       size="sm"
@@ -529,7 +540,27 @@ const filteredLoans = loans.filter((loan) => {
                                     >
                                       Disbursement
                                     </CButton>
-                                  </>
+                                    <CButton
+                                      color="warning"
+                                      size="sm"
+                                      className="me-2"
+                                      disabled={loan.loanStatus.toLowerCase() !== 'disbursed'}
+                                      onClick={() => handleLegalAction(loan.loanAccountNumber, loan.loanAmount)}>
+                                    
+                                      LegalAction
+                                    </CButton>
+                                    {/*<CButton
+                                      color="info"
+                                      size="sm"
+                                      className="me-2"
+                                      disabled={loan.loanStatus.toLowerCase() !== 'disbursed'}
+                                      onClick={() =>
+                                        handleViewAction(loan.loanAccountNumber, loan.loanAmount)
+                                      }
+                                    >
+                                    FieldVisit
+                                    </CButton>*/}
+                                  </div>
                                 ) : (
                                   <>
                                     <CButton
@@ -537,25 +568,27 @@ const filteredLoans = loans.filter((loan) => {
                                       size="sm"
                                       className="me-2"
                                       // onClick={() => handleApprove(loan.loanId, loan.taskId, "Approved")}
-                                         onClick={() => handleAction(loan.loanId, loan.taskId, "Approved")}
+                                      onClick={() => handleAction(loan.loanId, loan.taskId, "Approved")}
+                                      disabled={loadingAction[loan.taskId]}                                    >
+                                      {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Approve"}
 
-                                    >
-                                      Approve
                                     </CButton>
                                     <CButton
                                       color="danger"
                                       size="sm"
                                       className="me-2"
                                       onClick={() => handleAction(loan.loanId, loan.taskId, "Rejected")}
-                                    >
-                                      Reject
+                                      disabled={loadingAction[loan.taskId]}                                    >
+
+                                      {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Reject"}
+
                                     </CButton>
                                     <CButton
                                       color="info"
                                       size="sm"
                                       // onClick={() => handleView(loan.id,loan.loadId,loan.taskId,loan.processId, loan.loanStatus)}
-                                   onClick={() => handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)}
-                                      >
+                                      onClick={() => handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)}
+                                    >
                                       View
                                     </CButton>
                                     {/* <CButton
