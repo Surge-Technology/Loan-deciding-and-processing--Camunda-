@@ -50,31 +50,31 @@ public class PaymentController {
 	@PostMapping("/start-payment")
 	public String startPaymentWorkflow(@RequestParam String payment,
 			@RequestBody LoanTransactionDetails loanTransactionDetails) {
- 
+
+		String status="";
 		if (!paymentFailure) {
 			System.out.println("Payment done");
-			return "Payment done";
+			status="success";
+
 		}
- 
 		else {
+			status="failure";
+		}
 		Map<String, Object> variables = new HashMap<>();
-		variables.put("paymentStatus", payment);
+		variables.put("paymentStatus", status);
 		variables.put("loanId", loanTransactionDetails.getLoanId());
 		variables.put("loanAmount", loanTransactionDetails.getLoanAmount());
 		variables.put("transactionAmount", loanTransactionDetails.getTransactionAmount());
 		variables.put("balanceAmount", loanTransactionDetails.getBalanceAmount());
 		variables.put("paymentType", loanTransactionDetails.getPaymentType());
 		variables.put("email", loanTransactionDetails.getEmail());
+		variables.put("paymentMethod", "Manual Pay");
  
 		ProcessInstanceEvent processInstance = zeebeClient.newCreateInstanceCommand()
 				.bpmnProcessId("payment_process").latestVersion().variables(variables).send().join();
- 
-		
-//		ProcessInstanceEvent processInstance = zeebeClient.newCreateInstanceCommand().bpmnProcessId("payment_process")
-//				.latestVersion().variables(variables).send().join();
- 
-		return "Workflow started with ID: " + processInstance.getProcessInstanceKey();
+
+
+		return "Payment process Initiated";
 	}
-	}
-	
+
 }

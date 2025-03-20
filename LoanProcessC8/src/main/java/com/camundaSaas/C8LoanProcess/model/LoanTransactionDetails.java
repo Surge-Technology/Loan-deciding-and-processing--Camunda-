@@ -25,6 +25,17 @@ public class LoanTransactionDetails {
 	private Long transactionAmount;
 	private Long balanceAmount;
 	private String email;
+
+	private String paymentMethod;
+
+	public String getPaymentMethod() {
+		return paymentMethod;
+	}
+
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
+
 	public String getEmail() {
 		return email;
 	}

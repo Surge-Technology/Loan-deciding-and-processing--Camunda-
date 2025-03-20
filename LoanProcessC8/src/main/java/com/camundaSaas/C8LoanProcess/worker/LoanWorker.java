@@ -167,6 +167,66 @@ public class LoanWorker {
 //					}
 //				}
 
+
+
+//				int month = 4;
+//				Integer installmentNo = 1;
+//				Double loanAmount = 50000.0; // Total Loan Amount
+//				Double installmentAmount = 10000.0; // Fixed Installment Amount
+//				Double annualInterestRate = 11.45; // Annual Interest Rate
+//				Double monthlyInterestRate = annualInterestRate / (100 * 12); // Convert to Monthly Interest Rate
+//				Double closingPrincipal = loanAmount;
+//
+//				for (int i = 0; i < 6; i++) {
+//					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+//
+//					// Set Installment Date
+//					LocalDate date = LocalDate.of(2024, month, 11);
+//					repaymentSchedule.setInstallmentNo(installmentNo);
+//					repaymentSchedule.setInstallmentDate(date);
+//					repaymentSchedule.setInstallmentAmount(installmentAmount);
+//
+//					// Calculate Interest on Remaining Balance
+//					Double interest = closingPrincipal * monthlyInterestRate;
+//					repaymentSchedule.setInterest(interest);
+//
+//					// Calculate Principal as Installment Amount - Interest
+//					Double principal = installmentAmount - interest;
+//					if (principal < 0) {
+//						principal = 0.0; // Avoid negative principal
+//					}
+//					repaymentSchedule.setPrincipal(principal);
+//
+//					// Update Closing Principal
+//					closingPrincipal -= principal;
+//					if (closingPrincipal < 0) {
+//						closingPrincipal = 0.0; // Ensure no negative balance
+//					}
+//					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+//
+//					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+//
+//					System.out.println("RepaymentSchedule : " + repaymentSchedule);
+//
+//					// API Call
+//					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+//					HttpHeaders headers1 = new HttpHeaders();
+//					headers1.setContentType(MediaType.APPLICATION_JSON);
+//					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+//
+//					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+//					Map body = mapResponseEntity.getBody();
+//
+//					// Increment for Next Installment
+//					month += 1;
+//					installmentNo += 1;
+//
+//					if (body != null) {
+//						System.out.println("RepaymentSchedule has been saved");
+//					}
+//				}
+
+
 				int month = 4;
 				Integer installmentNo = 1;
 				Double loanAmount = 50000.0; // Total Loan Amount
@@ -184,22 +244,26 @@ public class LoanWorker {
 					repaymentSchedule.setInstallmentDate(date);
 					repaymentSchedule.setInstallmentAmount(installmentAmount);
 
-					// Calculate Interest on Remaining Balance
-					Double interest = closingPrincipal * monthlyInterestRate;
+					// Calculate Interest on Remaining Balance (rounded to 2 decimal places)
+					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
 					repaymentSchedule.setInterest(interest);
 
-					// Calculate Principal as Installment Amount - Interest
+					// Calculate Principal as Installment Amount - Interest (rounded to 2 decimal places)
 					Double principal = installmentAmount - interest;
-					if (principal < 0) {
-						principal = 0.0; // Avoid negative principal
+					principal = Math.round(principal * 100.0) / 100.0;
+
+					// Adjust final installment if principal is more than remaining balance
+					if (principal > closingPrincipal) {
+						principal = closingPrincipal;
+						interest = installmentAmount - principal; // Adjust interest for last installment
 					}
+
 					repaymentSchedule.setPrincipal(principal);
 
-					// Update Closing Principal
+					// Update Closing Principal (rounded)
 					closingPrincipal -= principal;
-					if (closingPrincipal < 0) {
-						closingPrincipal = 0.0; // Ensure no negative balance
-					}
+					closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+
 					repaymentSchedule.setClosingPrincipal(closingPrincipal);
 
 					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);

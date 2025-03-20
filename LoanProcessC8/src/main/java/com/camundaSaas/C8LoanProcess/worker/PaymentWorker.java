@@ -174,6 +174,7 @@ public class PaymentWorker {
 			transaction.setBalanceAmount(parseLong(variables.get("balanceAmount")));
 			transaction.setPaymentType(safeString(variables.get("paymentType")));
 			transaction.setEmail(safeString(variables.get("email")));
+			transaction.setPaymentMethod(variables.get("paymentMethod").toString());
  
 			// ✅ Save transaction to the database
 			loanTransactionDetailsRepository.save(transaction);
