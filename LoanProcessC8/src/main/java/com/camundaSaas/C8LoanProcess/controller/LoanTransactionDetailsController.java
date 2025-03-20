@@ -1,6 +1,7 @@
 package com.camundaSaas.C8LoanProcess.controller;
 
 import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
+import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.LoanTransactionDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -124,5 +127,41 @@ public class LoanTransactionDetailsController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=transaction_details.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfBytes);
+    }
+
+    @CrossOrigin
+    @GetMapping("/loanTransaction/sendLoanClosureEmailWithAttachment/{loanAccountNumber}")
+    public String sendEmailWithPdf(@PathVariable String loanAccountNumber) {
+        String to = "makandarshaukat786@gmail.com";
+        String subject = "Loan Closure Confirmation – Final Loan Statement Attached";
+        String body = "Dear Customer,<br><br>\n" +
+                "\n" +
+                "We are pleased to inform you that your loan has been successfully closed. Please find attached the final loan statement for your reference.<br><br>\n" +
+                "\n" +
+                "The attached document provides a detailed breakdown of your loan transactions, including the total amount repaid, outstanding balance (if any), and other relevant details.<br><br>\n" +
+                "\n" +
+                "If you have any questions or require any further assistance, please do not hesitate to reach out to our support team.<br><br>\n" +
+                "\n" +
+                "Thank you for trusting us with your financial needs. We appreciate your business and look forward to serving you again in the future.<br><br>\n" +
+                "\n" +
+                "Best regards,<br>  \n" +
+                "Loan Processing Team<br>  \n" +
+                "Surge IT Technology<br>  \n" +
+                "7769979532\n";
+
+        List<LoanTransactionDetails> transactions =
+                loanTransactionDetailsService.getTransactionByAccountLoanNumber(loanAccountNumber);
+
+        if (transactions.isEmpty()) {
+            return "No loan transaction details found for the given loan account number.";
+        }
+
+        try {
+            emailService.sendLoanClosureEmailWithAttachment(to, subject, body, transactions);
+            return "Email with PDF sent successfully.";
+        } catch (MessagingException | IOException e) {
+            e.printStackTrace();
+            return "Error sending email: " + e.getMessage();
+        }
     }
 }

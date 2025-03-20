@@ -1,6 +1,7 @@
 package com.camundaSaas.C8LoanProcess.service;
 
 
+import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -23,6 +24,9 @@ public class EmailService {
     @Autowired
     private RepaymentScheduleService repaymentScheduleService;
 
+    @Autowired
+    private LoanTransactionDetailsService transactionDetailsService;
+
     public void sendSimpleEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
@@ -38,6 +42,28 @@ public class EmailService {
 
         // Generate PDF
         byte[] pdfBytes = repaymentScheduleService.generatePdf(schedules);
+
+        // Create an email message
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(body, true); // 'true' enables HTML content
+        helper.setFrom("shaukatmakandar786@gmail.com");
+
+        // Attach the PDF
+        helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
+
+        // Send the email
+        mailSender.send(message);
+    }
+
+    public void sendLoanClosureEmailWithAttachment(String to, String subject, String body, List<LoanTransactionDetails> loanTransactionDetails)
+            throws MessagingException, IOException {
+
+        // Generate PDF
+        byte[] pdfBytes = transactionDetailsService.generateTransactionPdf(loanTransactionDetails);
 
         // Create an email message
         MimeMessage message = mailSender.createMimeMessage();

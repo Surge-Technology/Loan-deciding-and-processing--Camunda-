@@ -3,6 +3,7 @@ package com.camundaSaas.C8LoanProcess.service;
 import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
 import com.camundaSaas.C8LoanProcess.Repository.RepaymentScheduleRepository;
 import com.camundaSaas.C8LoanProcess.model.Loan;
+import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.itextpdf.text.*;
