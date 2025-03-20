@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Swal from 'sweetalert2'
-import { useLocation,useNavigation } from "react-router-dom";
+import { useLocation,useNavigation ,useNavigate} from "react-router-dom";
 import axios from "axios";
 
 const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const location = useLocation();
   const nav = useLocation();
+  // const nav =useNavigate()
   const payload = location.state?.payload;
   const [cardDetails, setCardDetails] = useState({
     cardNumber: "",
@@ -53,8 +54,10 @@ const Payment = () => {
   };
 
   const handlePayment = () => {
+    console.log(payload,"payload from payment");
+    
     if (validateFields()) {
-      axios.post(`http://localhost:8080/start-payment?payment=failure`,payload)
+      axios.post(`http://localhost:8080/start-payment`,payload)
         .then((res) => {
           //   alert("Payment Processed Successfully!");
           Swal.fire({
@@ -64,9 +67,9 @@ const Payment = () => {
             showConfirmButton: true,
           })
         })
+        nav('/applicantdashboard')
     } 
     
-    nav('/applicantdashboard')
   };
 
   return (

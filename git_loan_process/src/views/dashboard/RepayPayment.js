@@ -46,28 +46,21 @@ const RepayPayment = ({ loanDetails, onClose, onSuccess }) => {
     }
 
     console.log('Payload:', payload)
-    axios
-      .post(`http://localhost:8080/loanTransaction/save`, payload)
-      .then((res) => {
-        setLoader(false);
-        console.log(res.data.transactionAmount, res.data.balanceAmount);
-        setTransactionAmount(res.data.transactionAmount);
-        setBalAmount(res.data.balanceAmount);
-        // Swal.fire({
-        //   position: 'center',
-        //   icon: 'success',
-        //   title: 'Successfully initiated repayment',
-        //   showConfirmButton: true,
-        // })
-        // .then(
-        //   // () => onSuccess(transactionAmount,balAmount)
-        // ) 
+    // axios
+    //   .post(`http://localhost:8080/loanTransaction/save`, payload)
+    //   .then((res) => {
+    //     setLoader(false);
+    //     console.log(res.data.transactionAmount, res.data.balanceAmount);
+    //     setTransactionAmount(res.data.transactionAmount);
+    //     setBalAmount(res.data.balanceAmount);
+       
         nav(`/payment`, { state: { payload } })
-      })
-      .catch((err) => {
-        console.error('Error initiating repayment:', err)
-        Swal.fire('Error occurred. Please try again later.', '', 'error')
-      })
+      // })
+      // .catch((err) => {
+      //   console.error('Error initiating repayment:', err)
+      //   Swal.fire('Error occurred. Please try again later.', '', 'error')
+      // })
+      // nav('/payment');
   }
 
 
