@@ -48,14 +48,11 @@ public class PaymentController {
  
 	@CrossOrigin
 	@PostMapping("/start-payment")
-	public String startPaymentWorkflow(@RequestParam String payment,
-			@RequestBody LoanTransactionDetails loanTransactionDetails) {
+	public String startPaymentWorkflow(@RequestBody LoanTransactionDetails loanTransactionDetails) {
 
 		String status="";
 		if (!paymentFailure) {
-			System.out.println("Payment done");
 			status="success";
-
 		}
 		else {
 			status="failure";
@@ -69,6 +66,7 @@ public class PaymentController {
 		variables.put("paymentType", loanTransactionDetails.getPaymentType());
 		variables.put("email", loanTransactionDetails.getEmail());
 		variables.put("paymentMethod", "Manual Pay");
+		variables.put("loanAccountNumber", loanTransactionDetails.getLoanAccountNumber());
  
 		ProcessInstanceEvent processInstance = zeebeClient.newCreateInstanceCommand()
 				.bpmnProcessId("payment_process").latestVersion().variables(variables).send().join();

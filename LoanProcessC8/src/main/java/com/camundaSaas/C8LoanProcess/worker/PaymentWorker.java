@@ -3,7 +3,8 @@ package com.camundaSaas.C8LoanProcess.worker;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
- 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Component;
@@ -171,11 +172,18 @@ public class PaymentWorker {
 			transaction.setTransactionStatus(safeString(variables.get("paymentStatus")));
 			transaction.setLoanAmount(parseLong(variables.get("loanAmount")));
 			transaction.setTransactionAmount(parseLong(variables.get("transactionAmount")));
-			transaction.setBalanceAmount(parseLong(variables.get("balanceAmount")));
+			transaction.setLoanAccountNumber(safeString(variables.get("loanAccountNumber")));
+
+			if(!variables.get("paymentStatus").equals("failure"))
+				transaction.setBalanceAmount(parseLong(variables.get("balanceAmount"))-parseLong(variables.get("transactionAmount")));
+			else
+				transaction.setBalanceAmount(parseLong(variables.get("balanceAmount")));
 			transaction.setPaymentType(safeString(variables.get("paymentType")));
 			transaction.setEmail(safeString(variables.get("email")));
 			transaction.setPaymentMethod(variables.get("paymentMethod").toString());
- 
+			String uanId= "UAN"+ UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+			transaction.setUanId(uanId);
+
 			// ✅ Save transaction to the database
 			loanTransactionDetailsRepository.save(transaction);
  
