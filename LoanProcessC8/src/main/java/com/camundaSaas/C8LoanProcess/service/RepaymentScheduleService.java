@@ -298,6 +298,115 @@ public class RepaymentScheduleService {
         return out.toByteArray();
     }
 
+    public byte[] generateLoanClosureReport(List<RepaymentSchedule> schedules) {
+        Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10, 10);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            // Report Header
+            Paragraph header = new Paragraph("Loan Closure Report", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16));
+            header.setAlignment(Element.ALIGN_CENTER);
+            document.add(header);
+            document.add(new Paragraph("Generated Date: " + LocalDate.now(), FontFactory.getFont(FontFactory.HELVETICA, 10)));
+            document.add(new Paragraph("Reference No: LCR-2025-001", FontFactory.getFont(FontFactory.HELVETICA, 10)));
+            document.add(new Paragraph(" "));
+
+            // Loan Summary Table
+            PdfPTable summaryTable = new PdfPTable(2);
+            summaryTable.setWidthPercentage(100);
+            summaryTable.setWidths(new int[]{3, 5});
+
+            summaryTable.addCell(getCell("LAN Number", true));
+            summaryTable.addCell(getCell(": LPCHE23452145874", false));
+            summaryTable.addCell(getCell("Borrower Name", true));
+            summaryTable.addCell(getCell(": John Doe", false));
+            summaryTable.addCell(getCell("Loan Amount", true));
+            summaryTable.addCell(getCell(": 50,000", false));
+            summaryTable.addCell(getCell("Interest Rate", true));
+            summaryTable.addCell(getCell(": 11.45%", false));
+            summaryTable.addCell(getCell("Tenure (Months)", true));
+            summaryTable.addCell(getCell(": 5", false));
+            summaryTable.addCell(getCell("Start Date", true));
+            summaryTable.addCell(getCell(": 05 May 2025", false));
+            summaryTable.addCell(getCell("Repayment Mode", true));
+            summaryTable.addCell(getCell(": CES", false));
+
+            document.add(summaryTable);
+            document.add(new Paragraph(" "));
+
+            // Compute closure details
+            boolean isLoanClosed = schedules.get(schedules.size() - 1).getClosingPrincipal() == 0;
+            LocalDate closureDate = isLoanClosed ? schedules.get(schedules.size() - 1).getInstallmentDate() : null;
+            double totalInterestPaid = schedules.stream().mapToDouble(RepaymentSchedule::getInterest).sum();
+
+            // Loan Closure Details
+            PdfPTable closureTable = new PdfPTable(2);
+            closureTable.setWidthPercentage(100);
+            closureTable.setWidths(new int[]{3, 5});
+
+            closureTable.addCell(getCell("Loan Closure Status", true));
+            closureTable.addCell(getCell(isLoanClosed ? ": YES" : ": NO", false));
+            closureTable.addCell(getCell("Loan Closure Date", true));
+            closureTable.addCell(getCell(closureDate != null ? ": " + closureDate.toString() : ": N/A", false));
+            closureTable.addCell(getCell("Total Interest Paid", true));
+            closureTable.addCell(getCell(": " + String.format("%.2f", totalInterestPaid), false));
+            closureTable.addCell(getCell("Final Settlement Amount", true));
+            closureTable.addCell(getCell(isLoanClosed ? ": " + schedules.get(schedules.size() - 1).getInstallmentAmount().toString() : ": N/A", false));
+            closureTable.addCell(getCell("Closure Method", true));
+            closureTable.addCell(getCell(": EMI Completion", false));
+
+            document.add(closureTable);
+            document.add(new Paragraph(" "));
+
+            // Repayment Schedule Table
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100);
+            table.setWidths(new int[]{2, 3, 3, 3, 3, 3});
+
+            String[] headers = {"Installment No", "Date", "Amount Paid", "Principal", "Interest", "Closing Principal"};
+            for (String headerText : headers) {
+                PdfPCell headerCell = new PdfPCell(new Phrase(headerText, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9)));
+                table.addCell(headerCell);
+            }
+
+            for (RepaymentSchedule schedule : schedules) {
+                table.addCell(new PdfPCell(new Phrase(String.valueOf(schedule.getInstallmentNo()))));
+                table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentDate().toString())));
+                table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentAmount().toString())));
+                table.addCell(new PdfPCell(new Phrase(schedule.getPrincipal().toString())));
+                table.addCell(new PdfPCell(new Phrase(schedule.getInterest().toString())));
+                table.addCell(new PdfPCell(new Phrase(schedule.getClosingPrincipal().toString())));
+            }
+            document.add(table);
+            document.add(new Paragraph(" "));
+
+            // Loan Closure Certificate (Only if Loan is Fully Paid)
+            if (isLoanClosed) {
+                Paragraph certificate = new Paragraph("\nCERTIFICATE OF LOAN CLOSURE\n", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                certificate.setAlignment(Element.ALIGN_CENTER);
+                document.add(certificate);
+                document.add(new Paragraph("This is to certify that the loan with LAN Number LPCHE23452145874 has been successfully closed as of " + closureDate + "."));
+                document.add(new Paragraph("No further dues are pending, and the borrower has fulfilled all financial obligations."));
+                document.add(new Paragraph("\nAuthorized Signatory: ___________"));
+            }
+
+            document.close();
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+        return out.toByteArray();
+    }
+
+    private PdfPCell getCell(String text, boolean isBold) {
+        Font font = isBold ? FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9) : FontFactory.getFont(FontFactory.HELVETICA, 9);
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        return cell;
+    }
+
+
     private static PdfPCell getCell(String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setBorder(Rectangle.NO_BORDER);

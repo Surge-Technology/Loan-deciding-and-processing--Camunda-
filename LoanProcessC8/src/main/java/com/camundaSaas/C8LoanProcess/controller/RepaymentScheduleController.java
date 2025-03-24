@@ -77,6 +77,23 @@ public class RepaymentScheduleController {
     }
 
     @CrossOrigin
+    @GetMapping("/downloadLoanClosureReport/{loanAccountNumber}")
+    public ResponseEntity<byte[]> downloadLoanClosureReport(@PathVariable String loanAccountNumber) {
+        List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+
+        if (schedules.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdfBytes = repaymentScheduleService.generateLoanClosureReport(schedules);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @CrossOrigin
     @GetMapping("/repaymentSchedule/sendEmailWithAttachment/{loanAccountNumber}")
     public String sendEmailWithPdf(@PathVariable String loanAccountNumber) {
         String to = "makandarshaukat786@gmail.com";
