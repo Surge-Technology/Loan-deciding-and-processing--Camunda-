@@ -67,6 +67,11 @@ public class LoanClosureNotification {
 
 		Map<String, Object> updatedVariables = new HashMap<>();
 		updatedVariables.put("LoanClosure", true);
+		
+		String from = "shaukatmakandar786@gmail.com";
+		String body = "Loan closure process have been completed";
+		
+		emailService.sendSimpleEmail(from, MANAGER_EMAIL, body);
 
 		client.newCompleteCommand(job.getKey()).variables(updatedVariables).send().join();
 		System.out.println("Loan Closure Job Completed.");
