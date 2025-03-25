@@ -1555,7 +1555,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
  
 	    System.out.println("Fetched tasks: " + userTasks);
  
-	    // Get extractedId from /data
 	    Map<String, Object> taskVariable = getTaskVariablesJson();
 	    String processInstanceId = (String) taskVariable.get("extractedId"); // ✅ Corrected Key
  

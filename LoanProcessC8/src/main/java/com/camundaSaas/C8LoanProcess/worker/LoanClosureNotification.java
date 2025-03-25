@@ -1,6 +1,8 @@
 package com.camundaSaas.C8LoanProcess.worker;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,25 +43,32 @@ public class LoanClosureNotification {
 
             String from = "shaukatmakandar786@gmail.com";
             
-            // Use StringBuilder for appending dynamic content
             StringBuilder emailContent = new StringBuilder();
             emailContent.append("Need to start closure process for the following loan accounts:\n\n");
-            
-            // Loop through applicants and append loan account numbers to email body
+           
             for (LoanApplicantDetails applicant : applicants) {
                 emailContent.append("Loan Account Number: ").append(applicant.getLoanAccountNumber()).append("\n");
             }
 
-            // Debug: print out the email content
             System.out.println("Mail Sending...");
-            System.out.println(emailContent.toString());  // Print the email content to verify
+            System.out.println(emailContent.toString()); 
             
-            // Send the email
+            
             emailService.sendSimpleEmail(from, MANAGER_EMAIL, emailContent.toString());
             System.out.println("Mail sent...");
         }
 
-        // Complete the job
         zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
     }
+    
+    @ZeebeWorker(name = "LoanClosure", type = "LoanClosure")
+	public void warnBeforeLegalAction(final JobClient client, final ActivatedJob job) {
+		System.out.println("Loan closure process started.....");
+
+		Map<String, Object> updatedVariables = new HashMap<>();
+		updatedVariables.put("LoanClosure", true);
+
+		client.newCompleteCommand(job.getKey()).variables(updatedVariables).send().join();
+		System.out.println("Loan Closure Job Completed.");
+	}
 }
