@@ -1256,7 +1256,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	public ResponseEntity<String> generateLoanPdf() {
 		List<Loan> loans = loanDetailsService.getAllLoans(); 
 		try {
-			String uploadDirectory = appConfig.getFileSystemPath();
+			String uploadDirectory = appConfig.getLoanPdfPath();
 			PdfWriter writer = new PdfWriter(uploadDirectory);
 			PdfDocument pdf = new PdfDocument(writer);
 			Document document = new Document(pdf);
