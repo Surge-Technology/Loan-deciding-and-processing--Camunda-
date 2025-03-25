@@ -130,6 +130,20 @@ public class LoanTransactionDetailsController {
     }
 
     @CrossOrigin
+    @GetMapping("/loanTransaction/download/loanAccountNumber/{loanAccountNumber}")
+    public ResponseEntity<byte[]> downloadTransactionByLoanAccountNumber(@PathVariable String loanAccountNumber) {
+        List<LoanTransactionDetails> transactions =
+                loanTransactionDetailsService.getTransactionByAccountLoanNumber(loanAccountNumber);
+
+        byte[] pdfBytes = loanTransactionDetailsService.generateTransactionPdf(transactions);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=transaction_details.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @CrossOrigin
     @GetMapping("/loanTransaction/sendLoanClosureEmailWithAttachment/{loanAccountNumber}")
     public String sendEmailWithPdf(@PathVariable String loanAccountNumber) {
         String to = "makandarshaukat786@gmail.com";
