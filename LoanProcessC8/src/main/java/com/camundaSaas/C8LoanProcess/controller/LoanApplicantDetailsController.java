@@ -83,7 +83,6 @@ import io.camunda.tasklist.exception.TaskListException;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
 
-
 @RestController
 @CrossOrigin
 public class LoanApplicantDetailsController {
@@ -111,7 +110,7 @@ public class LoanApplicantDetailsController {
 
 	@Autowired
 	private LoanDetailsService loanDetailsService;
-	
+
 	private Path uploadDirectory;
 
 	@Autowired
@@ -128,7 +127,7 @@ public class LoanApplicantDetailsController {
 	@Value("${zeebe.client.security.plaintext:true}")
 	private boolean isPlainText;
 
-	@Value("${zeebe.client.cloud.client-id:}") 
+	@Value("${zeebe.client.cloud.client-id:}")
 	private String cloudClientId;
 
 	@Value("${zeebe.client.cloud.client-secret:}")
@@ -139,7 +138,7 @@ public class LoanApplicantDetailsController {
 
 	@Value("${zeebe.client.cloud.cluster-id:}")
 	private String cloudClusterId;
-	@Value("${zeebe.client.broker.gateway-address:}") 
+	@Value("${zeebe.client.broker.gateway-address:}")
 	private String brokerGatewayAddress;
 
 	@Value("${zeebe.client.security.plaintext:true}")
@@ -147,7 +146,6 @@ public class LoanApplicantDetailsController {
 	private static final String SELF_MANAGED_URL = "http://localhost:8083";
 	private static final String SAAS_TASKLIST_URL = "https://bru-2.tasklist.camunda.io";
 
-	
 	private Map<String, Object> responseMap;
 	private String emailId;
 	private long loanAmount;
@@ -157,9 +155,9 @@ public class LoanApplicantDetailsController {
 	String loanStatus = "Pending";
 	private String processInstanceId;
 	private JsonNode rootNode;
-	
+
 	String clarificationDetails = "";
-	 private String loanType;
+	private String loanType;
 
 	@CrossOrigin
 	@PostMapping("/saveApplicantDetails")
@@ -190,7 +188,7 @@ public class LoanApplicantDetailsController {
 		loanAmount = rootNode.path("bankDetails").path("loanAmount").asLong();
 		loanType = rootNode.path("bankDetails").path("loanType").asText();
 		loanAccountNumber = generateLoanAccountNumber();
-		
+
 		Timestamp createdDate = new Timestamp(System.currentTimeMillis());
 
 		if (rootNode.has("Files")) {
@@ -270,20 +268,21 @@ public class LoanApplicantDetailsController {
 //		return task;
 //	}
 	@CrossOrigin
-		@GetMapping("/getAllTransaction")
-		public List<Map<String, Object>> getAllTransaction() {
-			List<LoanTransactionDetails> loantransactionDetails = loantransactionDetailsRepository.findAll();
-			List<Map<String, Object>> transactionList = new ArrayList<>();
-	 
-			for (LoanTransactionDetails details : loantransactionDetails) {
-				Map<String, Object> map = new HashMap<>();
-				map.put("accountNumber", details.getLoanAccountNumber());
-				map.put("balanceAmount", details.getBalanceAmount());
-				transactionList.add(map);
-			}
-			return transactionList;
+	@GetMapping("/getAllTransaction")
+	public List<Map<String, Object>> getAllTransaction() {
+		List<LoanTransactionDetails> loantransactionDetails = loantransactionDetailsRepository.findAll();
+		List<Map<String, Object>> transactionList = new ArrayList<>();
+
+		for (LoanTransactionDetails details : loantransactionDetails) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("accountNumber", details.getLoanAccountNumber());
+			map.put("balanceAmount", details.getBalanceAmount());
+			transactionList.add(map);
 		}
-	//cGetActiveFromSaas
+		return transactionList;
+	}
+
+	// cGetActiveFromSaas
 	@GetMapping("/getActivedTaskList1")
 
 	public List<Task> getActivedTaskList1() throws TaskListException {
@@ -298,14 +297,12 @@ public class LoanApplicantDetailsController {
 
 				.shouldReturnVariables().authentication(sa).build();
 
-		
-	
-		
 		List<Task> taskdtoList = client.getTasks(true, TaskState.CREATED, 50, true);
-		
+
 		return client.getTasks(true, TaskState.CREATED, 50, true);
 
 	}
+
 //	@CrossOrigin
 //	@GetMapping("/ManagerEnd")
 //	public Map<String, Object> managerEnd() throws TaskListException {
@@ -327,55 +324,53 @@ public class LoanApplicantDetailsController {
 	@CrossOrigin
 	@GetMapping("/ManagerEnd")
 	public Map<String, Object> managerEnd() throws TaskListException {
-	    // Get active tasks
-	    ResponseEntity<List<TaskDTO>> resp = getActiveTasksManager();
+		// Get active tasks
+		ResponseEntity<List<TaskDTO>> resp = getActiveTasksManager();
 
-	    // Extract task IDs safelyx
-	    List<String> taskIds = resp.getBody() != null 
-	        ? resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList()) 
-	        : new ArrayList<>();
+		// Extract task IDs safelyx
+		List<String> taskIds = resp.getBody() != null
+				? resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList())
+				: new ArrayList<>();
 
-	    // Initialize the response map
-	    Map<String, Object> customerReply = new HashMap<>();
-	    customerReply.put("taskIds", taskIds);
+		// Initialize the response map
+		Map<String, Object> customerReply = new HashMap<>();
+		customerReply.put("taskIds", taskIds);
 
-	    // Initialize Camunda Task Client
-	    CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
-	            SELF_MANAGED_URL, SAAS_TASKLIST_URL);
+		// Initialize Camunda Task Client
+		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
+				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
 
-	    // Complete tasks one by one using the existing completeTask method
-	    for (String taskId : taskIds) {
-	        LoanCustomerUtilities.completeTask(client, taskId);
-	    }
+		// Complete tasks one by one using the existing completeTask method
+		for (String taskId : taskIds) {
+			LoanCustomerUtilities.completeTask(client, taskId);
+		}
 
-	    return customerReply;
+		return customerReply;
 	}
 
-
-	
 	public ResponseEntity<List<TaskDTO>> getActiveTasksManager() throws TaskListException {
 		String user = "Manager";
 		System.out.println("user: " + user);
- 
+
 		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
 				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
- 
+
 		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
 				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
 				.shouldReturnVariables().authentication(sa).build();
- 
+
 		List<Task> userTasks = client.getTasks(true, // Use filters
 				TaskState.CREATED, // Only fetch created (active) tasks
 				50, // Limit results
 				true // Include task variables
 		).stream().filter(task -> user.equals(task.getAssignee())).collect(Collectors.toList());
- 
+
 		System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
- 
+
 		Map<String, Object> clarificationData = getClarificationDetails(); // Get clarification details
- 
+
 		List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
- 
+
 			LoanApplicantDetails loanDetails = loanApplicantRepository.findByProcessInstanceId(processInstanceId);
 			if (loanDetails == null) {
 				System.out.println("No loan details found for processInstanceId: " + processInstanceId);
@@ -386,9 +381,10 @@ public class LoanApplicantDetailsController {
 			return new TaskDTO(task.getId(), task.getName(), task.getAssignee(), processInstanceId,
 					task.getCreationTime(), loanDetails);
 		}).collect(Collectors.toList());
- 
+
 		return ResponseEntity.ok(taskDTOs);
-	}  
+	}
+
 	@CrossOrigin
 	@GetMapping("/calculateTenureInterest")
 	public Map<String, Object> calculateTenureAndInterest() throws TaskListException {
@@ -410,74 +406,57 @@ public class LoanApplicantDetailsController {
 			tenure = 48;
 			interestRate = 9.0;
 		}
- 
+
 		loanResponseMap.put("loanAmount", loanAmount);
 		loanResponseMap.put("tenure", tenure);
 		loanResponseMap.put("interestRate", interestRate);
 		loanResponseMap.put("loanAccountNumber", loanAccountNumber);
 		loanResponseMap.put("applicantName", applicantName);
- 
+
 		ResponseEntity<List<TaskDTO>> resp = getActiveTasks();
- 
+
 		List<String> taskIds = resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList());
 		Map<String, Object> customerReply = getClarificationDetails();
 		customerReply.put("taskIds", taskIds);
- 
+
 		loanResponseMap.put("customerReply", customerReply);
 		loanResponseMap.put("taskIds", taskIds);
 		return loanResponseMap;
 	}
+
 	@CrossOrigin
 	@GetMapping("/getActiveTask")
 	public ResponseEntity<List<TaskDTO>> getActiveTask(@RequestParam String user) throws TaskListException {
-	    
-		System.out.println("user"+user);
-	    SaasAuthentication sa = new SaasAuthentication(
-	        "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
-	        "2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh"
-	    );
 
-	    CamundaTaskListClient client = new CamundaTaskListClient.Builder()
-	        .taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
-	        .shouldReturnVariables()
-	        .authentication(sa)
-	        .build();
+		System.out.println("user" + user);
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
 
-	    List<Task> userTasks = client.getTasks(
-	        true, 
-	        TaskState.CREATED, 
-	        50, 
-	        true 
-	    ).stream()
-	    .filter(task -> user.equals(task.getAssignee()))
-	    .collect(Collectors.toList());
-	    System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
+				.shouldReturnVariables().authentication(sa).build();
 
-	    List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
-	      
-	        LoanApplicantDetails loanDetails = loanApplicantRepository
-	                .findByProcessInstanceId(processInstanceId);
+		List<Task> userTasks = client.getTasks(true, TaskState.CREATED, 50, true).stream()
+				.filter(task -> user.equals(task.getAssignee())).collect(Collectors.toList());
+		System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
 
-	        if (loanDetails == null) {
-	            System.out.println("No loan details found for processInstanceId: " + processInstanceId);
-	            loanDetails = new LoanApplicantDetails(); 
-	        } else {
-	            System.out.println("Loan details found: " + loanDetails);
-	        }
+		List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
 
-	        return new TaskDTO(
-	                task.getId(),            
-	                task.getName(),        
-	                task.getAssignee(),     
-	                processInstanceId,      
-	                task.getCreationTime(), 
-	                loanDetails       
-	        );
-	    }).collect(Collectors.toList());
+			LoanApplicantDetails loanDetails = loanApplicantRepository.findByProcessInstanceId(processInstanceId);
 
-	    return ResponseEntity.ok(taskDTOs);
+			if (loanDetails == null) {
+				System.out.println("No loan details found for processInstanceId: " + processInstanceId);
+				loanDetails = new LoanApplicantDetails();
+			} else {
+				System.out.println("Loan details found: " + loanDetails);
+			}
+
+			return new TaskDTO(task.getId(), task.getName(), task.getAssignee(), processInstanceId,
+					task.getCreationTime(), loanDetails);
+		}).collect(Collectors.toList());
+
+		return ResponseEntity.ok(taskDTOs);
 	}
-
 
 //	    // Transform response into required format
 //	    List<Map<String, Object>> formattedTasks = userTasks.stream().map(task -> {
@@ -553,223 +532,164 @@ public class LoanApplicantDetailsController {
 //	    return userTasks;
 //	}
 
-	
-	//initial
+	// initial
 	@CrossOrigin
 	@PostMapping("/InitialApprover")
-	public ResponseEntity<String> handleLoanApproval(
-	        @RequestBody String approval,
-	        @RequestParam String processInstanceId,
-	        @RequestParam String id) throws Exception {  // Change RequestParam type to String
+	public ResponseEntity<String> handleLoanApproval(@RequestBody String approval,
+			@RequestParam String processInstanceId, @RequestParam String id) throws Exception { // Change RequestParam
+																								// type to String
 
 		System.out.println(processInstanceId);
-	    System.out.println("Received Approval Data: " + approval);
-	    System.out.println("Received Task ID: " + id);
+		System.out.println("Received Approval Data: " + approval);
+		System.out.println("Received Task ID: " + id);
 
-	    // Parse JSON request body
-	    ObjectMapper objectMapper = new ObjectMapper();
-	    JsonNode rootNode = objectMapper.readTree(approval);
+		// Parse JSON request body
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(approval);
 
-	    // Extract InitialApprover
-	    String assignee = rootNode.path("InitialApprover").asText().trim();
+		// Extract InitialApprover
+		String assignee = rootNode.path("InitialApprover").asText().trim();
 
-	    System.out.println("Assignee: " + assignee);
+		System.out.println("Assignee: " + assignee);
 
-	    // Set the process variable
-	    zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-	            .variables(Map.of("InitialApprover", assignee))
-	            .send()
-	            .join();
-	    System.out.println("Process variable 'InitialApprover' set successfully.");
+		// Set the process variable
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
+				.variables(Map.of("InitialApprover", assignee)).send().join();
+		System.out.println("Process variable 'InitialApprover' set successfully.");
 
-	    CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
-	            SELF_MANAGED_URL, SAAS_TASKLIST_URL);
+		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
+				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
 
-	    LoanCustomerUtilities.completeTask(client, id);
+		LoanCustomerUtilities.completeTask(client, id);
 
-	    return ResponseEntity.ok("Task " + id + " completed successfully.");
+		return ResponseEntity.ok("Task " + id + " completed successfully.");
 	}
+
 //approvers
 	@CrossOrigin
 	@PostMapping("/UnderWriter")
-	public ResponseEntity<String> UnderWriterApprover(
-	        @RequestBody String approval,
+	public ResponseEntity<String> UnderWriterApprover(@RequestBody String approval,
 //	        @RequestParam String processInstanceId,
-	        @RequestParam String id) throws Exception {
- 
-	    System.out.println("Received Approval Data: " + approval);
+			@RequestParam String id) throws Exception {
+
+		System.out.println("Received Approval Data: " + approval);
 //	    System.out.println("Received Process Instance ID: " + processInstanceId);
-	    System.out.println("Received Task ID: " + id);
- 
-	    ObjectMapper objectMapper = new ObjectMapper();
-	    JsonNode rootNode = objectMapper.readTree(approval);
-	    String finalDecision = rootNode.path("Decision").asText().trim();
-	     
-	    if ("needClarification".equals(finalDecision)) {
-	        clarificationDetails = rootNode.path("clarificationDetails").asText("");
-	    }
-	    System.out.println("Final Decision: " + finalDecision);
-	    System.out.println("Clarification Details: " + clarificationDetails);
-	    Map<String, Object> variables = new HashMap<>();
-	    variables.put("Decision", finalDecision);
- 
-	    if (!clarificationDetails.isEmpty()) {
-	        variables.put("clarificationDetails", clarificationDetails);
-	    }
-	    System.out.println(variables);
- 
-	    zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-	            .variables(variables)
-	            .send()
-	            .join();
-	    System.out.println("Process variables set successfully.");
-	    CamundaTaskListClient client = LoanCustomerUtilities.getClient(
-	            cloudClientId,
-	            cloudClientSecret,
-	            cloudClusterId,
-	            SELF_MANAGED_URL,
-	            SAAS_TASKLIST_URL
-	    );
-	    LoanCustomerUtilities.completeTask(client, id);
-	    System.out.println("Task " + id + " completed successfully.");
-	    return ResponseEntity.ok("UnderWriter decision processed and task completed successfully.");
+		System.out.println("Received Task ID: " + id);
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(approval);
+		String finalDecision = rootNode.path("Decision").asText().trim();
+
+		if ("needClarification".equals(finalDecision)) {
+			clarificationDetails = rootNode.path("clarificationDetails").asText("");
+		}
+		System.out.println("Final Decision: " + finalDecision);
+		System.out.println("Clarification Details: " + clarificationDetails);
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("Decision", finalDecision);
+
+		if (!clarificationDetails.isEmpty()) {
+			variables.put("clarificationDetails", clarificationDetails);
+		}
+		System.out.println(variables);
+
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(variables).send().join();
+		System.out.println("Process variables set successfully.");
+		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
+				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
+		LoanCustomerUtilities.completeTask(client, id);
+		System.out.println("Task " + id + " completed successfully.");
+		return ResponseEntity.ok("UnderWriter decision processed and task completed successfully.");
 	}
- 
- 
-@CrossOrigin
+
+	@CrossOrigin
 	@PostMapping("/LegalApprover")
-	public ResponseEntity<String> LegalApprover(
-	        @RequestBody String approval,
-	        @RequestParam String processInstanceId,
-	        @RequestParam String id) throws Exception {
- 
-	    System.out.println("Received Approval Data: " + approval);
-	    System.out.println("Received Process Instance ID: " + processInstanceId);
-	    System.out.println("Received Task ID: " + id);
-	    ObjectMapper objectMapper = new ObjectMapper();
-	    JsonNode rootNode = objectMapper.readTree(approval);
-	    String finalDecision = rootNode.path("Decision").asText().trim();
-	    
- 
-	    if ("needClarification".equals(finalDecision)) {
-	        clarificationDetails = rootNode.path("clarificationDetails").asText("");
-	    }
-	    System.out.println("Final Decision: " + finalDecision);
-	    System.out.println("Clarification Details: " + clarificationDetails);
-	    Map<String, Object> variables = new HashMap<>();
-	    variables.put("Decision", finalDecision);
- 
-	    if (!clarificationDetails.isEmpty()) {
-	        variables.put("clarificationDetails", clarificationDetails);
-	    }
- 
-	    zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-	            .variables(variables)
-	            .send()
-	            .join();
-	    System.out.println("Process variables set successfully.");
- 
-	    CamundaTaskListClient client = LoanCustomerUtilities.getClient(
-	            cloudClientId,
-	            cloudClientSecret,
-	            cloudClusterId,
-	            SELF_MANAGED_URL,
-	            SAAS_TASKLIST_URL
-	    );
-	    LoanCustomerUtilities.completeTask(client, id);
-	    System.out.println("Task " + id + " completed successfully.");
- 
-	    return ResponseEntity.ok("Legal approval process completed successfully.");
+	public ResponseEntity<String> LegalApprover(@RequestBody String approval, @RequestParam String processInstanceId,
+			@RequestParam String id) throws Exception {
+
+		System.out.println("Received Approval Data: " + approval);
+		System.out.println("Received Process Instance ID: " + processInstanceId);
+		System.out.println("Received Task ID: " + id);
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(approval);
+		String finalDecision = rootNode.path("Decision").asText().trim();
+
+		if ("needClarification".equals(finalDecision)) {
+			clarificationDetails = rootNode.path("clarificationDetails").asText("");
+		}
+		System.out.println("Final Decision: " + finalDecision);
+		System.out.println("Clarification Details: " + clarificationDetails);
+		Map<String, Object> variables = new HashMap<>();
+		variables.put("Decision", finalDecision);
+
+		if (!clarificationDetails.isEmpty()) {
+			variables.put("clarificationDetails", clarificationDetails);
+		}
+
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(variables).send().join();
+		System.out.println("Process variables set successfully.");
+
+		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
+				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
+		LoanCustomerUtilities.completeTask(client, id);
+		System.out.println("Task " + id + " completed successfully.");
+
+		return ResponseEntity.ok("Legal approval process completed successfully.");
 	}
- 
+
 //clarification
 
-@CrossOrigin
-@GetMapping("/clarification")
-public Map<String, Object> clarificationDetails() throws TaskListException {
-    // Get active tasks
-    ResponseEntity<List<TaskDTO>> resp = getActiveTasks();
-    
-    // Extract task IDs from the task list
-    List<String> taskIds = resp.getBody().stream()
-        .map(TaskDTO::getTaskId)
-        .collect(Collectors.toList());
-
-    // Get existing clarification details
-    Map<String, Object> customerReply = getClarificationDetails();
-    
-    // Add task IDs to the response map
-    customerReply.put("taskIds", taskIds);
-    
-    return customerReply;
-}
-
-private Map<String, Object> getClarificationDetails() {
-    System.out.println(clarificationDetails);
-    System.out.println(loanType);
-    System.out.println(loanAccountNumber);
-    System.out.println(emailId);
-
-    Map<String, Object> customerReply = new HashMap<>();
-    customerReply.put("loanType", loanType);
-    customerReply.put("clarificationDetails", clarificationDetails);
-    customerReply.put("loanAccountNumber", loanAccountNumber);
-    customerReply.put("emailId", emailId);
-
-    return customerReply;
-}
+	@CrossOrigin
+	@GetMapping("/clarification")
+	public Map<String, Object> clarificationDetails() throws TaskListException {
+		ResponseEntity<List<TaskDTO>> resp = getActiveTasks();
+		List<String> taskIds = resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList());
+		Map<String, Object> customerReply = getClarificationDetails();
+		customerReply.put("taskIds", taskIds);
+		return customerReply;
+	}
+	private Map<String, Object> getClarificationDetails() {
+		System.out.println(clarificationDetails);
+		System.out.println(loanType);
+		System.out.println(loanAccountNumber);
+		System.out.println(emailId);
+		Map<String, Object> customerReply = new HashMap<>();
+		customerReply.put("loanType", loanType);
+		customerReply.put("clarificationDetails", clarificationDetails);
+		customerReply.put("loanAccountNumber", loanAccountNumber);
+		customerReply.put("emailId", emailId);
+		return customerReply;
+	}
 
 // Updated getActiveTask method
-public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
-	String user="customer";
-    System.out.println("user: " + user);
-
-    SaasAuthentication sa = new SaasAuthentication(
-        "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
-        "2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh"
-    );
-
-    CamundaTaskListClient client = new CamundaTaskListClient.Builder()
-        .taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
-        .shouldReturnVariables()
-        .authentication(sa)
-        .build();
-
-    List<Task> userTasks = client.getTasks(
-        true, // Use filters
-        TaskState.CREATED, // Only fetch created (active) tasks
-        50, // Limit results
-        true // Include task variables
-    ).stream()
-    .filter(task -> user.equals(task.getAssignee()))
-    .collect(Collectors.toList());
-
-    System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
-
-    Map<String, Object> clarificationData = getClarificationDetails(); // Get clarification details
-
-    List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
-
-        LoanApplicantDetails loanDetails = loanApplicantRepository.findByProcessInstanceId(processInstanceId);
-        if (loanDetails == null) {
-            System.out.println("No loan details found for processInstanceId: " + processInstanceId);
-            loanDetails = new LoanApplicantDetails();
-        } else {
-            System.out.println("Loan details found: " + loanDetails);
-        }
-
-        // Include clarification details in TaskDTO if needed
-        return new TaskDTO(
-            task.getId(),
-            task.getName(),
-            task.getAssignee(),
-            processInstanceId,
-            task.getCreationTime(),
-            loanDetails        );
-    }).collect(Collectors.toList());
-
-    return ResponseEntity.ok(taskDTOs);
-}
+	public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
+		String user = "customer";
+		System.out.println("user: " + user);
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
+				.shouldReturnVariables().authentication(sa).build();
+		List<Task> userTasks = client.getTasks(true,
+				TaskState.CREATED, 
+				50, 
+				true 
+		).stream().filter(task -> user.equals(task.getAssignee())).collect(Collectors.toList());
+		System.out.println("Task Assignees: " + userTasks.stream().map(Task::getAssignee).collect(Collectors.toList()));
+		Map<String, Object> clarificationData = getClarificationDetails(); // Get clarification details
+		List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
+			LoanApplicantDetails loanDetails = loanApplicantRepository.findByProcessInstanceId(processInstanceId);
+			if (loanDetails == null) {
+				System.out.println("No loan details found for processInstanceId: " + processInstanceId);
+				loanDetails = new LoanApplicantDetails();
+			} else {
+				System.out.println("Loan details found: " + loanDetails);
+			}
+			return new TaskDTO(task.getId(), task.getName(), task.getAssignee(), processInstanceId,
+					task.getCreationTime(), loanDetails);
+		}).collect(Collectors.toList());
+		return ResponseEntity.ok(taskDTOs);
+	}
 
 //	@GetMapping("/clarification")
 //	public Map clarificationDetails() {
@@ -786,38 +706,33 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 //		
 //		return customerReply;
 //	}
-@CrossOrigin
+	@CrossOrigin
 	@PostMapping("/clarification/{taskId}")
 	public ResponseEntity<String> clarificationTask(@PathVariable String taskId) throws TaskListException {
 		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
 				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
-
 		LoanCustomerUtilities.completeTask(client, taskId);
-
 		return ResponseEntity.ok("Task " + taskId + " completed successfully.");
 	}
-	//complete
+
+	// complete
 	@PostMapping("/completeTask/{taskId}")
 	public ResponseEntity<String> completeTask(@PathVariable String taskId) throws TaskListException {
 		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
 				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
-
 		LoanCustomerUtilities.completeTask(client, taskId);
-
 		return ResponseEntity.ok("Task " + taskId + " completed successfully.");
 	}
+
 	@CrossOrigin
 	@GetMapping("/ApplicantDashboard")
 	public Map<String, Object> getApplicantDashboard(@RequestParam String emailId) {
 		Map<String, Object> responseMap = new HashMap<>();
 		System.out.println("Fetching loan details for email: " + emailId);
-
 		List<LoanApplicantDetails> loanDetailsList = loanApplicantService.getAllLoanDetailsByEmail(emailId);
 		System.out.println("Retrieved Loan Details: " + loanDetailsList);
-
 		if (!loanDetailsList.isEmpty()) {
 			List<Map<String, Object>> loanDetailsResponseList = new ArrayList<>();
-
 			for (LoanApplicantDetails loanDetails : loanDetailsList) {
 				Map<String, Object> loanDetailsMap = new HashMap<>();
 				loanDetailsMap.put("applicantName", loanDetails.getApplicantName());
@@ -829,13 +744,11 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 				loanDetailsMap.put("balanceAmount", loanDetails.getBalanceAmount());
 				loanDetailsResponseList.add(loanDetailsMap);
 			}
-
 			responseMap.put("loanDetails", loanDetailsResponseList);
 		} else {
 			System.out.println("No loan details found for email: " + emailId);
 			responseMap.put("error", "No loan details found for the given email.");
 		}
-
 		return responseMap;
 	}
 
@@ -845,24 +758,20 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		List<JsonNode> response = new ArrayList<>();
 		ObjectMapper objectMapper = new ObjectMapper();
 		List<LoanApplicantDetails> jsonDataList = loanApplicantRepository.findAll();
-
 		for (LoanApplicantDetails jsonData : jsonDataList) {
 			try {
 				JsonNode dataNode = objectMapper.readTree(jsonData.getData());
-
 				ObjectNode combinedNode = objectMapper.createObjectNode();
 				combinedNode.put("id", jsonData.getId());
 				combinedNode.put("emailId", jsonData.getEmailId());
 				combinedNode.put("loanAccountNumber", jsonData.getLoanAccountNumber());
-				combinedNode.put("createdDate",
-						jsonData.getCreatedDate() != null ? jsonData.getCreatedDate().toString() : null);
+				combinedNode.put("createdDate",jsonData.getCreatedDate() != null ? jsonData.getCreatedDate().toString() : null);
 				combinedNode.put("loanStatus", jsonData.getLoanStatus());
 				combinedNode.put("loanType", jsonData.getLoanType());
 				combinedNode.put("loanAmount", jsonData.getLoanAmount());
 				combinedNode.put("applicantName", jsonData.getApplicantName());
-				// combinedNode.put("balanceAmount", balanceAmount);
+				//combinedNode.put("balanceAmount", balanceAmount);
 				combinedNode.setAll((ObjectNode) dataNode);
-
 				response.add(combinedNode);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -877,16 +786,13 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		int age = (int) responseMap.get("age");
 		double annualIncome = (double) responseMap.get("annualIncome");
 		int cibilScore = calculateCibilScore(age, annualIncome);
-
 		return cibilScore;
 	}
-
 	public static int calculateCibilScore(int age, double annualIncome) {
 		int ageScore = getAgeScore(age);
 		int incomeScore = getIncomeScore(annualIncome);
 		return (ageScore + incomeScore) / 2;
 	}
-
 	private static int getAgeScore(int age) {
 		if (age >= 18 && age <= 25) {
 			return 300;
@@ -901,7 +807,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		}
 		return 300;
 	}
-
 	private static int getIncomeScore(double annualIncome) {
 		if (annualIncome < 500000) {
 			return 300;
@@ -926,7 +831,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@GetMapping("/getApplicantData/{id}")
 	public ResponseEntity<JsonNode> getApplicantData(@PathVariable Long id) {
 		Optional<LoanApplicantDetails> jsonData = loanApplicantRepository.findById(id);
-
 		if (jsonData.isPresent()) {
 			try {
 				ObjectMapper objectMapper = new ObjectMapper();
@@ -935,103 +839,25 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			} catch (IOException e) {
 				e.printStackTrace();
 				return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-
 			}
 		} else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
 	}
-
-//	@PostMapping("/InitialApprover")
-//	public ResponseEntity<String> handleLoanApproval(
-//	        @RequestBody String approval,
-//	        @RequestParam String processInstanceId) throws Exception {
-//
-//	    System.out.println("Received Approval Data: " + approval);
-//
-//	    ObjectMapper objectMapper = new ObjectMapper();
-//	    JsonNode rootNode = objectMapper.readTree(approval);
-//	    String finalDecision = rootNode.path("InitialApprover").asText();
-//	    System.out.println("Setting InitialApprover to: " + finalDecision);
-//
-//	    zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-//	            .variables(Map.of("InitialApprover", finalDecision.trim()))
-//	            .send()
-//	            .join();
-//	    System.out.println("Process variable 'InitialApprover' set successfully.");
-//
-//	    String selfManagedTaskListUrl = "http://localhost:8083";
-//	    SimpleAuthentication simpleAuthentication = new SimpleAuthentication("demo", "demo");
-//
-//	    CamundaTaskListClient client = new CamundaTaskListClient.Builder()
-//	            .taskListUrl(selfManagedTaskListUrl)
-//	            .shouldReturnVariables()
-//	            .authentication(simpleAuthentication)
-//	            .build();
-//
-//	    Task task = client.getTask(processInstanceId);
-//	   
-//	    String taskId = task.getId();
-//	    System.out.println(task.getId());
-//	    
-//	    client.completeTask(taskId, new HashMap<>());
-//	    System.out.println("atsk Completed");
-//	    
-//	    return ResponseEntity.ok("Loan approval process completed successfully.");
-//	}
-
-//	@PostMapping("/InitialApprover")
-//	public ResponseEntity<String> handleLoanApproval(@RequestBody String approval,
-//			@RequestParam String processInstanceId) throws Exception {
-//
-//		System.out.println("Received Approval Data: " + approval);
-//
-//		ObjectMapper objectMapper = new ObjectMapper();
-//		JsonNode rootNode = objectMapper.readTree(approval);
-//		String finalDecision = rootNode.path("InitialApprover").asText();
-//		System.out.println("Setting InitialApprover to: " + finalDecision);
-//
-//		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-//				.variables(Map.of("InitialApprover", finalDecision.trim())).send().join();
-//		System.out.println("Process variable 'InitialApprover' set successfully.");
-//
-//		String selfManagedTaskListUrl = "http://localhost:8083";
-//		SimpleAuthentication simpleAuthentication = new SimpleAuthentication("demo", "demo");
-//
-//		CamundaTaskListClient client = new CamundaTaskListClient.Builder().taskListUrl(selfManagedTaskListUrl)
-//				.shouldReturnVariables().authentication(simpleAuthentication).build();
-//
-//		List<Task> tasks = client.getTasks(true, TaskState.CREATED, 100);
-//
-//		Task task = tasks.get(0);
-//		String taskId = task.getId();
-//		System.out.println("Task ID: " + taskId);
-//		
-//		 //  client.claim(taskId, "demo");
-//		   System.out.println("task cliamed successfully");
-//		   Map<String, Object> variablesMap = new HashMap<>();
-//		client.completeTask(taskId, variablesMap);
-//		System.out.println("Task completed successfully.");
-//
-//		return ResponseEntity.ok("Loan approval process completed successfully.");
-//	}
 	@CrossOrigin
 	@PostMapping("/emailSenderClarification")
 	public String emailSenderClarification() throws JsonMappingException, JsonProcessingException {
-
 		String to = emailId;
 		String subject = "Clarification Needed";
 		String body = "Dear Customer,\n\n"
 				+ "We need additional clarification regarding your loan application. Specifically, we require the following details:\n"
-				// + "- " + clarificationDetails + "\n\n"
+				 + "- " + clarificationDetails + "\n\n"
 				+ "Please provide the necessary information by visiting the following link: "
 				+ "http://localhost:3003/#/file\n\n" + "Thank you for your prompt attention to this matter.\n\n";
 		System.out.println(body);
 		System.out.println(to);
-
-		 emailService.sendSimpleEmail(to, subject, body);
+		emailService.sendSimpleEmail(to, subject, body);
 		System.out.println("mail sent");
-
 		return "mail Sent";
 	}
 
@@ -1058,7 +884,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		String body = "We regret to inform you that your loan application has not been approved. "
 				+ "Please contact our support team for further details.";
 		System.out.println(body);
-//		emailService.sendSimpleEmail(to, subject, body);
+		emailService.sendSimpleEmail(to, subject, body);
 		return "Email Sent Successfully";
 	}
 
@@ -1104,7 +930,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@DeleteMapping("/delete/{id}")
 	public ResponseEntity<String> deleteFile(@PathVariable Long id) {
 		boolean isDeleted = fileService.deleteFileById(id);
-
 		if (isDeleted) {
 			return ResponseEntity.ok("File with ID " + id + " deleted successfully.");
 		} else {
@@ -1116,9 +941,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@DeleteMapping("/deleteMultiple")
 	public ResponseEntity<String> deleteMultipleFiles(@RequestParam("documentCategory") String documentCategory,
 			@RequestParam("emailId") String emailId) {
-
 		boolean isDeleted = fileService.deleteFilesByCategoryAndEmail(emailId, documentCategory);
-
 		if (isDeleted) {
 			return ResponseEntity.ok("All files corresponding to the category and emailId deleted successfully.");
 		} else {
@@ -1158,17 +981,14 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"files.zip\"").body(resource);
 	}
+
 	@CrossOrigin
 	@GetMapping("/download-all")
 	public ResponseEntity<Resource> downloadAllFiles() {
 		try {
-			
-			
 			Path uploadDirectory = Paths.get(appConfig.getFileSystemPath()).resolve("all-files.zip");
-
 			try (FileOutputStream fos = new FileOutputStream(uploadDirectory.toFile());
 					ZipOutputStream zipOut = new ZipOutputStream(fos)) {
-
 				File directory = new File(appConfig.getFileSystemPath());
 				File[] files = directory.listFiles();
 				if (files != null) {
@@ -1177,7 +997,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 							try (FileInputStream fis = new FileInputStream(file)) {
 								ZipEntry zipEntry = new ZipEntry(file.getName());
 								zipOut.putNextEntry(zipEntry);
-
 								byte[] buffer = new byte[1024];
 								int length;
 								while ((length = fis.read(buffer)) >= 0) {
@@ -1191,19 +1010,15 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			Resource resource = new FileSystemResource(uploadDirectory.toFile());
 			return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"all-files.zip\"")
 					.body(resource);
-
 		} catch (IOException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 		}
 	}
 
-
-
 	@CrossOrigin
 	@PostMapping("/save")
 	public LoanTransactionDetails saveTranscation(@RequestBody LoanTransactionDetails obj,
-												  @RequestParam String loanAccountNumber) {
-
+			@RequestParam String loanAccountNumber) {
 		System.out.println(loanAccountNumber);
 		System.out.println("loan amount: " + obj.getDate());
 		System.out.println("account" + obj.getLoanAccountNumber());
@@ -1220,21 +1035,18 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		System.out.println("print1" + obj.getLoanAccountNumber());
 		double balanceamount = detail.getBalanceAmount();
 		LoanApplicantDetails loanDetail = loanApplicantRepository.findByLoanAccountNumber(loanAccountNumber);
-
 		System.out.println("json data-----" + loanDetail.getData());
 		loanApplicantRepository.saveJson(loanDetail.getData(), loanDetail.getEmailId(), loanAccountNumber,
 				loanDetail.getCreatedDate(), loanDetail.getLoanStatus(), loanDetail.getLoanType(),
 				loanDetail.getLoanAmount(), loanDetail.getApplicantName(),
 				obj.getLoanAmount() - obj.getTransactionAmount(), loanDetail.getProcessInstanceId());
-
 		loanApplicantRepository.delete(loanDetail);
 		String to = emailId;
 		String subject = "Loan Management Report";
 		String body = "Dear User, please find the attached loan report details. Your paid amount is " + balanceamount;
-
 		System.out.println("to--" + to);
 		System.out.println("subject" + subject);
-		// emailService.sendSimpleEmail(to, subject, body);
+		emailService.sendSimpleEmail(to, subject, body);
 
 		System.out.println("Email sent to: " + to);
 		return loantransactionDetailsRepository.save(detail);
@@ -1254,7 +1066,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@CrossOrigin
 	@GetMapping("/loans/pdf")
 	public ResponseEntity<String> generateLoanPdf() {
-		List<Loan> loans = loanDetailsService.getAllLoans(); 
+		List<Loan> loans = loanDetailsService.getAllLoans();
 		try {
 			String uploadDirectory = appConfig.getLoanPdfPath();
 			PdfWriter writer = new PdfWriter(uploadDirectory);
@@ -1263,7 +1075,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			document.add(new Paragraph("Loan Management Report").setTextAlignment(TextAlignment.CENTER).setFontSize(22)
 					.setBold().setMarginBottom(20).setFontColor(ColorConstants.DARK_GRAY));
 			float[] columnWidths = { 1f, 2f, 2f, 2f, 1f, 1f, 2f };
-			Table table = new Table(columnWidths); 
+			Table table = new Table(columnWidths);
 			table.addCell(createStyledHeaderCell("Loan ID"));
 			table.addCell(createStyledHeaderCell("UAN Number"));
 			table.addCell(createStyledHeaderCell("Loan Account Number"));
@@ -1285,7 +1097,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 					.setTextAlignment(TextAlignment.RIGHT).setFontSize(8).setFontColor(ColorConstants.GRAY));
 			document.close();
 			return ResponseEntity.ok("PDF report has been successfully generated at: " + uploadDirectory);
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			return ResponseEntity.status(500).body("Error generating PDF report.");
@@ -1294,46 +1105,37 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 
 	private Cell createStyledCell(String content) {
 		Paragraph paragraph = new Paragraph(content).setTextAlignment(TextAlignment.CENTER).setFontSize(10);
-
-		return new Cell().add(paragraph) 
-				.setBackgroundColor(ColorConstants.WHITE) 
-				.setFontColor(ColorConstants.BLACK) 
+		return new Cell().add(paragraph).setBackgroundColor(ColorConstants.WHITE).setFontColor(ColorConstants.BLACK)
 				.setPadding(5);
 	}
+
 	private Cell createStyledHeaderCell(String content) {
 		Paragraph paragraph = new Paragraph(content).setTextAlignment(TextAlignment.CENTER).setFontSize(12).setBold();
-		return new Cell().add(paragraph) 
-				.setBackgroundColor(ColorConstants.BLUE) 
-				.setFontColor(ColorConstants.WHITE)
+		return new Cell().add(paragraph).setBackgroundColor(ColorConstants.BLUE).setFontColor(ColorConstants.WHITE)
 				.setPadding(10);
 	}
+
 	@CrossOrigin
 	@PostMapping("/customerAcknowledgement/{taskId}")
-    public Map<String, Object> customerAcknowledgement(@RequestBody String approval,@PathVariable String taskId) throws Exception {
-        Map<String, Object> customerReply = new HashMap<>();
-        
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = objectMapper.readTree(approval);
-
-        String assignee = rootNode.path("customer").asText().trim();
-        System.out.println("Assigning task to: " + assignee);
-
-        zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
-                .variables(Map.of("customer", assignee))
-                .send()
-                .join();
-        CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
+	public Map<String, Object> customerAcknowledgement(@RequestBody String approval, @PathVariable String taskId)
+			throws Exception {
+		Map<String, Object> customerReply = new HashMap<>();
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(approval);
+		String assignee = rootNode.path("customer").asText().trim();
+		System.out.println("Assigning task to: " + assignee);
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(Map.of("customer", assignee))
+				.send().join();
+		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
 				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
-
 		LoanCustomerUtilities.completeTask(client, taskId);
-        System.out.println("Process variable 'Customer' set successfully.");
+		System.out.println("Process variable 'Customer' set successfully.");
 		return customerReply;
-    }
+	}
 
 	@CrossOrigin
 	@PostMapping("/calculateTenureInterestSaveData")
 	public ResponseEntity<Map<String, Object>> calculateAndSaveLoan() {
-
 		int tenure;
 		double interestRate;
 		if (loanAmount <= 100000) {
@@ -1352,9 +1154,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			tenure = 48;
 			interestRate = 9.0;
 		}
-
 		String loanValue = String.valueOf(loanAmount);
-
 		Loan loan = new Loan();
 		loan.setTenure(tenure);
 		loan.setLoanAmount(loanValue);
@@ -1363,9 +1163,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		loan.setUanNumber(uanNumber);
 		loan.setLoanAccountNumber(loanAccountNumber);
 		loan.setLoanStatus(loanStatus);
-
 		Loan savedLoan = loanDetailsService.saveLoan(loan);
-
 		Map<String, Object> response = new HashMap<>();
 		response.put("loanId", savedLoan.getLoanId());
 		response.put("loanAmount", savedLoan.getLoanAmount());
@@ -1374,17 +1172,15 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		response.put("uanNumber", uanNumber);
 		response.put("loanStatus", loanStatus);
 		response.put("loanAccountNumber", loanAccountNumber);
-
 		System.out.println(response);
-
 		return ResponseEntity.ok(response);
 	}
+
 	@CrossOrigin
 	@GetMapping("/updateStatusApproved")
 	@Transactional
 	public String updateStatus() {
 		LoanApplicantDetails detail = loanApplicantRepository.findByLoanAccountNumber(loanAccountNumber);
-
 		if (detail == null) {
 			return "Loan applicant not found";
 		}
@@ -1398,9 +1194,7 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			return "Failed to generate JSON: " + e.getMessage();
 		}
 		loanApplicantRepository.updateLoanStatus(loanAccountNumber, "Approved", validJsonString);
-
 		loanStatus = "Approved";
-
 		return "Status updated successfully";
 	}
 
@@ -1409,7 +1203,6 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 	@Transactional
 	public String updateStatusDisbursed() {
 		LoanApplicantDetails detail = loanApplicantRepository.findByLoanAccountNumber(loanAccountNumber);
-
 		if (detail == null) {
 			return "Loan applicant not found";
 		}
@@ -1423,150 +1216,106 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 			return "Failed to generate JSON: " + e.getMessage();
 		}
 		loanApplicantRepository.updateLoanStatus(loanAccountNumber, "Disbursed", validJsonString);
-
 		loanStatus = "Disbursed";
-
 		return "Status updated successfully";
 	}
+
 	@GetMapping("/getAssignedTaskByAssignee/{assigneeName}")
-
 	public List<Task> getAssignedTaskByAssignee(@PathVariable String assigneeName) throws TaskListException {
-//		SaasAuthentication sa = new SaasAuthentication("jiIaOU5bGP1HJbyR3jZ.bhqsiCpTMTZZ", // Client ID or Token Key
-//				"wz0YxMw.oapyIi48t8aUrqOMXfubR9953gBuwa8cMqMG-595cyhM16wPAhNIKdJf" // Client Secret or Token Secret
-//		);
-		  SaasAuthentication sa = new SaasAuthentication(
-			        "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
-			        "2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh"
-			    );
-
-
-		CamundaTaskListClient client = new CamundaTaskListClient.Builder().authentication(sa)
-				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8") // Correct
-																										// taskList URL
-				.build();
-
-		System.out.println("Client Initialized: " + client);
-
-		List<Task> assigneeTasks = client.getAssigneeTasks(assigneeName, TaskState.CREATED, 50, true);
-
-		System.out.println("Active tasks: " + assigneeTasks);
-		return assigneeTasks;
-
-	}
-	@CrossOrigin
-	@GetMapping("/getAssignedTask/{processName}/{adminName}")
-
-	public List<Map<String, Object>> getAssignedTask(@PathVariable String processName, @PathVariable String adminName)
-			throws TaskListException {
-
-		  SaasAuthentication sa = new SaasAuthentication(
-			        "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
-			        "2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh"
-			    );
-
-		CamundaTaskListClient client = new CamundaTaskListClient.Builder().authentication(sa)
-
-				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8/").build();
-
-		List<Task> assigneeTasks = client.getAssigneeTasks(adminName, TaskState.CREATED, 50, true);
-
-//		return assigneeTasks;
-		 return assigneeTasks.stream().map(task -> 
-         task.getVariables().stream()
-             .collect(Collectors.toMap(var -> var.getName(), var -> var.getValue()))
-     ).collect(Collectors.toList());
-
-}
-	@GetMapping("/getAssignedTaskUnderWriter/{processName}/{adminName}")
-	 
-	public List<Task> getAssignedTaskUnderWriter(@PathVariable String processName, @PathVariable String adminName)
-			throws TaskListException {
- 
 		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
 				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
- 
 		CamundaTaskListClient client = new CamundaTaskListClient.Builder().authentication(sa)
- 
-				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8/").build();
- 
-		List<Task> assigneeTasks = client.getAssigneeTasks(adminName, TaskState.CREATED, 50, true);
-		JsonFileWriter.writeTasksToJsonFile(assigneeTasks);
- 
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8") // taskList URL
+				.build();
+		System.out.println("Client Initialized: " + client);
+		List<Task> assigneeTasks = client.getAssigneeTasks(assigneeName, TaskState.CREATED, 50, true);
+		System.out.println("Active tasks: " + assigneeTasks);
 		return assigneeTasks;
 	}
-	
+
+	@CrossOrigin
+	@GetMapping("/getAssignedTask/{processName}/{adminName}")
+	public List<Map<String, Object>> getAssignedTask(@PathVariable String processName, @PathVariable String adminName)
+			throws TaskListException {
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder().authentication(sa)
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8/").build();
+		List<Task> assigneeTasks = client.getAssigneeTasks(adminName, TaskState.CREATED, 50, true);
+		return assigneeTasks.stream()
+				.map(task -> task.getVariables().stream()
+						.collect(Collectors.toMap(var -> var.getName(), var -> var.getValue())))
+				.collect(Collectors.toList());
+	}
+
+	@GetMapping("/getAssignedTaskUnderWriter/{processName}/{adminName}")
+	public List<Task> getAssignedTaskUnderWriter(@PathVariable String processName, @PathVariable String adminName)
+			throws TaskListException {
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder().authentication(sa)
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8/").build();
+		List<Task> assigneeTasks = client.getAssigneeTasks(adminName, TaskState.CREATED, 50, true);
+		JsonFileWriter.writeTasksToJsonFile(assigneeTasks);
+		return assigneeTasks;
+	}
+
 	@GetMapping("/data")
-	    public Map<String, Object> getTaskVariablesJson() {
-	        Map<String, Object> variablesMap = new HashMap<>();
-	        ObjectMapper objectMapper = new ObjectMapper();
- 
-	        try {
-	            File jsonFile = new File("assigned_tasks.json");
-	            JsonNode rootNode = objectMapper.readTree(jsonFile);
- 
-	            if (rootNode.isArray() && rootNode.size() > 0) {
-	                JsonNode firstTask = rootNode.get(0); 
-	            
-	                JsonNode variablesNode = firstTask.get("variables");
-	                if (variablesNode != null && variablesNode.isArray() && variablesNode.size() > 0) {
-	                  
-	                    String fullId = variablesNode.get(0).get("id").asText();
-	                    String numericId = fullId.split("-")[0];
-	                    variablesMap.put("extractedId", numericId);
-	                    for (JsonNode variable : variablesNode) {
-	                        String name = variable.get("name").asText();
-	                        JsonNode valueNode = variable.get("value");
- 
-	                        if (valueNode.isNumber()) {
-	                            variablesMap.put(name, valueNode.asDouble());
-	                        } else if (valueNode.isArray()) {
-	                            variablesMap.put(name, objectMapper.convertValue(valueNode, String[].class));
-	                        } else {
-	                            variablesMap.put(name, valueNode.asText());
-	                        }
-	                    }
-	                }
-	            }
- 
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	            variablesMap.put("error", "Failed to read JSON file.");
-	        }
-	        return variablesMap;
-	    }
- 
-@GetMapping("/test")
+	public Map<String, Object> getTaskVariablesJson() {
+		Map<String, Object> variablesMap = new HashMap<>();
+		ObjectMapper objectMapper = new ObjectMapper();
+		try {
+			File jsonFile = new File("assigned_tasks.json");
+			JsonNode rootNode = objectMapper.readTree(jsonFile);
+			if (rootNode.isArray() && rootNode.size() > 0) {
+				JsonNode firstTask = rootNode.get(0);
+				JsonNode variablesNode = firstTask.get("variables");
+				if (variablesNode != null && variablesNode.isArray() && variablesNode.size() > 0) {
+					String fullId = variablesNode.get(0).get("id").asText();
+					String numericId = fullId.split("-")[0];
+					variablesMap.put("extractedId", numericId);
+					for (JsonNode variable : variablesNode) {
+						String name = variable.get("name").asText();
+						JsonNode valueNode = variable.get("value");
+						if (valueNode.isNumber()) {
+							variablesMap.put(name, valueNode.asDouble());
+						} else if (valueNode.isArray()) {
+							variablesMap.put(name, objectMapper.convertValue(valueNode, String[].class));
+						} else {
+							variablesMap.put(name, valueNode.asText());
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			variablesMap.put("error", "Failed to read JSON file.");
+		}
+		return variablesMap;
+	}
+
+	@GetMapping("/test")
 	public ResponseEntity<List<TaskDTO>> getActiveTasksUnderWriter() throws TaskListException {
-	    String user = "UnderWriter";
-	    System.out.println("user: " + user);
- 
-	    SaasAuthentication sa = new SaasAuthentication(
-	            "U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
-	            "2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
- 
-	    CamundaTaskListClient client = new CamundaTaskListClient.Builder()
-	            .taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
-	            .shouldReturnVariables().authentication(sa).build();
- 
-	    List<Task> userTasks = client.getTasks(true, TaskState.CREATED, 50, true)
-	            .stream()
-	            .filter(task -> user.equals(task.getAssignee()))
-	            .collect(Collectors.toList());
- 
-	    System.out.println("Fetched tasks: " + userTasks);
- 
-	    Map<String, Object> taskVariable = getTaskVariablesJson();
-	    String processInstanceId = (String) taskVariable.get("extractedId"); // ✅ Corrected Key
- 
-	    System.out.println("Extracted processInstanceId: " + processInstanceId);
- 
-	    List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
-	        LoanApplicantDetails loanApplicantDetails = loanApplicantRepository.findByProcessInstanceId(processInstanceId);
- 
-	        return new TaskDTO(task.getId(), task.getName(), task.getAssignee(), processInstanceId, task.getCreationTime(), loanApplicantDetails);
-	    }).collect(Collectors.toList());
- 
-	    return ResponseEntity.ok(taskDTOs);
+		String user = "UnderWriter";
+		System.out.println("user: " + user);
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
+				.shouldReturnVariables().authentication(sa).build();
+		List<Task> userTasks = client.getTasks(true, TaskState.CREATED, 50, true).stream()
+				.filter(task -> user.equals(task.getAssignee())).collect(Collectors.toList());
+		System.out.println("Fetched tasks: " + userTasks);
+		Map<String, Object> taskVariable = getTaskVariablesJson();
+		String processInstanceId = (String) taskVariable.get("extractedId"); // ✅ Corrected Key
+		System.out.println("Extracted processInstanceId: " + processInstanceId);
+		List<TaskDTO> taskDTOs = userTasks.stream().map(task -> {
+			LoanApplicantDetails loanApplicantDetails = loanApplicantRepository
+					.findByProcessInstanceId(processInstanceId);
+			return new TaskDTO(task.getId(), task.getName(), task.getAssignee(), processInstanceId,
+					task.getCreationTime(), loanApplicantDetails);
+		}).collect(Collectors.toList());
+		return ResponseEntity.ok(taskDTOs);
 	}
 
 	@CrossOrigin
@@ -1575,10 +1324,10 @@ public ResponseEntity<List<TaskDTO>> getActiveTasks() throws TaskListException {
 		Loan loan = loanDetailsService.getLoanByAccountNumber(accountNumber);
 		return ResponseEntity.status(HttpStatus.OK).body(loan);
 	}
+
 	@PostMapping("/loan/saveLoan")
 	public ResponseEntity<Loan> saveLoan(@RequestBody Loan loan) {
 		Loan savedLoan = loanDetailsService.saveLoan(loan);
 		return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
 	}
-
 }
