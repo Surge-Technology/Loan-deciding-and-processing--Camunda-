@@ -1,5 +1,7 @@
 package com.camundaSaas.C8LoanProcess.controller;
 
+import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
+import com.camundaSaas.C8LoanProcess.model.Loan;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class RepaymentScheduleController {
@@ -21,6 +24,9 @@ public class RepaymentScheduleController {
     private RepaymentScheduleService repaymentScheduleService;
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private LoanDetailsRepository loanDetailsRepository;
 
     @CrossOrigin
     @PostMapping("/repaymentSchedule/save")
@@ -86,6 +92,28 @@ public class RepaymentScheduleController {
         }
 
         byte[] pdfBytes = repaymentScheduleService.generateLoanClosureReport(schedules);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    @CrossOrigin
+    @GetMapping("/downloadComplianceAndAuditReport/{loanAccountNumber}")
+    public ResponseEntity<byte[]> downloadComplianceAndAuditReport(@PathVariable String loanAccountNumber) {
+        List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+
+        Optional<Loan> loanDetails = loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
+        if (schedules.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if(loanDetails.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+//        byte[] pdfBytes = repaymentScheduleService.generateLoanClosureReport(schedules);
+        byte[] pdfBytes = repaymentScheduleService.generateComplianceAuditReport(loanDetails.get(), schedules);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
