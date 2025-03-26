@@ -1038,6 +1038,9 @@ public class LoanApplicantDetailsController {
 		loan.setUanNumber(uanNumber);
 		loan.setLoanAccountNumber(loanAccountNumber);
 		loan.setLoanStatus(loanStatus);
+
+		LocalDate localDate = LocalDate.now().plusMonths(1).withDayOfMonth(10);
+		loan.setBillDate(localDate);
 		Loan savedLoan = loanDetailsService.saveLoan(loan);
 		Map<String, Object> response = new HashMap<>();
 		response.put("loanId", savedLoan.getLoanId());
