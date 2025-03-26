@@ -19,15 +19,9 @@ public class LoanClosureController {
 	@CrossOrigin
 	@GetMapping("/loanClosure")
 	public String loanClosure() {
-
 		ProcessInstanceEvent processInstanceEvent = zeebeClient.newCreateInstanceCommand().bpmnProcessId("LoanClosure")
 				.latestVersion().variables("").send().join();
-
 		processInstanceId = String.valueOf(processInstanceEvent.getProcessInstanceKey());
-
 		return processInstanceId + "Process Instance Started Successfully";
 	}
-	
-	
-	
 }

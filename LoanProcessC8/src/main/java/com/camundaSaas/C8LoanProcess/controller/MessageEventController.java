@@ -3,20 +3,15 @@ package com.camundaSaas.C8LoanProcess.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
-import com.camundaSaas.C8LoanProcess.model.TaskDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,7 +23,6 @@ import io.camunda.tasklist.dto.Task;
 import io.camunda.tasklist.dto.TaskState;
 import io.camunda.tasklist.exception.TaskListException;
 import io.camunda.zeebe.client.ZeebeClient;
-import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
 
 @RestController
 public class MessageEventController {
@@ -126,6 +120,7 @@ public class MessageEventController {
 		client.completeTask(taskId, map);
 		return "task Completed";
 	}
+	
 
 //	@CrossOrigin
 //	@GetMapping("/getActiveTask")

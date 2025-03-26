@@ -24,7 +24,9 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.camundaSaas.C8LoanProcess.AppConfig;
 import com.camundaSaas.C8LoanProcess.JsonFileWriter;
 import com.camundaSaas.C8LoanProcess.Repository.LoanApplicantRepository;
@@ -71,6 +74,7 @@ import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.property.TextAlignment;
+
 import io.camunda.tasklist.CamundaTaskListClient;
 import io.camunda.tasklist.auth.SaasAuthentication;
 import io.camunda.tasklist.dto.Task;
@@ -1225,4 +1229,59 @@ public class LoanApplicantDetailsController {
 		Loan savedLoan = loanDetailsService.saveLoan(loan);
 		return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
 	}
+	
+	private String taskId;
+	
+	@GetMapping("/loanTermModification")
+
+	public List<Task> getActivedTaskList() throws TaskListException {
+
+		String user = "Manager";
+
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
+
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
+
+				.shouldReturnVariables().authentication(sa).build();
+		List<Task> taskdtoList = client.getTasks(true, TaskState.CREATED, 50, true);
+		System.out.println(taskdtoList.get(0));
+		Task task = taskdtoList.get(0);
+		 taskId = task.getId();
+
+		return client.getTasks(true, TaskState.CREATED, 50, true);
+	}
+
+	@GetMapping("/loanTermModificationComplete")
+	public String completeTask(@RequestBody String loanTerm, @RequestParam String processInstanceId)
+			throws TaskListException, JsonMappingException, JsonProcessingException {
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode rootNode = objectMapper.readTree(loanTerm);
+
+		String assignee = rootNode.path("loanTerm").asText().trim();
+
+		System.out.println("Assignee: " + assignee);
+
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(Map.of("loanTerm", assignee))
+				.send().join();
+		System.out.println("Process variable 'loanTerm' set successfully.");
+		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
+
+				"2NKLsUvxfCy7B83YD5GTlo4Vw~pKwzgQd72n9_U4NpYUbpPlghYQ_ttg8y3KYCKh");
+
+		CamundaTaskListClient client = new CamundaTaskListClient.Builder()
+
+				.taskListUrl("https://bru-2.tasklist.camunda.io/1a8d8e18-4054-4bd2-afad-6f2adf8c58b8")
+
+				.shouldReturnVariables().authentication(sa).build();
+
+		Map<String, Object> map = new HashMap<>();
+		client.completeTask(taskId, map);
+		return "task Completed";
+	}
+	
 }
