@@ -50,7 +50,7 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(body, true); // 'true' enables HTML content
-        helper.setFrom("shaukatmakandar786@gmail.com");
+        helper.setFrom("balamanchari@gmail.com");
 
         // Attach the PDF
         helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
@@ -72,7 +72,7 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(body, true); // 'true' enables HTML content
-        helper.setFrom("shaukatmakandar786@gmail.com");
+        helper.setFrom("balamanchari@gmail.com");
 
         // Attach the PDF
         helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
@@ -86,7 +86,7 @@ public class EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("shaukatmakandar786@gmail.com");
+        message.setFrom("balamanchari@gmail.com");
 
         mailSender.send(message);
         System.out.println("Confirmation mail has been sent...!");
@@ -97,7 +97,7 @@ public class EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("shaukatmakandar786@gmail.com");
+        message.setFrom("balamanchari@gmail.com");
 
         mailSender.send(message);
         System.out.println("AutoPay Failure mail has been sent...!");

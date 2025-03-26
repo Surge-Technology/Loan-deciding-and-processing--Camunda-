@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,15 +60,16 @@ public class MessageEventController {
 	private static final String SAAS_TASKLIST_URL = "https://bru-2.tasklist.camunda.io";
 
 	@CrossOrigin
-	@GetMapping("/startMessage")
-	public String test(@RequestBody Map<String, Object> variables) {
-		System.out.println(variables);
-
-		zeebeClient.newPublishMessageCommand().messageName("messageStart").correlationKey("").variables(variables)
-				.send().join();
-
-		return "Process returned Successfully";
-	}
+		@PostMapping("/startMessage")
+		public String test(@RequestBody Map<String, Object> variables) {
+			System.out.println(variables);
+	 
+//			zeebeClient.newPublishMessageCommand().messageName("messageStart").correlationKey("").variables(variables)
+//					.send().join();
+	 
+			zeebeClient.newCreateInstanceCommand().bpmnProcessId("Process_0uh0bap").latestVersion().variables("").send().join();
+			return "Process returned Successfully";
+		}
 
 	@GetMapping("/getActivedTasks")
 

@@ -153,7 +153,7 @@ public class LoanApplicantDetailsController {
 	private final Map<String, Object> loanResponseMap = new HashMap<>();
 	private String loanAccountNumber;
 	private String applicantName;
-	String loanStatus = "Pending";
+	 String loanStatus = "Pending";
 	private String processInstanceId;
 	private JsonNode rootNode;
 	String clarificationDetails = "";
@@ -199,7 +199,8 @@ public class LoanApplicantDetailsController {
 		applicationData.put("id", generatedId);
 		applicationData.put("emailId", emailId);
 		applicationData.put("loanAccountNumber", loanAccountNumber);
-		applicationData.put("createdDate", createdDate);
+		applicationData.put("createdDate", createdDate); 
+		String loanStatus = "Pending";
 		applicationData.put("loanStatus", loanStatus);
 		applicationData.put("loanType", loanType);
 		applicationData.put("loanAmount", loanAmount);

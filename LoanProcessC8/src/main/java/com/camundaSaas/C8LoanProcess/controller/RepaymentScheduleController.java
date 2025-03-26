@@ -124,7 +124,7 @@ public class RepaymentScheduleController {
     @CrossOrigin
     @GetMapping("/repaymentSchedule/sendEmailWithAttachment/{loanAccountNumber}")
     public String sendEmailWithPdf(@PathVariable String loanAccountNumber) {
-        String to = "makandarshaukat786@gmail.com";
+        String to = "camerongre1@gmail.com";
         String subject = "Repayment Schedule for Your Loan – Important Information";
         String body = "Dear Customer,<br><br>\n" +
                 "\n" +
