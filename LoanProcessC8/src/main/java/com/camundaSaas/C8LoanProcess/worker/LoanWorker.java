@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
+import com.camundaSaas.C8LoanProcess.service.EmailService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpEntity;
@@ -27,6 +29,9 @@ public class LoanWorker {
 	ZeebeClient zeebeClient;
 	
 	RestTemplate restTemplate= new RestTemplate();
+	
+	@Autowired
+	EmailService emailService;
 
 	@ZeebeWorker(name = "Persist Customer Information", type = "collection")
 	public void handlePersistCustomerInformation(final JobClient client, final ActivatedJob job) {
@@ -115,6 +120,18 @@ public class LoanWorker {
 	@ZeebeWorker(name = "Loan Status Update", type = "Loan Status Update")
 	public void LoanStatusUpdateDisbursement(final JobClient client, final ActivatedJob job) {
 	    Map<String, Object> variableasmap = job.getVariablesAsMap();
+	    zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
+	}
+	
+	
+	
+	@ZeebeWorker(name = "LoanTermApprovalNotification", type = "LoanTermApprovalNotification")
+	public void LoanTermApprovalNotification(final JobClient client, final ActivatedJob job) {
+	    Map<String, Object> variableasmap = job.getVariablesAsMap();
+	    String from = "shaukatmakandar786@gmail.com";
+	    String to = "shaukatmakandar786@gmail.com";
+	    String body = "Loan Term Approval Notification";
+	    emailService.sendSimpleEmail(from, to, body);
 	    zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
 	}
 	

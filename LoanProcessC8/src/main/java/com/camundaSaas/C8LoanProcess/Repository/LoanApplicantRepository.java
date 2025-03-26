@@ -38,4 +38,7 @@ public interface LoanApplicantRepository extends JpaRepository<LoanApplicantDeta
 
 	LoanApplicantDetails findByProcessInstanceId(String processInstanceId);
 
+
+	List<LoanApplicantDetails> findByBalanceAmountAndLoanStatusNot(long l, String string);
+
 }
