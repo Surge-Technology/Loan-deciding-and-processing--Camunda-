@@ -57,8 +57,7 @@ public class LoanScheduler {
         if(isAutoPayFail){
 
             for (Loan loan : loansDueToday) {
-
-                String to = "makandarshaukat786@gmail.com";
+            	String to ="camerongre1@gmail.com";
                 String subject = "AutoPay Failure Notification - Payment Bounced";
                 String body = "Dear Customer,\n\n"
                         + "We regret to inform you that your recent loan payment attempt via AutoPay has failed due to Insufficient Balance.\n\n"
@@ -67,7 +66,7 @@ public class LoanScheduler {
                         // + "- Payment Date: " + paymentDate + "\n"
                         + "- Loan Account Number: " + loan.getLoanAccountNumber() + "\n\n"
                         + "To avoid any penalties or service disruptions, we kindly request you to make the payment manually at your earliest convenience.\n\n"
-                        + "You can review your loan details and make a payment by visiting the following link: http://localhost:3003/#/file\n\n"
+                        + "You can review your loan details and make a payment by visiting the following link: http://localhost:3003/#/loginPage\n\n"
                         + "If you believe this is an error, please contact our support team immediately.\n\n"
                         + "Best Regards,\nLoan Management Team";
 
@@ -82,7 +81,7 @@ public class LoanScheduler {
                 transaction.setTransactionAmount(10000L);
                 transaction.setBalanceAmount(Long.parseLong(loan.getLoanAmount()));
                 transaction.setPaymentType("bank_transfer");
-                transaction.setEmail("makandarshaukat786@gmail.com");
+                transaction.setEmail("camerongre1@gmail.com");
                 transaction.setPaymentMethod("Auto Pay");
                 transaction.setLoanAccountNumber(loan.getLoanAccountNumber());
                 transaction.setUanId(uanId);
@@ -94,7 +93,7 @@ public class LoanScheduler {
 
             for (Loan loan : loansDueToday) {
 
-                String to = "makandarshaukat786@gmail.com";
+                String to ="camerongre1@gmail.com";
                 String subject = "Loan Payment Confirmation";
                 String body = "Dear Customer,\n\n"
                         + "We are pleased to inform you that your loan payment has been successfully received.\n\n"
@@ -103,7 +102,7 @@ public class LoanScheduler {
                         // + "- Payment Date: " + paymentDate + "\n"
                         + "- Loan Account Number: " + loan.getLoanAccountNumber() + "\n\n"
                         + "Thank you for your timely payment.\n\n"
-                        + "Please check all information by visiting the following link:http://localhost:3003/#/file\n\n"
+                        
                         + "Best Regards,\nLoan Management Team";
 
                 emailService.sendPaymentConfirmationEmail(to, subject, body);
@@ -117,7 +116,7 @@ public class LoanScheduler {
                 transaction.setTransactionAmount(10000L);
                 transaction.setBalanceAmount(Long.parseLong(loan.getLoanAmount()) - 10000L);
                 transaction.setPaymentType("bank_transfer");
-                transaction.setEmail("makandarshaukat786@gmail.com");
+                transaction.setEmail("camerongre1@gmail.com");
                 transaction.setPaymentMethod("Auto Pay");
                 transaction.setLoanAccountNumber(loan.getLoanAccountNumber());
                 transaction.setUanId(uanId);
@@ -144,7 +143,7 @@ public class LoanScheduler {
             List<Loan> loansDueSoon = loanDetailsRepository.findByBillDate(today);
 
             for (Loan loan : loansDueSoon) {
-                String to = "makandarshaukat786@gmail.com"; // Fetch actual customer email
+                String to ="camerongre1@gmail.com"; // Fetch actual customer email
                 String subject = "Upcoming Loan Payment Reminder";
                 String body = "Dear Customer,\n\n"
                         + "This is a reminder that your loan payment is due on **" + loan.getBillDate() + "**.\n\n"
@@ -177,7 +176,7 @@ public class LoanScheduler {
 
             for (Loan loan : loansDueToday) {
 
-                String to = "makandarshaukat786@gmail.com";
+            	String to ="camerongre1@gmail.com";
                 String subject = "AutoPay Failure Notification - Payment Bounced";
                 String body = "Dear Customer,\n\n"
                         + "We regret to inform you that your recent loan payment attempt via AutoPay has failed due to a bounced transaction.\n\n"
@@ -186,7 +185,7 @@ public class LoanScheduler {
                         // + "- Payment Date: " + paymentDate + "\n"
                         + "- Loan Account Number: " + loan.getLoanAccountNumber() + "\n\n"
                         + "To avoid any penalties or service disruptions, we kindly request you to make the payment manually at your earliest convenience.\n\n"
-                        + "You can review your loan details and make a payment by visiting the following link: http://localhost:3003/#/file\n\n"
+                        + "You can review your loan details and make a payment by visiting the following link: http://localhost:3003/#/loginPage\n\n"
                         + "If you believe this is an error, please contact our support team immediately.\n\n"
                         + "Best Regards,\nLoan Management Team";
 

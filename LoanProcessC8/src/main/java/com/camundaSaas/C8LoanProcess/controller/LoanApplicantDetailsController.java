@@ -163,7 +163,7 @@ public class LoanApplicantDetailsController {
 	@PostMapping("/saveApplicantDetails")
 	public ResponseEntity<Map<String, Object>> saveJson(@RequestBody String data) throws IOException {
 		ProcessInstanceEvent processInstance = zeebeClient.newCreateInstanceCommand()
-				.bpmnProcessId("Loan_Application_C8").latestVersion().send().join();
+				.bpmnProcessId("Loan_Application").latestVersion().send().join();
 		processInstanceId = String.valueOf(processInstance.getProcessInstanceKey());
 		rootNode = objectMapper.readTree(data);
 		String dobString = rootNode.path("personalData").path("personalInfo").path("dob").asText();
@@ -1050,6 +1050,7 @@ public class LoanApplicantDetailsController {
 		response.put("uanNumber", uanNumber);
 		response.put("loanStatus", loanStatus);
 		response.put("loanAccountNumber", loanAccountNumber);
+		response.put("billDate", localDate);
 		System.out.println(response);
 		return ResponseEntity.ok(response);
 	}
@@ -1240,7 +1241,7 @@ public class LoanApplicantDetailsController {
 
 	public List<Task> getActivedTaskList() throws TaskListException {
 
-		String user = "Manager";
+		String user = "LoanOfficer";
 
 		SaasAuthentication sa = new SaasAuthentication("U_L~ogg51nWrF_z4fLbAVFQS3aZ~GQIB",
 
@@ -1258,7 +1259,7 @@ public class LoanApplicantDetailsController {
 
 		return client.getTasks(true, TaskState.CREATED, 50, true);
 	}
-
+@CrossOrigin
 	@GetMapping("/loanTermModificationComplete")
 	public String completeTask(@RequestBody String loanTerm, @RequestParam String processInstanceId)
 			throws TaskListException, JsonMappingException, JsonProcessingException {

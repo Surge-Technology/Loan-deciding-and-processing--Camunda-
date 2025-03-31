@@ -32,7 +32,7 @@ public class LoanClosureNotification {
     @Autowired
     private EmailService emailService;
 
-    private static final String MANAGER_EMAIL = "balamanchari@gmail.com";
+    private static final String MANAGER_EMAIL = "camerongre1@gmail.com";
 
     @ZeebeWorker(name = "ClosureNotification", type = "ClosureNotification")
     public void checkAndSendEmail(final JobClient client, final ActivatedJob job) {
