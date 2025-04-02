@@ -55,6 +55,7 @@ import com.camundaSaas.C8LoanProcess.model.FileEntity;
 import com.camundaSaas.C8LoanProcess.model.Loan;
 import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
 import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
+import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.camundaSaas.C8LoanProcess.model.TaskDTO;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.FileService;
@@ -1054,6 +1055,8 @@ public class LoanApplicantDetailsController {
 		System.out.println(response);
 		return ResponseEntity.ok(response);
 	}
+	
+	
 
 	@CrossOrigin
 	@GetMapping("/updateStatusApproved")
@@ -1261,7 +1264,7 @@ public class LoanApplicantDetailsController {
 	}
 @CrossOrigin
 	@GetMapping("/loanTermModificationComplete")
-	public String completeTask(@RequestBody String loanTerm, @RequestParam String processInstanceId)
+	public String completeTask1(@RequestBody String loanTerm)
 			throws TaskListException, JsonMappingException, JsonProcessingException {
 
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -1288,5 +1291,33 @@ public class LoanApplicantDetailsController {
 		client.completeTask(taskId, map);
 		return "task Completed";
 	}
-	
+//
+//private List<RepaymentScheduleDetailsDto> generateRepaymentSchedule(double loanAmount, double interestRate, int tenure, String loanAccountNumber) {
+//    List<RepaymentScheduleDetailsDto> scheduleList = new ArrayList<>();
+//    double monthlyInterestRate = (interestRate / 100) / 12;
+//    double emi = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenure)) /
+//                 (Math.pow(1 + monthlyInterestRate, tenure) - 1);
+//    double balance = loanAmount;
+//    
+//    for (int i = 1; i <= tenure; i++) {
+//        double interest = balance * monthlyInterestRate;
+//        double principal = emi - interest;
+//        balance -= principal;
+//        
+//        RepaymentScheduleDetailsDto installment = new RepaymentScheduleDetailsDto();
+//        installment.setInstallmentNo(i);
+//        installment.setInstallmentDate(LocalDate.now().plusMonths(i));
+//        installment.setInstallmentAmount(emi);
+//        installment.setPrincipal(principal);
+//        installment.setInterest(interest);
+//        installment.setClosingPrincipal(Math.max(0, balance));
+//        installment.setLoanAccountNumber(loanAccountNumber);
+//        installment.setTenure(tenure);
+//        
+//        scheduleList.add(installment);
+//    }
+//    return scheduleList;
+//}
+
+
 }

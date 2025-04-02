@@ -1,26 +1,39 @@
 package com.camundaSaas.C8LoanProcess.controller;
 
-import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
-import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
-import com.camundaSaas.C8LoanProcess.service.EmailService;
-import com.camundaSaas.C8LoanProcess.service.LoanTransactionDetailsService;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import javax.mail.MessagingException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.mail.MessagingException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import com.camundaSaas.C8LoanProcess.model.Loan;
+import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
+import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
+import com.camundaSaas.C8LoanProcess.service.EmailService;
+import com.camundaSaas.C8LoanProcess.service.LoanDetailsService;
+import com.camundaSaas.C8LoanProcess.service.LoanTransactionDetailsService;
 
 @RestController
 public class LoanTransactionDetailsController {
 
     @Autowired
     private LoanTransactionDetailsService loanTransactionDetailsService;
+    
+    @Autowired
+    private LoanDetailsService loanDetailsService;
 
     @Autowired
     private EmailService emailService;
@@ -178,4 +191,6 @@ public class LoanTransactionDetailsController {
             return "Error sending email: " + e.getMessage();
         }
     }
+    
+
 }

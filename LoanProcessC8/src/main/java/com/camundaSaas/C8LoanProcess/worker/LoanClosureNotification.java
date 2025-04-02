@@ -32,7 +32,6 @@ public class LoanClosureNotification {
     @Autowired
     private EmailService emailService;
 
-    private static final String MANAGER_EMAIL = "camerongre1@gmail.com";
 
     @ZeebeWorker(name = "ClosureNotification", type = "ClosureNotification")
     public void checkAndSendEmail(final JobClient client, final ActivatedJob job) {
@@ -41,7 +40,8 @@ public class LoanClosureNotification {
         if (!applicants.isEmpty()) {
             System.out.println("Applicants Data+++++++++++" + applicants);
 
-            String from = "";
+            String from = "balamanchari@gmail.com";
+            String to = "camerongre1@gmail.com";
             
             StringBuilder emailContent = new StringBuilder();
             emailContent.append("Need to start closure process for the following loan accounts:\n\n");
@@ -54,7 +54,7 @@ public class LoanClosureNotification {
             System.out.println(emailContent.toString()); 
             
             
-            emailService.sendSimpleEmail(from, MANAGER_EMAIL, emailContent.toString());
+            emailService.sendSimpleEmail(from, to, emailContent.toString());
             System.out.println("Mail sent...");
         }
 
@@ -69,9 +69,10 @@ public class LoanClosureNotification {
 		updatedVariables.put("LoanClosure", true);
 		
 		String from = "balamanchari@gmail.com";
+		String to = "camerongre1@gmail.com";
 		String body = "Loan closure process have been completed";
 		
-		emailService.sendSimpleEmail(from, MANAGER_EMAIL, body);
+		emailService.sendSimpleEmail(from, to, body);
 
 		client.newCompleteCommand(job.getKey()).variables(updatedVariables).send().join();
 		System.out.println("Loan Closure Job Completed.");
