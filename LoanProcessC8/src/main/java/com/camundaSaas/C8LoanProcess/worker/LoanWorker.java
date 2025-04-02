@@ -32,16 +32,64 @@ public class LoanWorker {
 	
 	@Autowired
 	EmailService emailService;
-
-	@ZeebeWorker(name = "Persist Customer Information", type = "collection")
-	public void handlePersistCustomerInformation(final JobClient client, final ActivatedJob job) {
-		List<String> users = Arrays.asList("UnderWriter", "LegalApprover");
-
-		Map<String, Object> variables = new HashMap<>();
-		variables.put("assigneeList", users);
-		client.newCompleteCommand(job.getKey()).variables(variables).send().join();
-	}
 	
+	  @ZeebeWorker(name = "Persist Customer Information", type = "collection")
+	    public void handlePersistCustomerInformation(final JobClient client, final ActivatedJob job) {
+	   
+	        List<Map<String, String>> assigneeList = Arrays.asList(
+	            Map.of("role", "UnderWriter", "email", "balamanchari@gmail.com"),
+	            Map.of("role", "LegalApprover", "email", "manjla@gmail.com")
+	        );
+
+	        Map<String, Object> variables = new HashMap<>();
+	        variables.put("assigneeList", assigneeList); 
+
+
+	        client.newCompleteCommand(job.getKey()).variables(variables).send().join();
+	    }
+
+	    @ZeebeWorker(name = "NotificationForUser", type = "NotificationForUser")
+	    public void notificationForUser(final JobClient client, final ActivatedJob job) {
+	        Map<String, Object> variables = job.getVariablesAsMap();
+	        Map<String, String> assignee = (Map<String, String>) variables.get("assignee"); 
+
+	        
+	        System.out.println("+++++++++++++++++++++++++++++++++++++++++++");
+	        System.out.println("Assignee"+assignee);
+	        String role = assignee.get("role");
+	        String email = assignee.get("email");
+
+	        sendNotification(email, role);
+
+	        client.newCompleteCommand(job.getKey()).send().join();
+	    }
+
+	    private void sendNotification(String email, String role) {
+	        System.out.println("Sending notification to: " + email + " for role: " + role);
+	        // Integrate with Email/SMS notification service here
+	    }
+	
+
+//	@ZeebeWorker(name = "Persist Customer Information", type = "collection")
+//	public void handlePersistCustomerInformation(final JobClient client, final ActivatedJob job) {
+//		List<String> users = Arrays.asList("UnderWriter", "LegalApprover");
+//
+//		Map<String, Object> variables = new HashMap<>();
+//		variables.put("assigneeList", users);
+//		client.newCompleteCommand(job.getKey()).variables(variables).send().join();
+//	}
+//	
+//	
+//	@ZeebeWorker(name = "NotificationForUser", type = "NotificationForUser")
+//	public void NotificationForUser(final JobClient client, final ActivatedJob job) {
+//
+//
+//		Map<String, Object> variables = new HashMap<>();
+//		variables.get("assigneeList");
+//		
+//		client.newCompleteCommand(job.getKey()).variables(variables).send().join();
+//	}
+
 	@ZeebeWorker(name = "ApprovalNotification", type = "ApprovalNotification")
 	public void approvalNotification(final JobClient client, final ActivatedJob job) {
 	    System.out.println("Approval Notification");
@@ -50,15 +98,11 @@ public class LoanWorker {
  
 	        String url1 = "http://localhost:8080/emailSenderApproval";
  
-	        // Setting headers
 	        HttpHeaders headers = new HttpHeaders();
 	        headers.setContentType(MediaType.APPLICATION_JSON);
  
-	        // If you need to send emailId, pass it as a request body
 	        Map<String, String> requestBody = new HashMap<>();
-	        requestBody.put("emailId", "balamanchari@gmail.com"); // Replace with actual emailId from variables
- 
-	        // Build request entity
+	       // requestBody.put("emailId", "balamanchari@gmail.com"); 
 	        HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
  
 	        ResponseEntity<String> response1 = restTemplate.postForEntity(url1, request, String.class);

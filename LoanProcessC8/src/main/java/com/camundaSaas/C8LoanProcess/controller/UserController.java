@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.camundaSaas.C8LoanProcess.model.User;
+import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.UserService;
 
 @RestController
@@ -25,12 +26,25 @@ public class UserController {
 	@Autowired
 	UserService userService;
 
+	@Autowired
+	EmailService emailService;
+
 	@CrossOrigin
 	@PostMapping("/createUser")
 	public ResponseEntity<User> createUser(@RequestBody User user) {
 		System.out.println(user);
 		User createdUser = userService.createUser(user);
+		sendEmail(createdUser);
 		return ResponseEntity.ok(createdUser);
+	}
+
+	private void sendEmail(User user) {
+		String to = user.getEmail();
+		String subject = "Welcome to Our Platform!";
+		String body = "Dear " + user.getUsername() + ",\n\n" + "Your account has been created successfully.\n"
+				+ "Username: " + user.getUsername() + "\n" + "Password: " + user.getPassword() + "\n\n"
+				+ "Best Regards,\nTeam";
+		emailService.sendSimpleEmail(to, subject, body);
 	}
 
 	@GetMapping("/getAllUsers")
@@ -71,15 +85,15 @@ public class UserController {
 	@CrossOrigin
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody User loginUser) {
-	    User user = userService.login(loginUser.getEmail(), loginUser.getPassword());
-	    
-	    if (user != null) {
-	        Map<String, Object> userMap = new HashMap<>();
-	        userMap.put("email", user.getEmail());
-	        userMap.put("userName", user.getUsername());
-	        return ResponseEntity.ok(userMap); // Return success response
-	    } else {
-	        return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid email or password"));
-	    }
+		User user = userService.login(loginUser.getEmail(), loginUser.getPassword());
+
+		if (user != null) {
+			Map<String, Object> userMap = new HashMap<>();
+			userMap.put("email", user.getEmail());
+			userMap.put("userName", user.getUsername());
+			return ResponseEntity.ok(userMap); // Return success response
+		} else {
+			return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid email or password"));
+		}
 	}
 }

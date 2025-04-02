@@ -42,7 +42,6 @@ public class RepaymentScheduleService {
         List<RepaymentScheduleDetailsDto> listData=new ArrayList<>();
         ModelMapper modelMapper=new ModelMapper();
         for(RepaymentSchedule repaymentSchedule : repaymentSchedules){
-
             Optional<Loan> byLoanAccountNumber = loanDetailsRepository.findByLoanAccountNumber(repaymentSchedule.getLoanAccountNumber());
             if(byLoanAccountNumber.isPresent()){
                 RepaymentScheduleDetailsDto dto = modelMapper.map(repaymentSchedule, RepaymentScheduleDetailsDto.class);
@@ -50,12 +49,11 @@ public class RepaymentScheduleService {
                 listData.add(dto);
             }
         }
-
         return listData;
     }
 
     public byte[] generatePdf(List<RepaymentSchedule> schedules) {
-        // Set custom page size with reduced height (Half of A4 Landscape)
+      
         Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10, 10);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -63,8 +61,6 @@ public class RepaymentScheduleService {
         try {
             PdfWriter.getInstance(document, out);
             document.open();
-
-            // Define table for loan information
             PdfPTable loanInfoTable = new PdfPTable(2);
             loanInfoTable.setWidthPercentage(100);
             loanInfoTable.setWidths(new int[]{3, 3});
@@ -128,17 +124,13 @@ public class RepaymentScheduleService {
 
             loanInfoTable.addCell(emptyCell);
             loanInfoTable.addCell(principalCell);
-
-            // Add Loan Info Table to Document
             document.add(loanInfoTable);
-            document.add(new Paragraph(" ")); // Space before next table
+            document.add(new Paragraph(" "));
 
-            // Repayment Schedule Table
             PdfPTable table = new PdfPTable(6);
             table.setWidthPercentage(100);
             table.setWidths(new int[]{2, 3, 3, 3, 3, 3});
 
-            // Table Header
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
             table.addCell(new PdfPCell(new Phrase("Installment No", smallFont)));
             table.addCell(new PdfPCell(new Phrase("Date", smallFont)));
@@ -147,7 +139,6 @@ public class RepaymentScheduleService {
             table.addCell(new PdfPCell(new Phrase("Interest", smallFont)));
             table.addCell(new PdfPCell(new Phrase("Closing Principal", smallFont)));
 
-            // Table Data
             for (RepaymentSchedule schedule : schedules) {
                 table.addCell(new PdfPCell(new Phrase(String.valueOf(schedule.getInstallmentNo()), smallFont)));
                 table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentDate().toString(), smallFont)));
@@ -166,7 +157,6 @@ public class RepaymentScheduleService {
     }
 
     public byte[] generateLoanClosurePdf(List<RepaymentSchedule> schedules) {
-        // Set custom page size with reduced height (Half of A4 Landscape)
         Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10, 10);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -174,8 +164,6 @@ public class RepaymentScheduleService {
         try {
             PdfWriter.getInstance(document, out);
             document.open();
-
-            // Define table for loan information
             PdfPTable loanInfoTable = new PdfPTable(2);
             loanInfoTable.setWidthPercentage(100);
             loanInfoTable.setWidths(new int[]{3, 3});
@@ -190,8 +178,7 @@ public class RepaymentScheduleService {
             Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
             PdfPTable leftTable = new PdfPTable(2);
             leftTable.setWidthPercentage(100);
-            leftTable.setWidths(new float[]{3, 5});  // Column 1: Labels, Column 2: Values
-
+            leftTable.setWidths(new float[]{3, 5});
             leftTable.addCell(getCell("LAN Number", smallFont));
             leftTable.addCell(getCell(": LPCHE23452145874", smallFont));
             leftTable.addCell(getCell("Location", smallFont));
@@ -203,8 +190,7 @@ public class RepaymentScheduleService {
 
             PdfPTable rightTable = new PdfPTable(2);
             rightTable.setWidthPercentage(100);
-            rightTable.setWidths(new float[]{3, 5});  // Column 1: Labels, Column 2: Values
-
+            rightTable.setWidths(new float[]{3, 5}); 
             rightTable.addCell(getCell("Loan Amount", smallFont));
             rightTable.addCell(getCell(": 50,000", smallFont));
             rightTable.addCell(getCell("No Of Advanced EMI", smallFont));
@@ -220,12 +206,9 @@ public class RepaymentScheduleService {
             rightTable.addCell(getCell("Rate of Interest(%)", smallFont));
             rightTable.addCell(getCell(": 11.45", smallFont));
 
-
-            // Loan Closure Details
             boolean isLoanClosed = schedules.get(schedules.size() - 1).getClosingPrincipal() == 0;
             LocalDate closureDate = isLoanClosed ? schedules.get(schedules.size() - 1).getInstallmentDate() : null;
 
-            // Compute total interest paid
             double totalInterestPaid = schedules.stream().mapToDouble(RepaymentSchedule::getInterest).sum();
 
             rightTable.addCell(getCell("Loan Closure Status", smallFont));
@@ -262,16 +245,12 @@ public class RepaymentScheduleService {
             loanInfoTable.addCell(emptyCell);
             loanInfoTable.addCell(principalCell);
 
-            // Add Loan Info Table to Document
             document.add(loanInfoTable);
-            document.add(new Paragraph(" ")); // Space before next table
-
-            // Repayment Schedule Table
+            document.add(new Paragraph(" ")); 
             PdfPTable table = new PdfPTable(6);
             table.setWidthPercentage(100);
             table.setWidths(new int[]{2, 3, 3, 3, 3, 3});
 
-            // Table Header
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
             table.addCell(new PdfPCell(new Phrase("Installment No", smallFont)));
             table.addCell(new PdfPCell(new Phrase("Date", smallFont)));
@@ -280,7 +259,6 @@ public class RepaymentScheduleService {
             table.addCell(new PdfPCell(new Phrase("Interest", smallFont)));
             table.addCell(new PdfPCell(new Phrase("Closing Principal", smallFont)));
 
-            // Table Data
             for (RepaymentSchedule schedule : schedules) {
                 table.addCell(new PdfPCell(new Phrase(String.valueOf(schedule.getInstallmentNo()), smallFont)));
                 table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentDate().toString(), smallFont)));
@@ -306,7 +284,6 @@ public class RepaymentScheduleService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Report Header
             Paragraph header = new Paragraph("Loan Closure Report", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16));
             header.setAlignment(Element.ALIGN_CENTER);
             document.add(header);
@@ -314,7 +291,6 @@ public class RepaymentScheduleService {
             document.add(new Paragraph("Reference No: LCR-2025-001", FontFactory.getFont(FontFactory.HELVETICA, 10)));
             document.add(new Paragraph(" "));
 
-            // Loan Summary Table
             PdfPTable summaryTable = new PdfPTable(2);
             summaryTable.setWidthPercentage(100);
             summaryTable.setWidths(new int[]{3, 5});
@@ -337,12 +313,10 @@ public class RepaymentScheduleService {
             document.add(summaryTable);
             document.add(new Paragraph(" "));
 
-            // Compute closure details
             boolean isLoanClosed = schedules.get(schedules.size() - 1).getClosingPrincipal() == 0;
             LocalDate closureDate = isLoanClosed ? schedules.get(schedules.size() - 1).getInstallmentDate() : null;
             double totalInterestPaid = schedules.stream().mapToDouble(RepaymentSchedule::getInterest).sum();
 
-            // Loan Closure Details
             PdfPTable closureTable = new PdfPTable(2);
             closureTable.setWidthPercentage(100);
             closureTable.setWidths(new int[]{3, 5});
@@ -361,7 +335,7 @@ public class RepaymentScheduleService {
             document.add(closureTable);
             document.add(new Paragraph(" "));
 
-            // Repayment Schedule Table
+        
             PdfPTable table = new PdfPTable(6);
             table.setWidthPercentage(100);
             table.setWidths(new int[]{2, 3, 3, 3, 3, 3});
@@ -383,8 +357,7 @@ public class RepaymentScheduleService {
             document.add(table);
             document.add(new Paragraph(" "));
 
-            // Loan Closure Certificate (Only if Loan is Fully Paid)
-            if (isLoanClosed) {
+           if (isLoanClosed) {
                 Paragraph certificate = new Paragraph("\nCERTIFICATE OF LOAN CLOSURE\n", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
                 certificate.setAlignment(Element.ALIGN_CENTER);
                 document.add(certificate);
@@ -407,8 +380,7 @@ public class RepaymentScheduleService {
         try {
             PdfWriter.getInstance(document, out);
             document.open();
-
-            // Report Header
+ 
             Paragraph header = new Paragraph("Compliance & Audit Report", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16));
             header.setAlignment(Element.ALIGN_CENTER);
             document.add(header);
@@ -416,7 +388,6 @@ public class RepaymentScheduleService {
             document.add(new Paragraph("Reference No: CAR-2025-001", FontFactory.getFont(FontFactory.HELVETICA, 10)));
             document.add(new Paragraph(" "));
 
-            // Loan Summary
             PdfPTable summaryTable = new PdfPTable(2);
             summaryTable.setWidthPercentage(100);
             summaryTable.setWidths(new int[]{3, 5});
@@ -439,7 +410,6 @@ public class RepaymentScheduleService {
             document.add(summaryTable);
             document.add(new Paragraph(" "));
 
-            // Financial Audit
             PdfPTable auditTable = new PdfPTable(2);
             auditTable.setWidthPercentage(100);
             auditTable.setWidths(new int[]{3, 5});
@@ -461,7 +431,6 @@ public class RepaymentScheduleService {
             document.add(auditTable);
             document.add(new Paragraph(" "));
 
-            // Risk Assessment
             PdfPTable riskTable = new PdfPTable(2);
             riskTable.setWidthPercentage(100);
             riskTable.setWidths(new int[]{3, 5});
@@ -476,7 +445,6 @@ public class RepaymentScheduleService {
             document.add(riskTable);
             document.add(new Paragraph(" "));
 
-            // Compliance & Audit Conclusion
             Paragraph conclusion = new Paragraph("Final Compliance & Audit Status: PASS",
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12));
             document.add(conclusion);

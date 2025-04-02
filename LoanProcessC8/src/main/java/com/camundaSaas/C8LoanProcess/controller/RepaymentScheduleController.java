@@ -186,7 +186,7 @@ public class RepaymentScheduleController {
     @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
     public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) {
         List<RepaymentSchedule> schedules = loanDetailsService.getRepaymentSchedule(loanAccountNumber);
-
+       
         if (schedules.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -198,4 +198,6 @@ public class RepaymentScheduleController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfBytes);
     }
+    
+
 }

@@ -97,6 +97,8 @@ public class LoanDetailsService {
     public List<RepaymentSchedule> getRepaymentSchedule(String loanAccountNumber) {
         return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
     }
+    
+    
 
     public byte[] generatePdf(List<RepaymentSchedule> schedules) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {

@@ -117,6 +117,8 @@ public class Worker {
 		System.out.println("Processing SendReminder Job...");
 
 		Map<String, Object> variables = job.getVariablesAsMap();
+		String to = (String) variables.get("emailId");
+		System.out.println(to);
 		System.out.println("Sending payment reminder to: ");
 
 		Map<String, Object> updatedVariables = new HashMap<>();
