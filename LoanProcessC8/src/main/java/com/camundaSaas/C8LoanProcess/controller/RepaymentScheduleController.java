@@ -1,12 +1,18 @@
 package com.camundaSaas.C8LoanProcess.controller;
 
+import com.camundaSaas.C8LoanProcess.Repository.LoanApplicantRepository;
 import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
 import com.camundaSaas.C8LoanProcess.model.Loan;
+import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
+import com.camundaSaas.C8LoanProcess.service.LoanApplicantService;
 import com.camundaSaas.C8LoanProcess.service.LoanDetailsService;
 import com.camundaSaas.C8LoanProcess.service.RepaymentScheduleService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,6 +37,9 @@ public class RepaymentScheduleController {
     
     @Autowired
     private LoanDetailsRepository loanDetailsRepository;
+    
+    @Autowired
+    private LoanApplicantService loanApplicantService;
 
     @CrossOrigin
     @PostMapping("/repaymentSchedule/save")
@@ -184,14 +193,15 @@ public class RepaymentScheduleController {
     }
     
     @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
-    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) {
+    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) throws JsonMappingException, JsonProcessingException {
         List<RepaymentSchedule> schedules = loanDetailsService.getRepaymentSchedule(loanAccountNumber);
-       
+        LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
+        
         if (schedules.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        byte[] pdfBytes = loanDetailsService.generatePdf(schedules);
+        byte[] pdfBytes = loanDetailsService.generatePdf(schedules,loanApplicantDetails);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")

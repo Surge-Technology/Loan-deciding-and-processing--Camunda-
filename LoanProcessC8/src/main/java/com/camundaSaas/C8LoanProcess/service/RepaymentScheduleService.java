@@ -469,8 +469,6 @@ public class RepaymentScheduleService {
         return cell;
     }
 
-
-    // Helper method to add a row to the loan details table
     private void addLoanInfoRow(PdfPTable table, String label, String value) {
         Font font = FontFactory.getFont(FontFactory.HELVETICA, 12);
 

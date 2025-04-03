@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.camundaSaas.C8LoanProcess.Repository.LoanApplicantRepository;
 import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
+import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 
 
 @Service
@@ -27,6 +28,14 @@ public class LoanApplicantService {
 	  public List<LoanApplicantDetails> getAllLoanDetailsByEmail(String emailId) {
 	        return loanApplicantDetailsRepository.findAllByEmailIdOrderByCreatedDateDesc(emailId);
 	    }
+
+
+	public LoanApplicantDetails getapplicantData(String loanAccountNumber) {
+		
+		return loanApplicantDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
+	}
+	   
+
 	  
 	
 }
