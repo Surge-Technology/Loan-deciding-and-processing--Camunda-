@@ -159,19 +159,42 @@ public class LoanWorker {
 	            Map<String, Object> responseBody = response.getBody();
 				System.out.println("Loan has been saved...!");
 				String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
+				
+//				response.put("loanId", savedLoan.getLoanId());
+//				response.put("loanAmount", savedLoan.getLoanAmount());
+//				response.put("tenure", savedLoan.getTenure());
+//				response.put("interestRate", savedLoan.getInterest());
+//				response.put("uanNumber", uanNumber);
+//				response.put("loanStatus", loanStatus);
+//				response.put("loanAccountNumber", loanAccountNumber);
+//				response.put("billDate", localDate);
+				
+				int month = (int) responseBody.get("tenure");
+				Integer installmentNo = (Integer) responseBody.get("tenure");
+				Double loanAmount = (Double) responseBody.get("loanAmount");
+				Double annualInterestRate = (Double) responseBody.get("interestRate");
 
-				int month = 4;
-				Integer installmentNo = 1;
-				Double loanAmount = 50000.0; // Total Loan Amount
-				Double installmentAmount = 10000.0; // Fixed Installment Amount
-				Double annualInterestRate = 11.45; // Annual Interest Rate
-				Double monthlyInterestRate = annualInterestRate / (100 * 12); // Convert to Monthly Interest Rate
+				Double monthlyInterestRate = annualInterestRate / (100 * 12);
+				Double installmentAmount;
+				if (monthlyInterestRate > 0) {
+				    installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month)) / 
+				                        (Math.pow(1 + monthlyInterestRate, month) - 1);
+				} else {
+				    installmentAmount = loanAmount / month;
+				}
 				Double closingPrincipal = loanAmount;
+				for (int i = 1; i <= installmentNo; i++) {
+				    Double interestComponent = closingPrincipal * monthlyInterestRate;
+				    Double principalComponent = installmentAmount - interestComponent;
+				    closingPrincipal -= principalComponent;
+				}
+				System.out.println("Installment Amount: " + installmentAmount);
+				System.out.println("Final Closing Principal: " + closingPrincipal);
+
 
 				for (int i = 0; i < 6; i++) {
 					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
 
-					// Set Installment Date
 					LocalDate date = LocalDate.of(2024, month, 11);
 					repaymentSchedule.setInstallmentNo(installmentNo);
 					repaymentSchedule.setInstallmentDate(date);
@@ -181,19 +204,16 @@ public class LoanWorker {
 					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
 					repaymentSchedule.setInterest(interest);
 
-					// Calculate Principal as Installment Amount - Interest (rounded to 2 decimal places)
 					Double principal = installmentAmount - interest;
 					principal = Math.round(principal * 100.0) / 100.0;
 
-					// Adjust final installment if principal is more than remaining balance
 					if (principal > closingPrincipal) {
 						principal = closingPrincipal;
-						interest = installmentAmount - principal; // Adjust interest for last installment
+						interest = installmentAmount - principal; 
 					}
 
 					repaymentSchedule.setPrincipal(principal);
 
-					// Update Closing Principal (rounded)
 					closingPrincipal -= principal;
 					closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
 
@@ -203,7 +223,6 @@ public class LoanWorker {
 
 					System.out.println("RepaymentSchedule : " + repaymentSchedule);
 
-					// API Call
 					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
 					HttpHeaders headers1 = new HttpHeaders();
 					headers1.setContentType(MediaType.APPLICATION_JSON);
