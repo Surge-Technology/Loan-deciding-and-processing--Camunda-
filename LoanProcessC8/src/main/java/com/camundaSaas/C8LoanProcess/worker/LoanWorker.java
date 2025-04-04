@@ -200,7 +200,6 @@ public class LoanWorker {
 					repaymentSchedule.setInstallmentDate(date);
 					repaymentSchedule.setInstallmentAmount(installmentAmount);
 
-					// Calculate Interest on Remaining Balance (rounded to 2 decimal places)
 					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
 					repaymentSchedule.setInterest(interest);
 
@@ -262,4 +261,6 @@ public class LoanWorker {
 	                    .join();
 	        }
 	    }
+	
+
 }

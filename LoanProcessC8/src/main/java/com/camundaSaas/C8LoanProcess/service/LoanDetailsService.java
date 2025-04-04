@@ -36,97 +36,90 @@ import com.itextpdf.text.pdf.PdfWriter;
 @Service
 public class LoanDetailsService {
 
-    @Autowired
-    private LoanDetailsRepository loanDetailsRepository;
-    
-    @Autowired
-    private RepaymentScheduleRepository repaymentScheduleRepository;
-    
+	@Autowired
+	private LoanDetailsRepository loanDetailsRepository;
 
-    public Loan saveLoan(Loan loan) {
-        return loanDetailsRepository.save(loan);
-    }
+	@Autowired
+	private RepaymentScheduleRepository repaymentScheduleRepository;
 
-    public List<Loan> getAllLoans() {
-        return loanDetailsRepository.findAll();
-    }
+	public Loan saveLoan(Loan loan) {
+		return loanDetailsRepository.save(loan);
+	}
 
-    public Optional<Loan> getLoanById(Long id) {
-        return loanDetailsRepository.findById(id);
-    }
+	public List<Loan> getAllLoans() {
+		return loanDetailsRepository.findAll();
+	}
 
-    public Loan getLoanByAccountNumber(String loanAccountNumber) {
+	public Optional<Loan> getLoanById(Long id) {
+		return loanDetailsRepository.findById(id);
+	}
 
-        return loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Loan not found for account number: " + loanAccountNumber));
-    }
-    
-    public Optional<Loan> getLoanDetails(String loanAccountNumber) {
-        return loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
-    }
+	public Loan getLoanByAccountNumber(String loanAccountNumber) {
+
+		return loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber).orElseThrow(
+				() -> new ResourceNotFoundException("Loan not found for account number: " + loanAccountNumber));
+	}
+
+	public Optional<Loan> getLoanDetails(String loanAccountNumber) {
+		return loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
+	}
 
 //    public List<RepaymentSchedule> getRepaymentSchedule(String loanAccountNumber) {
 //        return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
 //    }
-    
-    
-    
-    private PdfPCell getCell(String text, boolean isBold) {
-        Font font = isBold ? FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9) : FontFactory.getFont(FontFactory.HELVETICA, 9);
-        PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        return cell;
-    }
 
+	private PdfPCell getCell(String text, boolean isBold) {
+		Font font = isBold ? FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9)
+				: FontFactory.getFont(FontFactory.HELVETICA, 9);
+		PdfPCell cell = new PdfPCell(new Phrase(text, font));
+		return cell;
+	}
 
-    private static PdfPCell getCell(String text, Font font) {
-        PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setBorder(Rectangle.NO_BORDER);
-        return cell;
-    }
+	private static PdfPCell getCell(String text, Font font) {
+		PdfPCell cell = new PdfPCell(new Phrase(text, font));
+		cell.setBorder(Rectangle.NO_BORDER);
+		return cell;
+	}
 
-    public List<RepaymentSchedule> calculateAmortizationSchedule(Loan loan) {
-        double principal = Double.parseDouble(loan.getLoanAmount());
-        double monthlyInterestRate = loan.getInterest() / 100 / 12;
-        int totalPayments = loan.getTenure() * 12;
+	public List<RepaymentSchedule> calculateAmortizationSchedule(Loan loan) {
+		double principal = Double.parseDouble(loan.getLoanAmount());
+		double monthlyInterestRate = loan.getInterest() / 100 / 12;
+		int totalPayments = loan.getTenure() * 12;
 
-        double monthlyPayment = (principal * monthlyInterestRate) /
-                (1 - Math.pow(1 + monthlyInterestRate, -totalPayments));
+		double monthlyPayment = (principal * monthlyInterestRate)
+				/ (1 - Math.pow(1 + monthlyInterestRate, -totalPayments));
 
-        double remainingBalance = principal;
-      //  LocalDate installmentDate = LocalDate.now().plusMonths(1);
+		double remainingBalance = principal;
+		// LocalDate installmentDate = LocalDate.now().plusMonths(1);
 
-        List<RepaymentSchedule> schedule = new ArrayList<>();
+		List<RepaymentSchedule> schedule = new ArrayList<>();
 
-        for (int i = 1; i <= totalPayments; i++) {
-        	LocalDate installmentDate = LocalDate.now().plusMonths(i);
-            double interestPayment = remainingBalance * monthlyInterestRate;
-            double principalPayment = monthlyPayment - interestPayment;
-            remainingBalance -= principalPayment;
+		for (int i = 1; i <= totalPayments; i++) {
+			LocalDate installmentDate = LocalDate.now().plusMonths(i);
+			double interestPayment = remainingBalance * monthlyInterestRate;
+			double principalPayment = monthlyPayment - interestPayment;
+			remainingBalance -= principalPayment;
 
-            RepaymentSchedule installment = new RepaymentSchedule();
-            installment.setInstallmentNo(i);
-            installment.setInstallmentDate(installmentDate);
-            installment.setInstallmentAmount(monthlyPayment);
-            installment.setPrincipal(principalPayment);
-            installment.setInterest(interestPayment);
-            installment.setClosingPrincipal(Math.max(0, remainingBalance));
-            installment.setLoanAccountNumber(loan.getLoanAccountNumber());
+			RepaymentSchedule installment = new RepaymentSchedule();
+			installment.setInstallmentNo(i);
+			installment.setInstallmentDate(installmentDate);
+			installment.setInstallmentAmount(monthlyPayment);
+			installment.setPrincipal(principalPayment);
+			installment.setInterest(interestPayment);
+			installment.setClosingPrincipal(Math.max(0, remainingBalance));
+			installment.setLoanAccountNumber(loan.getLoanAccountNumber());
 
-            schedule.add(installment);
-            installmentDate = installmentDate.plusMonths(1);
-        }
+			schedule.add(installment);
+			installmentDate = installmentDate.plusMonths(1);
+		}
 
-        repaymentScheduleRepository.saveAll(schedule);
-        return schedule;
-    }
-    
-    
+		repaymentScheduleRepository.saveAll(schedule);
+		return schedule;
+	}
 
-    public List<RepaymentSchedule> getRepaymentSchedule(String loanAccountNumber) {
-        return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
-    }
-    
-    
+	public List<RepaymentSchedule> getRepaymentSchedule(String loanAccountNumber) {
+		return repaymentScheduleRepository.findByLoanAccountNumber(loanAccountNumber);
+	}
 
 //    public byte[] generatePdf(List<RepaymentSchedule> schedules) {
 //    	 Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10, 10);
@@ -267,117 +260,119 @@ public class LoanDetailsService {
 //       }
 //       return out.toByteArray();
 //    }
-    
-    
-    public byte[] generatePdf(List<RepaymentSchedule> schedules, LoanApplicantDetails loanApplicantDetails) throws JsonMappingException, JsonProcessingException {
-        Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10, 10);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        try {
-            PdfWriter.getInstance(document, out);
-            document.open();
+	public byte[] generatePdf(List<RepaymentSchedule> schedules, LoanApplicantDetails loanApplicantDetails)
+			throws JsonMappingException, JsonProcessingException {
+		Document document = new Document(new Rectangle(PageSize.A4.getWidth(), PageSize.A4.getHeight() / 2), 10, 10, 10,
+				10);
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            PdfPTable loanInfoTable = new PdfPTable(2);
-            loanInfoTable.setWidthPercentage(100);
-            loanInfoTable.setWidths(new int[]{3, 3});
+		try {
+			PdfWriter.getInstance(document, out);
+			document.open();
 
+			PdfPTable loanInfoTable = new PdfPTable(2);
+			loanInfoTable.setWidthPercentage(100);
+			loanInfoTable.setWidths(new int[] { 3, 3 });
 
-            PdfPCell titleCell = new PdfPCell(new Phrase("Amortization Schedule", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
-            titleCell.setColspan(2);
-            titleCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            titleCell.setPadding(10);
-            titleCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-            loanInfoTable.addCell(titleCell);
+			PdfPCell titleCell = new PdfPCell(
+					new Phrase("Amortization Schedule", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+			titleCell.setColspan(2);
+			titleCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+			titleCell.setPadding(10);
+			titleCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+			loanInfoTable.addCell(titleCell);
 
-            Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
-            PdfPTable leftTable = new PdfPTable(2);
-            leftTable.setWidthPercentage(100);
-            leftTable.setWidths(new float[]{3, 5});
+			Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+			PdfPTable leftTable = new PdfPTable(2);
+			leftTable.setWidthPercentage(100);
+			leftTable.setWidths(new float[] { 3, 5 });
 
-          
-  
-            leftTable.addCell(getCell("LAN Number", smallFont));
-            leftTable.addCell(getCell(": " + loanApplicantDetails.getLoanAccountNumber(), smallFont));
-            String data = loanApplicantDetails.getData();
-            
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(data);
-            JsonNode personalDataNode = rootNode.path("personalData");
-            
-            // Extract "addressInfo" node
-            JsonNode addressInfoNode = personalDataNode.path("addressInfo");
-            String zip = addressInfoNode.path("zip").asText();
-            String city = addressInfoNode.path("city").asText();
-            String state = addressInfoNode.path("state").asText();
-            String streetLine1 = addressInfoNode.path("streetLine1").asText();
-            String streetLine2 = addressInfoNode.path("streetLine2").asText();
-            int yearsAtAddress = addressInfoNode.path("yearsAtAddress").asInt();
-            
-String address = streetLine1.concat(streetLine2);
-     
-            leftTable.addCell(getCell("Name", smallFont));
-            leftTable.addCell(getCell(": " + loanApplicantDetails.getApplicantName(), smallFont));
-            leftTable.addCell(getCell("Address", smallFont));
-            leftTable.addCell(getCell(": " +address, smallFont));
-            leftTable.addCell(getCell("City", smallFont));
-            leftTable.addCell(getCell(": " + city, smallFont));
-            leftTable.addCell(getCell("State", smallFont));
-            leftTable.addCell(getCell(": " + state, smallFont));
+			leftTable.addCell(getCell("LAN Number", smallFont));
+			leftTable.addCell(getCell(": " + loanApplicantDetails.getLoanAccountNumber(), smallFont));
+			String data = loanApplicantDetails.getData();
 
-            PdfPTable rightTable = new PdfPTable(2);
-            rightTable.setWidthPercentage(100);
-            rightTable.setWidths(new float[]{3, 5});
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode rootNode = objectMapper.readTree(data);
+			JsonNode personalDataNode = rootNode.path("personalData");
 
-            rightTable.addCell(getCell("Loan Amount", smallFont));
-            rightTable.addCell(getCell(": " + loanApplicantDetails.getLoanAmount(), smallFont));
+			// Extract "addressInfo" node
+			JsonNode addressInfoNode = personalDataNode.path("addressInfo");
+			String zip = addressInfoNode.path("zip").asText();
+			String city = addressInfoNode.path("city").asText();
+			String state = addressInfoNode.path("state").asText();
+			String streetLine1 = addressInfoNode.path("streetLine1").asText();
+			String streetLine2 = addressInfoNode.path("streetLine2").asText();
+			int yearsAtAddress = addressInfoNode.path("yearsAtAddress").asInt();
+
+			String address = streetLine1.concat(streetLine2);
+
+			leftTable.addCell(getCell("Name", smallFont));
+			leftTable.addCell(getCell(": " + loanApplicantDetails.getApplicantName(), smallFont));
+			leftTable.addCell(getCell("Address", smallFont));
+			leftTable.addCell(getCell(": " + address, smallFont));
+			leftTable.addCell(getCell("City", smallFont));
+			leftTable.addCell(getCell(": " + city, smallFont));
+			leftTable.addCell(getCell("State", smallFont));
+			leftTable.addCell(getCell(": " + state, smallFont));
+
+			PdfPTable rightTable = new PdfPTable(2);
+			rightTable.setWidthPercentage(100);
+			rightTable.setWidths(new float[] { 3, 5 });
+
+			rightTable.addCell(getCell("Loan Amount", smallFont));
+			rightTable.addCell(getCell(": " + loanApplicantDetails.getLoanAmount(), smallFont));
 //            rightTable.addCell(getCell("No Of Advanced EMI", smallFont));
 //            rightTable.addCell(getCell(": " + loanApplicantDetails.getTenure(), smallFont));
 //            rightTable.addCell(getCell("Installment", smallFont));
 //            rightTable.addCell(getCell(": " + loanApplicantDetails.getInstallmentAmount(), smallFont));
-            rightTable.addCell(getCell("Loan Type", smallFont));
-            rightTable.addCell(getCell(": " + loanApplicantDetails.getLoanType(), smallFont));
-            rightTable.addCell(getCell("Start Date", smallFont));
-            rightTable.addCell(getCell(": " + loanApplicantDetails.getCreatedDate(), smallFont));
+			rightTable.addCell(getCell("Loan Type", smallFont));
+			rightTable.addCell(getCell(": " + loanApplicantDetails.getLoanType(), smallFont));
+			rightTable.addCell(getCell("Start Date", smallFont));
+			rightTable.addCell(getCell(": " + loanApplicantDetails.getCreatedDate(), smallFont));
 
-            PdfPCell leftColumn = new PdfPCell(leftTable);
-            leftColumn.setPadding(5);
-            PdfPCell rightColumn = new PdfPCell(rightTable);
-            rightColumn.setPadding(5);
+			PdfPCell leftColumn = new PdfPCell(leftTable);
+			leftColumn.setPadding(5);
+			PdfPCell rightColumn = new PdfPCell(rightTable);
+			rightColumn.setPadding(5);
 
-            loanInfoTable.addCell(leftColumn);
-            loanInfoTable.addCell(rightColumn);
+			loanInfoTable.addCell(leftColumn);
+			loanInfoTable.addCell(rightColumn);
 
-            PdfPCell emptyCell = new PdfPCell(new Phrase(" "));
-            PdfPCell principalCell = new PdfPCell(new Phrase("Principal Amount (less) Adv. EMIs: Rs " + loanApplicantDetails.getLoanAmount(),
-                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9)));
-            principalCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            principalCell.setPadding(5);
+			PdfPCell emptyCell = new PdfPCell(new Phrase(" "));
+			PdfPCell principalCell = new PdfPCell(
+					new Phrase("Principal Amount (less) Adv. EMIs: Rs " + loanApplicantDetails.getLoanAmount(),
+							FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9)));
+			principalCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+			principalCell.setPadding(5);
 
-            loanInfoTable.addCell(emptyCell);
-            loanInfoTable.addCell(principalCell);
-            document.add(loanInfoTable);
-            document.add(new Paragraph(" "));
+			loanInfoTable.addCell(emptyCell);
+			loanInfoTable.addCell(principalCell);
+			document.add(loanInfoTable);
+			document.add(new Paragraph(" "));
 
-            // Table for repayment schedule
-            PdfPTable table = new PdfPTable(6);
-            table.setWidthPercentage(100);
-            table.setWidths(new int[]{2, 3, 3, 3, 3, 3});
+			// Table for repayment schedule
+			PdfPTable table = new PdfPTable(6);
+			table.setWidthPercentage(100);
+			table.setWidths(new int[] { 2, 3, 3, 3, 3, 3 });
 
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,9);
-            table.addCell(new PdfPCell(new Phrase("Installment No", smallFont)));
-            table.addCell(new PdfPCell(new Phrase("Date", smallFont)));
-            table.addCell(new PdfPCell(new Phrase("Amount", smallFont)));
-            table.addCell(new PdfPCell(new Phrase("Principal", smallFont)));
-            table.addCell(new PdfPCell(new Phrase("Interest", smallFont)));
-            table.addCell(new PdfPCell(new Phrase("Closing Principal", smallFont)));
-            for (RepaymentSchedule schedule : schedules) {
-                table.addCell(new PdfPCell(new Phrase(String.valueOf(schedule.getInstallmentNo()), smallFont)));
-                table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentDate().toString(), smallFont)));
-                table.addCell(new PdfPCell(new Phrase(String.format("%.2f",schedule.getInstallmentAmount()), smallFont)));
-                table.addCell(new PdfPCell(new Phrase(String.format("%.2f",schedule.getPrincipal()), smallFont)));
-                table.addCell(new PdfPCell(new Phrase(String.format("%.2f",schedule.getInterest()), smallFont)));
-                table.addCell(new PdfPCell(new Phrase(String.format("%.2f",schedule.getClosingPrincipal()), smallFont)));
-            }
+			Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+			table.addCell(new PdfPCell(new Phrase("Installment No", smallFont)));
+			table.addCell(new PdfPCell(new Phrase("Date", smallFont)));
+			table.addCell(new PdfPCell(new Phrase("Amount", smallFont)));
+			table.addCell(new PdfPCell(new Phrase("Principal", smallFont)));
+			table.addCell(new PdfPCell(new Phrase("Interest", smallFont)));
+			table.addCell(new PdfPCell(new Phrase("Closing Principal", smallFont)));
+			for (RepaymentSchedule schedule : schedules) {
+				table.addCell(new PdfPCell(new Phrase(String.valueOf(schedule.getInstallmentNo()), smallFont)));
+				table.addCell(new PdfPCell(new Phrase(schedule.getInstallmentDate().toString(), smallFont)));
+				table.addCell(
+						new PdfPCell(new Phrase(String.format("%.2f", schedule.getInstallmentAmount()), smallFont)));
+				table.addCell(new PdfPCell(new Phrase(String.format("%.2f", schedule.getPrincipal()), smallFont)));
+				table.addCell(new PdfPCell(new Phrase(String.format("%.2f", schedule.getInterest()), smallFont)));
+				table.addCell(
+						new PdfPCell(new Phrase(String.format("%.2f", schedule.getClosingPrincipal()), smallFont)));
+			}
 //            for (RepaymentSchedule schedule : schedules) {
 //                table.addCell(String.valueOf(schedule.getInstallmentNo()));
 //                table.addCell(schedule.getInstallmentDate().toString());
@@ -387,12 +382,12 @@ String address = streetLine1.concat(streetLine2);
 //                table.addCell(String.format("%.2f", schedule.getClosingPrincipal()));
 //            }
 
-            document.add(table);
-            document.close();
-        } catch (DocumentException e) {
-            e.printStackTrace();
-        }
-        return out.toByteArray();
-    }
+			document.add(table);
+			document.close();
+		} catch (DocumentException e) {
+			e.printStackTrace();
+		}
+		return out.toByteArray();
+	}
 
-    }
+}
