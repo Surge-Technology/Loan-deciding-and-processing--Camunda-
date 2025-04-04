@@ -13,6 +13,8 @@ import java.util.Optional;
 @Repository
 public interface LoanDetailsRepository extends JpaRepository<Loan, Long> {
 	Optional<Loan> findByLoanAccountNumber(String loanAccountNumber);
+	
+	
 
 	List<Loan> findByBillDate(LocalDate billDate);
 	

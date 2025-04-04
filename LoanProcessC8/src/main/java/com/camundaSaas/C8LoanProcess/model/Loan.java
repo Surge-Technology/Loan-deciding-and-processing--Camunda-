@@ -96,5 +96,7 @@ public class Loan {
 		this.loanStatus = loanStatus;
 	}
 
+
+
  
 }

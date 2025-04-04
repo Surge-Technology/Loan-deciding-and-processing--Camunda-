@@ -24,9 +24,6 @@ public class LoanModificationController {
 
 	@Autowired
 	private ObjectMapper objectMapper;
-	
-	
-	
 
 	@PostMapping("/saveLoanData")
 	public String saveLoanData(@RequestBody JsonNode requestJson) {
@@ -50,17 +47,16 @@ public class LoanModificationController {
 			return "Failed to save loan data: " + e.getMessage();
 		}
 	}
-	
-	
-	 @GetMapping("/get/{loanAccountNumber}")
-	    public ResponseEntity<?> getLoanModificationByLoanAccountNumber(@PathVariable String loanAccountNumber) {
-	        Optional<LoanModification> result = repository.findByLoanAccountNumber(loanAccountNumber);
 
-	        if (result.isPresent()) {
-	            return ResponseEntity.ok(result.get());
-	        } else {
-	            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-	                    .body("No loan modification found for account number: " + loanAccountNumber);
-	        }
-	    }
+	@GetMapping("/get/{loanAccountNumber}")
+	public ResponseEntity<?> getLoanModificationByLoanAccountNumber(@PathVariable String loanAccountNumber) {
+		Optional<LoanModification> result = repository.findByLoanAccountNumber(loanAccountNumber);
+
+		if (result.isPresent()) {
+			return ResponseEntity.ok(result.get());
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body("No loan modification found for account number: " + loanAccountNumber);
+		}
+	}
 }

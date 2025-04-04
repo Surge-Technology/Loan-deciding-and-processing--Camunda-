@@ -5,9 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
-import com.camundaSaas.C8LoanProcess.service.EmailService;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,6 +14,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+
+import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
+import com.camundaSaas.C8LoanProcess.Repository.LoanModificationRepository;
+import com.camundaSaas.C8LoanProcess.model.Loan;
+import com.camundaSaas.C8LoanProcess.model.LoanModification;
+import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
+import com.camundaSaas.C8LoanProcess.service.EmailService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
@@ -33,6 +40,11 @@ public class LoanWorker {
 	@Autowired
 	EmailService emailService;
 	
+	@Autowired
+	LoanDetailsRepository loanDetailsRepository;
+	
+	@Autowired
+	LoanModificationRepository loanModificationRepository;
 	 
 
 	@ZeebeWorker(name = "Persist Customer Information", type = "collection")
@@ -136,12 +148,51 @@ public class LoanWorker {
 	
 	@ZeebeWorker(name = "LoanTermApprovalNotification", type = "LoanTermApprovalNotification")
 	public void LoanTermApprovalNotification(final JobClient client, final ActivatedJob job) {
-	    Map<String, Object> variableasmap = job.getVariablesAsMap();
-	    String from = "shaukatmakandar786@gmail.com";
-	    String to = "shaukatmakandar786@gmail.com";
-	    String body = "Loan Term Approval Notification";
-	    emailService.sendSimpleEmail(from, to, body);
-	    zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
+		   try {
+		        Map<String, Object> variables = job.getVariablesAsMap();
+		        ObjectMapper objectMapper = new ObjectMapper();
+
+		        JsonNode newDataNode = objectMapper.convertValue(variables.get("NewData"), JsonNode.class);
+		        String loanAccountNumber = newDataNode.path("loanAccountNumber").asText();
+
+		        Optional<Loan> optionalLoan = loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
+
+		        if (optionalLoan.isPresent()) {
+		            Loan loan = optionalLoan.get();
+
+		            loan.setLoanAmount(newDataNode.path("loanAmount").asText());
+		            loan.setTenure(newDataNode.path("tenure").asInt());
+		            loan.setInterest(newDataNode.path("interestRate").asDouble());
+		            loan.setLoanStatus("Approved"); 
+		            loan.setBillDate(LocalDate.now()); 
+
+		            loanDetailsRepository.save(loan);
+
+		            String updatedPayloadJson = objectMapper.writeValueAsString(variables);
+		            LoanModification modification = new LoanModification();
+		            modification.setLoanAccountNumber(loanAccountNumber);
+		            modification.setPayloadJson(updatedPayloadJson);
+		            loanModificationRepository.save(modification);
+
+		            String to = "shaukatmakandar786@gmail.com";
+		            String subject = "Loan Term Approval Notification";
+		            String body = "Loan updated successfully for account: " + loanAccountNumber;
+		            emailService.sendSimpleEmail(to, subject, body);
+
+		            client.newCompleteCommand(job.getKey()).send().join();
+
+		        } else {
+		            throw new RuntimeException("Loan not found with loanAccountNumber: " + loanAccountNumber);
+		        }
+
+		    } catch (Exception e) {
+		        e.printStackTrace();
+		        client.newFailCommand(job.getKey())
+		              .retries(job.getRetries() - 1)
+		              .errorMessage("Error updating loan: " + e.getMessage())
+		              .send()
+		              .join();
+		    }
 	}
 	
 	
