@@ -61,22 +61,22 @@ public class RepaymentScheduleController {
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
 
-//    @CrossOrigin
-//    @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
-//    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) {
-//        List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
-//
-//        if (schedules.isEmpty()) {
-//            return ResponseEntity.notFound().build();
-//        }
-//
-//        byte[] pdfBytes = repaymentScheduleService.generatePdf(schedules);
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
-//                .contentType(MediaType.APPLICATION_PDF)
-//                .body(pdfBytes);
-//    }
+    @CrossOrigin
+    @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
+    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) throws JsonMappingException, JsonProcessingException {
+        List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+        LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
+        if (schedules.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdfBytes = loanDetailsService.generatePdf(schedules,loanApplicantDetails);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
 
     @CrossOrigin
     @GetMapping("/downloadLoanClosure/{loanAccountNumber}")
@@ -192,22 +192,22 @@ public class RepaymentScheduleController {
         return loanDetailsService.getRepaymentSchedule(loanAccountNumber);
     }
     
-    @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
-    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) throws JsonMappingException, JsonProcessingException {
-        List<RepaymentSchedule> schedules = loanDetailsService.getRepaymentSchedule(loanAccountNumber);
-        LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
-        
-        if (schedules.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        byte[] pdfBytes = loanDetailsService.generatePdf(schedules,loanApplicantDetails);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfBytes);
-    }
+//    @GetMapping("/repaymentSchedule/download/{loanAccountNumber}")
+//    public ResponseEntity<byte[]> downloadRepaymentSchedule(@PathVariable String loanAccountNumber) throws JsonMappingException, JsonProcessingException {
+//        List<RepaymentSchedule> schedules = loanDetailsService.getRepaymentSchedule(loanAccountNumber);
+//        LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
+//        
+//        if (schedules.isEmpty()) {
+//            return ResponseEntity.notFound().build();
+//        }
+//
+//        byte[] pdfBytes = loanDetailsService.generatePdf(schedules,loanApplicantDetails);
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=repayment_schedule.pdf")
+//                .contentType(MediaType.APPLICATION_PDF)
+//                .body(pdfBytes);
+//    }
     
 
 }
