@@ -43,6 +43,17 @@ public class LoanCustomerUtilities {
 						: new SaasAuthentication(cloudClientId, cloudClientSecret))
 				.build();
 	}
+	
+//	public static CamundaTaskListClient getOperate(String cloudClientId, String cloudClientSecret, String cloudClusterId,
+//			String SELF_MANAGED_URL, String SAAS_TASKLIST_URL) throws TaskListException {
+//		boolean isSelfManaged = cloudClientId.isEmpty();
+//
+//		return new CamundaTaskListClient.Builder()
+//				.taskListUrl(isSelfManaged ? SELF_MANAGED_URL : SAAS_TASKLIST_URL + "/" + cloudClusterId)
+//				.shouldReturnVariables().authentication(isSelfManaged ? new SimpleAuthentication("demo", "demo")
+//						: new SaasAuthentication(cloudClientId, cloudClientSecret))
+//				.build();
+//	}
 
 	public static Optional<Task> getActiveTask(CamundaTaskListClient client, String processInstanceId)
 			throws TaskListException {
