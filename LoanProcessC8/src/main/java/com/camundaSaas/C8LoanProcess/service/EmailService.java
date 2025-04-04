@@ -127,4 +127,74 @@ public class EmailService {
         }
     }
 
+    public void sendLoanDecisionEmail(String status) {
+        String subject = "Loan Decision Notification - " + status;
+
+        String decisionMessage;
+
+        switch (status.toUpperCase()) {
+            case "APPROVED":
+                decisionMessage = "The borrower's loan has been approved.";
+                break;
+            case "REJECTED":
+                decisionMessage = "The borrower's loan has been rejected.";
+                break;
+            case "MODIFY":
+                decisionMessage = "The borrower is requesting modifications to the loan terms.";
+                break;
+            default:
+                decisionMessage = "Unknown loan status. Please check the details.";
+        }
+
+        String body = "Dear Banker,\n\n"
+                + decisionMessage + "\n\n"
+                + "Please review the details and take the necessary action.\n\n"
+                + "Best Regards,\nLoan Management Team";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(fromEmail);  // Replace with actual banker email
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom(customerEmail);  // Replace with your sender email
+
+        mailSender.send(message);
+        System.out.println("Loan decision email sent to banker.");
+    }
+
+    public void sendModificationAcceptedEmail() {
+        String subject = "Loan Modification Accepted - Review and Accept";
+
+        String body = "Dear Borrower,\n\n"
+                + "Your requested modifications to the loan terms have been accepted by the manager.\n\n"
+                + "Please review the updated terms and proceed with acceptance at your earliest convenience.\n\n"
+                + "Best Regards,\nLoan Management Team";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(customerEmail);
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom(fromEmail);  // Replace with your sender email
+
+        mailSender.send(message);
+        System.out.println("Loan modification acceptance email sent to borrower.");
+    }
+
+    public void sendFinalLoanAcceptanceEmail() {
+        String subject = "Final Loan Acceptance Notification";
+
+        String body = "Dear Banker,\n\n"
+                + "The borrower has reviewed the final loan terms and conditions and has accepted them.\n\n"
+                + "Please proceed with the next steps in the loan process.\n\n"
+                + "Best Regards,\nLoan Management Team";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(fromEmail);
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom(customerEmail);  // Replace with your sender email
+
+        mailSender.send(message);
+        System.out.println("Final loan acceptance email sent to banker.");
+    }
+
 }
