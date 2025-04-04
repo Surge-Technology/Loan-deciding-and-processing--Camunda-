@@ -32,11 +32,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +49,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.camundaSaas.C8LoanProcess.AppConfig;
@@ -55,7 +61,6 @@ import com.camundaSaas.C8LoanProcess.model.FileEntity;
 import com.camundaSaas.C8LoanProcess.model.Loan;
 import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
 import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
-import com.camundaSaas.C8LoanProcess.model.RepaymentScheduleDetailsDto;
 import com.camundaSaas.C8LoanProcess.model.TaskDTO;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.FileService;
@@ -105,7 +110,7 @@ public class LoanApplicantDetailsController {
 
 	@Autowired
 	EmailService emailService;
-	
+
 	@Autowired
 	LoanWorker loanWorker;
 
@@ -1004,16 +1009,100 @@ public class LoanApplicantDetailsController {
 		Map<String, Object> customerReply = new HashMap<>();
 		ObjectMapper objectMapper = new ObjectMapper();
 		JsonNode rootNode = objectMapper.readTree(approval);
+//		String assignee = rootNode.path("customer").asText().trim();
 		String assignee = rootNode.path("customer").asText().trim();
+		JsonNode oldDataNode = rootNode.path("OldData");
+		JsonNode newDataNode = rootNode.path("NewData");
 		System.out.println("Assigning task to: " + assignee);
-		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(Map.of("customer", assignee))
-				.send().join();
+//		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId)).variables(Map.of("customer", assignee))
+//				.send().join();
+		Map<String, Object> oldData = objectMapper.convertValue(oldDataNode, Map.class);
+		Map<String, Object> newData = objectMapper.convertValue(newDataNode, Map.class);
+		zeebeClient.newSetVariablesCommand(Long.parseLong(processInstanceId))
+				.variables(Map.of("customer", assignee, "OldData", oldData, "NewData", newData)).send().join();
 		CamundaTaskListClient client = LoanCustomerUtilities.getClient(cloudClientId, cloudClientSecret, cloudClusterId,
 				SELF_MANAGED_URL, SAAS_TASKLIST_URL);
 		LoanCustomerUtilities.completeTask(client, taskId);
 		System.out.println("Process variable 'Customer' set successfully.");
 		return customerReply;
 	}
+//	@CrossOrigin
+//    @GetMapping("/variables/{processInstanceId}")
+//    public ResponseEntity<Map<String, Object>> getProcessVariables(@PathVariable String processInstanceId) {
+//        Map<String, Object> response = new HashMap<>();
+//        try {
+//            ActivatedJob job = zeebeClient
+//                .newActivateJobsCommand()
+//                .jobType("Customer Acknowledgement") 
+//                .maxJobsToActivate(100)
+//                .send()
+//                .join()
+//                .getJobs()
+//                .stream()
+//                .filter(j -> String.valueOf(j.getProcessInstanceKey()).equals(processInstanceId))
+//                .findFirst()
+//                .orElse(null);
+//
+//            if (job != null) {
+//                response = job.getVariablesAsMap();
+//                return ResponseEntity.ok(response);
+//            } else {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(Map.of("error", "No job found for given processInstanceId"));
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(Map.of("error", "Failed to fetch process variables", "details", e.getMessage()));
+//        }
+//    }
+	
+	@GetMapping("/variables/{processInstanceId}")
+	public ResponseEntity<Object> getVariablesFromCamundaOperate(@PathVariable String processInstanceId) {
+	    String tokenUrl = "https://login.cloud.camunda.io/oauth/token";
+	    String clientId = "<your-client-id>";
+	    String clientSecret = "<your-client-secret>";
+	    String clusterId = "<your-cluster-id>";
+	    String operateUrl = "https://operate.camunda.io/" + clusterId + "/v1/process-instances/" + processInstanceId + "/variables";
+
+	    // Get Access Token
+	    RestTemplate restTemplate = new RestTemplate();
+	    HttpHeaders tokenHeaders = new HttpHeaders();
+	    tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+	    MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+	    form.add("grant_type", "client_credentials");
+	    form.add("client_id", clientId);
+	    form.add("client_secret", clientSecret);
+	    form.add("audience", "operate.camunda.io");
+
+	    HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(form, tokenHeaders);
+	    ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
+
+	    if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Failed to get access token"));
+	    }
+
+	    String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+	    // Use token to fetch variables
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setBearerAuth(accessToken);
+	    HttpEntity<Void> request = new HttpEntity<>(headers);
+
+	    try {
+	        ResponseEntity<Object> operateResponse = restTemplate.exchange(
+	                operateUrl, HttpMethod.GET, request, Object.class);
+	        return operateResponse;
+	    } catch (HttpClientErrorException.NotFound e) {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+	                .body(Map.of("error", "No variables found for given processInstanceId"));
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body(Map.of("error", "Failed to fetch variables", "details", e.getMessage()));
+	    }
+	}
+
 
 	@CrossOrigin
 	@PostMapping("/calculateTenureInterestSaveData")
@@ -1326,20 +1415,17 @@ public class LoanApplicantDetailsController {
 
 	@GetMapping("/{processInstanceId}")
 	public Map<String, Object> getData(@PathVariable String processInstanceId) {
-	    return getData(processInstanceId);
+		return getData(processInstanceId);
 	}
-	
+
 	public void getData(final JobClient client, final ActivatedJob job) {
-	    Map<String, Object> map = job.getVariablesAsMap();
-	    long processInstanceId = job.getProcessInstanceKey();
-	    String name = (String) map.get("applicantName"); 
+		Map<String, Object> map = job.getVariablesAsMap();
+		long processInstanceId = job.getProcessInstanceKey();
+		String name = (String) map.get("applicantName");
 
-	    System.out.println("ProcessInstanceId: " + processInstanceId);
-	    System.out.println("Applicant Name: " + name);
+		System.out.println("ProcessInstanceId: " + processInstanceId);
+		System.out.println("Applicant Name: " + name);
 
-	    client.newCompleteCommand(job.getKey())
-	        .variables(map) 
-	        .send()
-	        .join();
+		client.newCompleteCommand(job.getKey()).variables(map).send().join();
 	}
 }
