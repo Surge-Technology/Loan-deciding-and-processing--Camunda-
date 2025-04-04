@@ -4,6 +4,7 @@ package com.camundaSaas.C8LoanProcess.service;
 import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
 import com.camundaSaas.C8LoanProcess.model.RepaymentSchedule;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,12 +28,18 @@ public class EmailService {
     @Autowired
     private LoanTransactionDetailsService transactionDetailsService;
 
+    @Value("${customer.email}")
+    private String customerEmail;
+
+    @Value("${bank.email}")
+    private String fromEmail;
+
     public void sendSimpleEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
+        message.setTo(customerEmail);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("balamanchari@gmail.com");
+        message.setFrom(fromEmail);
 
         mailSender.send(message);
     }
@@ -47,10 +54,10 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-        helper.setTo(to);
+        helper.setTo(customerEmail);
         helper.setSubject(subject);
         helper.setText(body, true); // 'true' enables HTML content
-        helper.setFrom("balamanchari@gmail.com");
+        helper.setFrom(fromEmail);
 
         // Attach the PDF
         helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
@@ -69,10 +76,10 @@ public class EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-        helper.setTo(to);
+        helper.setTo(customerEmail);
         helper.setSubject(subject);
         helper.setText(body, true); // 'true' enables HTML content
-        helper.setFrom("balamanchari@gmail.com");
+        helper.setFrom(fromEmail);
 
         // Attach the PDF
         helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
@@ -83,10 +90,10 @@ public class EmailService {
 
     public void sendPaymentConfirmationEmail(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
+        message.setTo(customerEmail);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("balamanchari@gmail.com");
+        message.setFrom(fromEmail);
 
         mailSender.send(message);
         System.out.println("Confirmation mail has been sent...!");
@@ -94,10 +101,10 @@ public class EmailService {
 
     public void sendAutoPayFailure(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
+        message.setTo(customerEmail);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("balamanchari@gmail.com");
+        message.setFrom(fromEmail);
 
         mailSender.send(message);
         System.out.println("AutoPay Failure mail has been sent...!");
@@ -108,7 +115,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-            helper.setTo(to);
+            helper.setTo(customerEmail);
             helper.setSubject(subject);
             helper.setText(body, true);  // 'true' indicates HTML content
 
