@@ -1357,7 +1357,7 @@ public class LoanApplicantDetailsController {
 	}
 
 	@CrossOrigin
-	@GetMapping("/loanTermModificationComplete")
+	@PostMapping("loanTermModificationComplete")
 	public String completeTask1(@RequestBody String loanTerm)
 			throws TaskListException, JsonMappingException, JsonProcessingException {
 
