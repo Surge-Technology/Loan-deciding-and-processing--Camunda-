@@ -380,24 +380,49 @@ public class LoanApplicantDetailsController {
 			tenure = 48;
 			interestRate = 9.0;
 		}
-
+ 
 		loanResponseMap.put("loanAmount", loanAmount);
 		loanResponseMap.put("tenure", tenure);
 		loanResponseMap.put("interestRate", interestRate);
 		loanResponseMap.put("loanAccountNumber", loanAccountNumber);
 		loanResponseMap.put("applicantName", applicantName);
-
+ 
 		ResponseEntity<List<TaskDTO>> resp = getActiveTasks();
-
+		
+		String loanValue = String.valueOf(loanAmount);
+		Loan loan = new Loan();
+		loan.setTenure(tenure);
+		loan.setLoanAmount(loanValue);
+		loan.setInterest(interestRate);
+		String uanNumber = generateAccountNumber();
+		loan.setUanNumber(uanNumber);
+		loan.setLoanAccountNumber(loanAccountNumber);
+		loan.setLoanStatus(loanStatus);
+ 
+		LocalDate localDate = LocalDate.now().plusMonths(1).withDayOfMonth(10);
+		loan.setBillDate(localDate);
+		Loan savedLoan = loanDetailsService.saveLoan(loan);
+		Map<String, Object> response = new HashMap<>();
+		response.put("loanId", savedLoan.getLoanId());
+		response.put("loanAmount", savedLoan.getLoanAmount());
+		response.put("tenure", savedLoan.getTenure());
+		response.put("interestRate", savedLoan.getInterest());
+		response.put("uanNumber", uanNumber);
+		response.put("loanStatus", loanStatus);
+		response.put("loanAccountNumber", loanAccountNumber);
+		response.put("billDate", localDate);
+		System.out.println(response);
+	
+ 
 		List<String> taskIds = resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList());
 		Map<String, Object> customerReply = getClarificationDetails();
 		customerReply.put("taskIds", taskIds);
-
+ 
 		loanResponseMap.put("customerReply", customerReply);
 		loanResponseMap.put("taskIds", taskIds);
 		return loanResponseMap;
 	}
-
+	
 	@CrossOrigin
 	@GetMapping("/getActiveTask")
 	public ResponseEntity<List<TaskDTO>> getActiveTask(@RequestParam String user) throws TaskListException {
@@ -1125,6 +1150,8 @@ public class LoanApplicantDetailsController {
 			tenure = 48;
 			interestRate = 9.0;
 		}
+		
+		
 		String loanValue = String.valueOf(loanAmount);
 		Loan loan = new Loan();
 		loan.setTenure(tenure);
