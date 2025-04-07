@@ -29,14 +29,14 @@ const LoanAmountDetails = (props) => {
   const formik = useFormik({
     enableReinitialize: true, // Allows updating initial values dynamically
     initialValues: {
-      loanType: loanData?.customerReply?.loanType || '',
+      loanType: loanData?.customerReply?.loanType || 'Home Loan',
       loanAmount: loanData?.loanAmount || '',
       loanAccountNumber: loanData?.loanAccountNumber || '',
       applicantName: loanData?.applicantName || '',
       repayLoan: '4 month',
       emiAmount: '6000',
       intrestRate: loanData?.interestRate || '',
-      expectedDate: '2027-10-19',
+      expectedDate: loanData?.billDate|| '2025-05-10',
       repayDuration: loanData?.tenure || '',
       taskId: loanData?.taskIds[0],
     },
@@ -44,7 +44,7 @@ const LoanAmountDetails = (props) => {
       console.log('Submitted Data:', values)
     },
   })
-
+ 
   const processInstance = localStorage.getItem('id')
   console.log('process Instance id retrived', processInstance)
   const [loading, setLoading] = useState(false);
