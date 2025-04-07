@@ -48,9 +48,9 @@ const LoanApproverDashboard = (loan) => {
       let response;
       let formattedLoans = [];
   
-      if (storedUser === "FieldOfficer") {
+      if (storedUser === "LoanOfficer") {
         try {
-          response = await axios.get(`${URL}/getActivedTasks`);
+          response = await axios.get(`${URL}/loanTermModification`);
           console.log('API Response for FieldOfficer:', response.data); // Debugging Step 1
   
           // Ensure response.data is an array
@@ -86,7 +86,7 @@ const LoanApproverDashboard = (loan) => {
           console.error('Error fetching tasks for FieldOfficer:', error);
         }
       } 
-      else if (storedUser !== 'Manager') {
+      else if (storedUser !== 'DisbursementOfficer') {
         try {
           response = await axios.get(`${URL}/getActiveTask?user=${storedUser}`);
           console.log('API Response for User Tasks:', response.data); // Debugging Step 3
@@ -125,7 +125,7 @@ const LoanApproverDashboard = (loan) => {
       } 
       else {
         response = await axios.get(`${URL}/getApplicantDetails`);
-        console.log('API Response for Manager:', response.data);
+        console.log('API Response for Disbursement Officer:', response.data);
   
         formattedLoans = Array.isArray(response.data)
           ? response.data
@@ -252,6 +252,7 @@ const LoanApproverDashboard = (loan) => {
     localStorage.setItem('processId', processId);
 
     const storedUser = localStorage.getItem('username');
+console.log("1234567",storedUser);
 
     switch (storedUser) {
       case 'InitialApprover':
@@ -263,11 +264,12 @@ const LoanApproverDashboard = (loan) => {
       case 'LegalApprover':
         navigate('/legalApprover');
         break;
-      case 'Manager':
+      case 'DisbursementOfficer':
         navigate('/managerForm'); // Corrected spelling
         break;
-        case 'FieldOfficer':
-          navigate('/fieldOfficer')
+        case 'LoanOfficer':
+          navigate('/loanOfficer');
+          break;
       default:
         navigate('/applicantDashboard');
         break;
@@ -339,6 +341,27 @@ const LoanApproverDashboard = (loan) => {
     setSelectedLoan(loanAccountNumber)
     setSelectedLoanAmount(loanAmount)
   }
+  const [isDisabled, setIsDisabled] = useState(false);
+ const handleClosure = () => {
+  setIsDisabled(true);
+    axios
+      .get(`${URL}/loanClosure`)  // First API call
+      .then(() => {
+        return axios.get(`${URL}/updateStatusClosed`);  // Second API call
+      })
+      .then(() => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Loan Closed successfully!',
+        }).then(() => {
+          onSuccess();
+        });
+      })
+      .catch((err) => {
+        Swal.fire('Error', err.response?.data?.message || 'Please try again later.', 'error');
+        setIsDisabled(false);
+      });
+};
 
 
   const handleLegalAction = async (loanAccountNumber) => {
@@ -356,7 +379,7 @@ const LoanApproverDashboard = (loan) => {
       const response = await axios.post(`${URL}/startMessage`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
-  
+  alert('Legal Action take ')
       console.log('Legal Action API Response:', response.data);
     } catch (error) {
       console.error('Error initiating legal action:', error);
@@ -476,7 +499,7 @@ const LoanApproverDashboard = (loan) => {
                   <CRow className="align-items-center">
                     <CCol md="6" className="d-flex justify-content-between align-items-center">
                       <h6>📄 Loan Applications</h6>
-                      {storedUser === 'Manager' ? (
+                      {storedUser === 'DisbursementOfficer' ? (
                         <>
                           <CButton
                             color="info"
@@ -527,80 +550,82 @@ const LoanApproverDashboard = (loan) => {
                               <CTableDataCell>₹{loan.loanAmount}</CTableDataCell>
                               <CTableDataCell>{loan.loanStatus}</CTableDataCell>
                               <CTableDataCell>
-                                {storedUser === 'Manager' ? (
-                                  <div  className="d-flex">
-                                    <CButton
-                                      color="success"
-                                      size="sm"
-                                      className="me-2"
-                                      disabled={loan.loanStatus.toLowerCase() === 'disbursed'}
-                                      onClick={() =>
-                                        handleDisbursement(loan.loanAccountNumber, loan.loanAmount)
-                                      }
-                                    >
-                                      Disbursement
-                                    </CButton>
-                                    <CButton
-                                      color="warning"
-                                      size="sm"
-                                      className="me-2"
-                                      disabled={loan.loanStatus.toLowerCase() !== 'disbursed'}
-                                      onClick={() => handleLegalAction(loan.loanAccountNumber, loan.loanAmount)}>
-                                    
-                                      LegalAction
-                                    </CButton>
-                                    {/*<CButton
-                                      color="info"
-                                      size="sm"
-                                      className="me-2"
-                                      disabled={loan.loanStatus.toLowerCase() !== 'disbursed'}
-                                      onClick={() =>
-                                        handleViewAction(loan.loanAccountNumber, loan.loanAmount)
-                                      }
-                                    >
-                                    FieldVisit
-                                    </CButton>*/}
-                                  </div>
-                                ) : (
-                                  <>
-                                    <CButton
-                                      color="success"
-                                      size="sm"
-                                      className="me-2"
-                                      // onClick={() => handleApprove(loan.loanId, loan.taskId, "Approved")}
-                                      onClick={() => handleAction(loan.loanId, loan.taskId, "Approved")}
-                                      disabled={loadingAction[loan.taskId]}                                    >
-                                      {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Approve"}
-
-                                    </CButton>
-                                    <CButton
-                                      color="danger"
-                                      size="sm"
-                                      className="me-2"
-                                      onClick={() => handleAction(loan.loanId, loan.taskId, "Rejected")}
-                                      disabled={loadingAction[loan.taskId]}                                    >
-
-                                      {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Reject"}
-
-                                    </CButton>
-                                    <CButton
-                                      color="info"
-                                      size="sm"
-                                      // onClick={() => handleView(loan.id,loan.loadId,loan.taskId,loan.processId, loan.loanStatus)}
-                                      onClick={() => handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)}
-                                    >
-                                      View
-                                    </CButton>
-                                    {/* <CButton
-                                      color="success"
-                                      size="sm"
-                                      className="me-2"
-                                      onClick={() => handleDisbursement(loan.loanId)}
-                                    >
-                                      Get Disbursement
-                                    </CButton> */}
-                                  </>
-                                )}
+                              {storedUser === 'DisbursementOfficer' ? (
+                                <div className="d-flex">
+                                  <CButton
+                                    color="success"
+                                    size="sm"
+                                    className="me-2"
+                                    disabled={loan.loanStatus.toLowerCase() === 'disbursed' || loan.loanStatus.toLowerCase() =='closed'}
+                                    onClick={() =>
+                                      handleDisbursement(loan.loanAccountNumber, loan.loanAmount)
+                                    }
+                                  >
+                                    Disbursement
+                                  </CButton>
+                                  <CButton
+                                    color="warning"
+                                    size="sm"
+                                    className="me-2"
+                                    disabled={loan.loanStatus.toLowerCase() !== 'disbursed' || isDisabled || loan.loanStatus.toLowerCase() =='closed'}
+                                    onClick={() =>
+                                      handleLegalAction(loan.loanAccountNumber, loan.loanAmount)
+                                    }
+                                  >
+                                    LegalAction
+                                  </CButton>
+                                  <CButton
+                                    color="danger"
+                                    size="sm"
+                                    className="me-2"
+                                    onClick={handleClosure}
+                                    disabled={loan.loanStatus.toLowerCase() !== 'disbursed' || isDisabled || loan.loanStatus.toLowerCase() =='closed'}
+                                  >
+                                    Closure
+                                  </CButton>
+                                </div>
+                              ) : storedUser === 'LoanOfficer' ? (
+                                <CButton
+                                  color="info"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)
+                                  }
+                                >
+                                  View
+                                </CButton>
+                              ) : (
+                                <>
+                                  <CButton
+                                    color="success"
+                                    size="sm"
+                                    className="me-2"
+                                    onClick={() => handleAction(loan.loanId, loan.taskId, "Approved")}
+                                    disabled={loadingAction[loan.taskId]}
+                                  >
+                                    {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Approve"}
+                                  </CButton>
+                                  <CButton
+                                    color="danger"
+                                    size="sm"
+                                    className="me-2"
+                                    onClick={() => handleAction(loan.loanId, loan.taskId, "Rejected")}
+                                    disabled={loadingAction[loan.taskId]}
+                                  >
+                                    {loadingAction[loan.taskId] ? <CSpinner size="sm" /> : "Reject"}
+                                  </CButton>
+                                  <CButton
+                                    color="info"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleView(loan.id, loan.loanId, loan.taskId, loan.processId, loan.loanStatus)
+                                    }
+                                  >
+                                    View
+                                  </CButton>
+                                </>
+                              )}
+                              
                               </CTableDataCell>
                             </CTableRow>
                           ))

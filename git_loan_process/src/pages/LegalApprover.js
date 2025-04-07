@@ -125,7 +125,7 @@ const LegalApprover = () => {
   }
 
   const handleSubmit = async () => {
-    if (!incomeStatus || !collateralStatus || !legalReviewStatus) {
+    if ( !collateralStatus || !legalReviewStatus) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -154,7 +154,7 @@ const LegalApprover = () => {
 
       Swal.fire({
         icon: 'success',
-        title: 'Success',
+        title: 'Submitted',
         text: 'Legal review submitted successfully!',
         confirmButtonColor: '#28a745',
       }).then(async () => {
@@ -182,9 +182,7 @@ const LegalApprover = () => {
         confirmButtonColor: '#d33',
       })
     } 
-    // finally {
-    //   setLoadingAction(false)
-    // }
+   
   }
 
   const handlePrevious = () => {
@@ -199,28 +197,13 @@ const LegalApprover = () => {
     }
 
     const emailData = {
-      //   to: 'recipient@example.com',  // Replace with actual recipient email
-      //   subject: 'Clarification Request',
+    
       clarificationDetails: clarification,
     }
 
     console.log(emailData)
 
-    // try {
-    //   const response = await axios.post(`${API_URL}/send-email`, emailData, {
-    //     headers: { 'Content-Type': 'application/json' },
-    //   });
-
-    //   if (response.status === 200) {
-    //     alert('Email sent successfully!');
-    //     setClarification(''); // Clear the textarea after successful submission
-    //   } else {
-    //     alert('Failed to send email.');
-    //   }
-    // } catch (error) {
-    //   console.error('Error sending email:', error);
-    //   alert('Error sending email. Please try again.');
-    // }
+    
   }
 
   return (
@@ -238,22 +221,7 @@ const LegalApprover = () => {
 
       <CCardBody>
         <CRow className="mb-4">
-          {/* Income Verification Status */}
-          <CCol md="6">
-            <CCard className="shadow-sm p-3">
-              <CCardHeader className="bg-light">
-                <strong>Income Verification Status</strong>
-              </CCardHeader>
-              <CCardBody>
-                <CFormSelect value={incomeStatus} onChange={(e) => setIncomeStatus(e.target.value)}>
-                  <option value="">Select Status</option>
-                  <option value="Verified">✅ Verified</option>
-                  <option value="Pending">⌛ Pending</option>
-                  <option value="Rejected">❌ Rejected</option>
-                </CFormSelect>
-              </CCardBody>
-            </CCard>
-          </CCol>
+         
           <CCol md="6">
             <CCard className="shadow-sm p-3">
               <CCardHeader className="bg-light">
@@ -272,10 +240,10 @@ const LegalApprover = () => {
               </CCardBody>
             </CCard>
           </CCol>
-        </CRow>
+     
 
-        <CRow className="mb-4">
-          {/* Legal Review Status */}
+      
+         
 
           {/* Collateral Status */}
           <CCol md="6">
@@ -336,26 +304,7 @@ const LegalApprover = () => {
                 {downloadMessage && <p className="mt-2 text-muted">{downloadMessage}</p>}
               </CCol>
             </CRow>
-            {/*   <div style={{ marginTop: "12px",marginRight:'50px' }}>
-            <h6 className="d-flex text-start">Downloaded Documents:</h6>
-           {downloadedFiles && downloadedFiles.length > 0 ? (
-              <ul>
-                {downloadedFiles.map((fileData, index) => (
-                  <li key={index}>
-                    <strong>{fileData.documentCategory}:</strong>{" "}
-                    {fileData.fileName}
-                    <DownloadIcon
-                      sx={{ fontSize: 25, color: "blue" }}
-                      style={{ marginLeft: "20px" }}
-                     // onClick={() => handleDownloadDocById(fileData.fileId)} // Replace `id` with the unique key in your metadataResponse
-                    />
-                  </li>
-                ))}  
-              </ul>
-            ) : (
-              <p>Files not uploaded yet!</p>
-            )} 
-          </div>  */}
+          
           </CCardBody>
         </CCard>
 

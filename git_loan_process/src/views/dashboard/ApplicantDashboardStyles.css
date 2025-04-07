@@ -37,11 +37,11 @@
     color: white;
 }
 .table{
-    margin-left: 15px;
+    margin-left: 10px;
     max-height: 750px;
     overflow-y: auto;
     overflow-x: hidden;
-    width: 99%;
+    width: 100%;
     scrollbar-width: thin; /* Makes the scrollbar thin */
     scrollbar-color: rgba(180, 169, 169, 0.912)  #f1f1f1; 
 }

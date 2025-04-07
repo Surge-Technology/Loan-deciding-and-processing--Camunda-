@@ -26,6 +26,7 @@ const PaymentScheduleReport = (props) => {
   const [reportData, setReportData] = useState([]);
   const [showReport, setShowReport] = useState(false);
   const nav = useNavigate();
+  const URL = import.meta.env.VITE_BASE_URL
 
  
 
@@ -35,7 +36,7 @@ const PaymentScheduleReport = (props) => {
   const generateReport = () => {
     setShowReport(true);
     axios
-      .get(`http://localhost:8080/repaymentSchedule/loanAccountNumber/${accountNumber}`)
+      .get(`${URL}/schedule/${accountNumber}`)
       .then((res) => {
         console.log(res.data);
         // Ensure the response data is stored as an array
@@ -89,12 +90,12 @@ const PaymentScheduleReport = (props) => {
   }
 
   const location = useLocation();
-  const { accountNumber } = location.state || {}; // Get the account number from state
+  const { accountNumber } = location.state || {}; 
 
 
   useEffect(() => {
     axios
-      .get(`http://localhost:8080/repaymentSchedule/loanAccountNumber/${accountNumber}`)
+      .get(`${URL}schedule/${accountNumber}`)
       .then((res) => {
         console.log(res.data[0]);
         setInitialData({

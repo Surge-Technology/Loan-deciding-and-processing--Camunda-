@@ -6,12 +6,15 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 
-const LoanAmountDetails = (props) => {
+const LoanApplicationModification = (props) => {
   const URL = import.meta.env.VITE_BASE_URL
   const navigate = useNavigate()
+  const selectedLoanAcc = localStorage.getItem('selectedLoanId')
+  console.log('selectedLoanACC', selectedLoanAcc)
 
   const [isAcknowledged, setIsAcknowledged] = useState(false)
   const [loanData, setLoanData] = useState(null)
+  const [newTerm, setNewTerm] = useState()
   useEffect(() => {
     axios
       .get(`${URL}/calculateTenureInterest`)
@@ -25,7 +28,28 @@ const LoanAmountDetails = (props) => {
       })
       .catch((error) => console.error('Error fetching data:', error))
   }, [])
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${URL}/get/${selectedLoanAcc}`)
 
+        // Assuming the data is directly inside `response.data`
+        const payloadJson = response.data.payloadJson
+
+        // Parse the JSON string
+        const parsedPayload = JSON.parse(payloadJson)
+
+        // Get the tenure from NewData
+        const tenureValue = parsedPayload.NewData.tenure
+        setNewTerm(tenureValue)
+        console.log('Tenure:', tenureValue)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }
+    }
+
+    fetchData()
+  }, [selectedLoanAcc])
   const formik = useFormik({
     enableReinitialize: true, // Allows updating initial values dynamically
     initialValues: {
@@ -47,61 +71,49 @@ const LoanAmountDetails = (props) => {
 
   const processInstance = localStorage.getItem('id')
   console.log('process Instance id retrived', processInstance)
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState('')
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-  
+    e.preventDefault()
+    setLoading(true)
+
     if (!processInstance) {
-      console.error("Task ID is missing.");
-      setLoading(false);
-      return;
+      console.error('Task ID is missing.')
+      setLoading(false)
+      return
     }
-    const updatedLoanTerm = formik.values.repayDuration;
-    const updatedLoanData = { 
-      ...loanData, 
-      tenure: updatedLoanTerm
-    }
+
     const payload = {
-      OldData: loanData,
-      NewData: updatedLoanData,
-      customer: status,
-    };
-  console.log("payload---------------",payload);
-  
-    try {
-      const response = await axios.post(
-        `${URL}/customerAcknowledgement/${processInstance}`,
-        payload
-      );
-  
-      console.log("Handle Approve Response:", response.data);
-  
-      // Check if status is "Accept" (Use correct string comparison)
-      if (status === "Accept") {
-        Swal.fire({
-          icon: "success",
-          title: "Accepted",
-          confirmButtonColor: "#28a745",
-        });
-      }
-  
-      // Navigate to home after success
-      navigate("/home");
-    } catch (error) {
-      console.error("Error approving task:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        confirmButtonColor: "#d33",
-      });
-    } finally {
-      setLoading(false);
+      loanTerm: status,
     }
-  };
-  
- 
+
+    try {
+      const response = await axios.post(`${URL}/loanTermModificationComplete`, payload)
+
+      console.log('Handle Approve Response:', response.data)
+
+      // Check if status is "Accept" (Use correct string comparison)
+      if (status === 'Accept') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Accepted',
+          confirmButtonColor: '#28a745',
+        })
+      }
+
+      // Navigate to home after success
+      navigate('/loanApproverDashboard')
+    } catch (error) {
+      console.error('Error approving task:', error)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        confirmButtonColor: '#d33',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="container mt-5 mb-5">
@@ -154,9 +166,7 @@ const LoanAmountDetails = (props) => {
                 />
               </div>
             </div>
-            {/* <div className="form-section mt-2"> */}
-            {/* RepayLoan, IntrestRate and Emi-Amount*/}
-
+          
             <div className="row mt-3">
               {/* Repay loan */}
               <div className="col-md-6">
@@ -200,26 +210,26 @@ const LoanAmountDetails = (props) => {
             </div>
 
             <div className="row mt-3">
-              {/* intrest Rate*/}
               <div className="col-md-4">
-                <label htmlFor="intrestRate" className="form-label">
-                  Interest Rate
+                <label htmlFor="repayDuration" className="form-label">
+                  Old Loan Term
                 </label>
                 <input
                   type="text"
-                  className={`form-control ${formik.touched.intrestRate && formik.errors.intrestRate ? 'is-invalid' : ''}`}
-                  id="phone"
-                  name="phone"
+                  className={`form-control ${formik.touched.repayDuration && formik.errors.repayDuration ? 'is-invalid' : ''}`}
+                  id="Repay_Duration"
                   disabled
-                  value={formik.values.intrestRate}
+                  name="Repay_Duration"
+                  value={formik.values.repayDuration}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  min="1"
                 />
-                {formik.touched.intrestRate && formik.errors.intrestRate && (
-                  <div className="invalid-feedback">{formik.errors.intrestRate}</div>
+                {formik.touched.repayDuration && formik.errors.repayDuration && (
+                  <div className="invalid-feedback">{formik.errors.repayDuration}</div>
                 )}
               </div>
-
+              {/* intrest Rate*/}
               <div className="col-md-4">
                 <label htmlFor="expectedDate" className="form-label">
                   Expected Date
@@ -238,64 +248,61 @@ const LoanAmountDetails = (props) => {
                   <div className="invalid-feedback">{formik.errors.expectedDate}</div>
                 )}
               </div>
-
               <div className="col-md-4">
-              <label htmlFor="repayDuration" className="form-label">Loan Term</label>
-              <input
-                type="text"
-                className={`form-control ${formik.touched.repayDuration && formik.errors.repayDuration ? 'is-invalid' : ''}`}
-                id="Repay_Duration"
-                name="repayDuration"
-                value={formik.values.repayDuration}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                disabled={status !== "modify"}  // Enable only if "modify" is selected
-              />
-              {formik.touched.repayDuration && formik.errors.repayDuration && (
-                <div className="invalid-feedback">{formik.errors.repayDuration}</div>
-              )}
+                <label htmlFor="intrestRate" className="form-label">
+                  Interest Rate
+                </label>
+                <input
+                  type="text"
+                  className={`form-control ${formik.touched.intrestRate && formik.errors.intrestRate ? 'is-invalid' : ''}`}
+                  id="phone"
+                  name="phone"
+                  disabled
+                  value={formik.values.intrestRate}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                {formik.touched.intrestRate && formik.errors.intrestRate && (
+                  <div className="invalid-feedback">{formik.errors.intrestRate}</div>
+                )}
+              </div>{' '}
+              <div className="col-md-4">
+                <label htmlFor="repayDuration" className="form-label">
+                  New Loan Term Request by borrower
+                </label>
+                <input
+                  type="text"
+                  className={`form-control ${formik.touched.repayDuration && formik.errors.repayDuration ? 'is-invalid' : ''}`}
+                  id="Repay_Duration"
+                  disabled
+                  name="Repay_Duration"
+                  value={newTerm}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  min="1"
+                />
+                {formik.touched.repayDuration && formik.errors.repayDuration && (
+                  <div className="invalid-feedback">{formik.errors.repayDuration}</div>
+                )}
+              </div>
             </div>
-            
-
-              <div className="col-md-4">
-              <label htmlFor="repayDuration" className="form-label">
-                Decision
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                required
-                className="form-control"
-              >
-                <option value="">Select</option>
-                <option value="Approved">Accept</option>
-                <option value="modify">Modification Needed</option>
+            {/* </div> */}
+            <div>
+              <label>Decision:</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value)} required>
+                <option>Select</option>
+                <option value="approve">Accept</option>
                 <option value="reject">Reject</option>
               </select>
-            </div>
-            </div>
-           
-
-
-            <div className="form-group mt-3">
-              <input
-                type="checkbox"
-                id="acknowledge"
-                checked={isAcknowledged}
-                onChange={(e) => setIsAcknowledged(e.target.checked)}
-              />
-              <label htmlFor="acknowledge" className="ms-2">
-                I acknowledge that I have reviewed the terms and conditions.
-              </label>
             </div>
 
             <div
               className="mt-4"
               style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}
             >
-            <button  className="btn btn-primary "
-            type="submit">Submit</button>
-
+              <button className="btn btn-primary " type="submit">
+                Submit
+              </button>
             </div>
           </div>
         </form>
@@ -304,4 +311,4 @@ const LoanAmountDetails = (props) => {
   )
 }
 
-export default LoanAmountDetails
+export default LoanApplicationModification

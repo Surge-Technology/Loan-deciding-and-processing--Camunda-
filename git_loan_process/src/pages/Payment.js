@@ -9,6 +9,7 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const location = useLocation();
   const nav = useLocation();
+  const navi=useNavigate();
   // const nav =useNavigate()
   const payload = location.state?.payload;
   const [cardDetails, setCardDetails] = useState({
@@ -67,7 +68,7 @@ const Payment = () => {
             showConfirmButton: true,
           })
         })
-        nav('/applicantdashboard')
+        navi('/applicantdashboard')
     } 
     
   };

@@ -57,6 +57,7 @@ const ReviewPage = React.lazy(() => import('./views/applyLoan/ReviewPage'))
 const PaymentScheduleReport = React.lazy(() => import('../src/pages/PaymentScheduleReport'))
 const Payment = React.lazy(() => import('../src/pages/Payment'))
 const PaymentTransactionDetails = React.lazy(() => import('../src/pages/PaymentTransactionDetails'))
+const LoanApplicationModification = React.lazy(() => import('../src/pages/LoanApplicationModification'))
 
 
 
@@ -66,6 +67,7 @@ const routes = [
   { path: '/createCustomer', name: 'CreateCustomer', element: CreateCustomer},
   { path: '/customerDetailsForm', name: 'CustomerDetailsForm', element: CustomerDetailsForm},
   { path: '/customerForm', name: 'CustomerForm', element: CustomerForm},
+  { path: '/loanOfficer', name: 'LoanApplicationModification', element: LoanApplicationModification},
 
 
 {path:'/userRegistration',name:'UserRegistration',element:UserRegistration},

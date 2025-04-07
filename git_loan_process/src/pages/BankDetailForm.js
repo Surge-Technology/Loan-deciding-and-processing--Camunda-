@@ -23,7 +23,7 @@ const BankDetailsForm = () => {
     phoneNumber: '9876543210',
     loanType: 'homeLoan',
     purposeOfLoan: 'Home Renovation',
-    loanAmount: '650000',
+    loanAmount: '50000',
     comments: 'Building a new home',
   };
   const handlePrevious = () => {

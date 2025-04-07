@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import { cilArrowBottom, cilArrowCircleRight, cilArrowRight, cilChevronRight } from '@coreui/icons'
+import { cilArrowRight, cilChevronRight } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import {
   CButton,
@@ -16,24 +16,23 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react'
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload'
 import axios from 'axios'
 import React, { useState } from 'react'
 import { ModalBody } from 'react-bootstrap'
-import { FaPlusCircle } from 'react-icons/fa'
+import { FaDownload, FaPlusCircle } from 'react-icons/fa'
 import { useNavigate, useParams } from 'react-router-dom'
+import TransactionPopUp from '../../pages/transactionPopUp'
 import './ApplicantDashboardStyles.css'
 import RepayPayment from './RepayPayment'
-import TransactionPopUp from '../../pages/transactionPopUp'
-import { FileDownload } from '@mui/icons-material'
 const URL = import.meta.env.VITE_BASE_URL
 
 const ApplicantDashboard = () => {
-  const { id } = useParams();
+  const { id } = useParams()
 
-  const [applicants, setApplicants] = useState([])
   const [RepayModal, setRepayModal] = useState(false)
   const [transactionModal, setTransactionModal] = useState(false)
-  const [transactionData, setTransactionData] = useState();
+  const [transactionData, setTransactionData] = useState()
   const [selectedLoan, setSelectedLoan] = useState(null)
   const [loanDetails, setLoanDetails] = useState()
   const [data, setData] = useState([])
@@ -43,15 +42,14 @@ const ApplicantDashboard = () => {
   const navigate = useNavigate()
   const [showTransactions, setShowTransactions] = useState(false)
   const [showLoans, setShowLoans] = useState(false)
-  const [activeTable, setActiveTable] = useState(null)
 
-  const email = localStorage.getItem("email");
+  const email = localStorage.getItem('email')
 
   const loadTransactions = () => {
     setShowLoans(false)
     setShowTransactions(true)
     axios
-      .get(`http://localhost:8080/loanTransaction/email/${email}`)
+      .get(`${URL}/loanTransaction/email/${email}`)
       .then((response) => {
         console.log('Transaction Details:', response.data)
         setTransaction(response.data)
@@ -95,15 +93,12 @@ const ApplicantDashboard = () => {
               loanStatus: item.loanStatus || '',
               action: (
                 <CButton
-                  // color={item.loanStatus === "Disbursed" && latestBalance > 0 ? "success" : "secondary"}
                   className="repay"
                   onClick={() => modalHandleChange(item.accountNumber, item)}
                   color={
                     item.loanStatus === 'Disbursed' && latestBalance > 0 ? 'success' : 'secondary'
                   }
                   disabled={item.loanStatus !== 'Disbursed' || latestBalance === 0}
-
-                // disabled={item.loanStatus !== "Disbursed" || latestBalance === 0}
                 >
                   {item.loanStatus === 'Disbursed' && latestBalance === 0 ? 'Paid' : 'Repay'}
                 </CButton>
@@ -112,7 +107,7 @@ const ApplicantDashboard = () => {
           })
 
           setData(formattedData)
-          setShowLoans(true) // ✅ Ensure this is set
+          setShowLoans(true) 
           console.log('Final Merged Data:', formattedData)
         })
       })
@@ -125,9 +120,9 @@ const ApplicantDashboard = () => {
     setLoanDetails(loanDetails)
   }
   const showTransactionModal = (uanId, transactionDetails) => {
-    console.log("onbutton clic view", uanId, transactionDetails);
-    setTransactionModal(true);
-    setTransactionData(transactionDetails);
+    console.log('onbutton clic view', uanId, transactionDetails)
+    setTransactionModal(true)
+    setTransactionData(transactionDetails)
   }
 
   const filteredData = data?.length
@@ -135,7 +130,56 @@ const ApplicantDashboard = () => {
       ? data
       : data.filter((item) => item.loanStatus === selectedStatus)
     : []
+    const handleDownload = async (accountNumber) => {
+      try {
+        console.log("Downloading for Account:", accountNumber);
+  
+        // Example: Fetching a file from the backend (Adjust API as needed)
+        const response = await axios.get(`http://localhost:8080/repaymentSchedule/download/${accountNumber}`, {
+          responseType: "blob", // Important for handling file downloads
+        });
+  
+        // Create a blob URL for the downloaded file
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `LoanDetails_${accountNumber}.pdf`); // File name
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (error) {
+        console.error("Error downloading file:", error);
+      }
+    };
+  const downloadPDF = () => {
+    axios
+      .get(`${URL}/repaymentSchedule/download/${accountNumber}`, {
+        responseType: 'blob',
+      })
+      .then((res) => {
+        console.log(res)
 
+        const url = window.URL.createObjectURL(new Blob([res.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', 'Repayment_Schedule.pdf')
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+
+        Swal.fire({
+          position: 'center',
+          icon: 'success',
+          title: 'Successfully downloaded report',
+          showConfirmButton: true,
+        })
+      })
+      .catch((err) => {
+        console.error('Error downloading report:', err)
+        Swal.fire('Error occurred. Please try again later.', '', 'error')
+      })
+  }
   return (
     <>
       <CModal
@@ -155,11 +199,9 @@ const ApplicantDashboard = () => {
             loanDetails={loanDetails}
             onClose={() => setRepayModal(false)}
             onSuccess={() => {
-              setRepayModal(false) // Close the modal
-              // console.log('Transaction Amount:', transactionAmount)
+              setRepayModal(false) 
               console.log('Balance Amount:', balanceAmount)
-              // // Add logic to refresh the component (e.g., fetch updated data)
-              // fetchData() // Example: Fetch updated data
+       
             }}
           />
         </ModalBody>
@@ -189,7 +231,7 @@ const ApplicantDashboard = () => {
       </CModal>
 
       <div style={{ backgroundColor: '#27445D', color: 'white', height: '100vh' }}>
-        <h1 style={{ paddingLeft: '25px', marginLeft: '25px' }}>Applicant Dashboard</h1>
+        <h1 style={{ paddingLeft: '25px', marginLeft: '25px' }}>Borrower Portal</h1>
         <CCard
           className="shadow-lg mb-3"
           style={{
@@ -276,6 +318,7 @@ const ApplicantDashboard = () => {
                               <CTableHeaderCell>Type</CTableHeaderCell>
                               <CTableHeaderCell>Status</CTableHeaderCell>
                               <CTableHeaderCell>Action</CTableHeaderCell>
+                              <CTableHeaderCell>Download </CTableHeaderCell>
                             </CTableRow>
                           </CTableHead>
                           <CTableBody>
@@ -289,6 +332,15 @@ const ApplicantDashboard = () => {
                                 <CTableDataCell>{item.loanType}</CTableDataCell>
                                 <CTableDataCell>{item.loanStatus}</CTableDataCell>
                                 <CTableDataCell>{item.action}</CTableDataCell>
+                                <CTableDataCell>
+                                  <CButton variant="outline" size="sm">
+                                    <CloudDownloadIcon className="me-2" onClick={() => handleDownload(item.loanAccountNumber)} />
+                                  </CButton>
+                                </CTableDataCell> <CTableDataCell>
+                                <button onClick={() => handleDownload(loan.accountNumber)}>
+                                <FaDownload />
+                              </button>
+                                </CTableDataCell>
                               </CTableRow>
                             ))}
                           </CTableBody>
@@ -308,6 +360,7 @@ const ApplicantDashboard = () => {
                                 <CTableHeaderCell>Transaction Type</CTableHeaderCell>
                                 <CTableHeaderCell>Amount</CTableHeaderCell>
                                 <CTableHeaderCell>Date</CTableHeaderCell>
+
                                 <CTableHeaderCell>View </CTableHeaderCell>
                               </CTableRow>
                             </CTableHead>
@@ -321,7 +374,12 @@ const ApplicantDashboard = () => {
                                     <CTableDataCell>{txn.loanAmount}</CTableDataCell>
                                     <CTableDataCell>{txn.date}</CTableDataCell>
                                     <CTableDataCell>
-                                      <CButton color="success" onClick={() => showTransactionModal(txn.uanId, txn)}>View</CButton>
+                                      <CButton
+                                        color="success"
+                                        onClick={() => showTransactionModal(txn.uanId, txn)}
+                                      >
+                                        View
+                                      </CButton>
                                       {/* <CButton>
                                         <FileDownload />
                                       </CButton> */}

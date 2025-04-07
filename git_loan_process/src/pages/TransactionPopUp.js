@@ -24,7 +24,7 @@ const TransactionPopUp = ({ transactionDetails, onClose, onSuccess }) => {
         date: "",
         loanAccountNumber: "",
         loanAmount: "",
-        paymentType: "",
+        paymentMethod: "",
         transactionAmount: "",
         balanceAmount: "",
         email: "",
@@ -51,7 +51,7 @@ const TransactionPopUp = ({ transactionDetails, onClose, onSuccess }) => {
                     date: res.data.date,
                     loanAccountNumber: res.data.loanAccountNumber,
                     loanAmount: res.data.loanAmount,
-                    paymentType: res.data.paymentType,
+                    paymentMethod: res.data.paymentMethod,
                     transactionAmount: res.data.transactionAmount,
                     balanceAmount: res.data.balanceAmount,
                     email: res.data.email,
@@ -136,8 +136,8 @@ const TransactionPopUp = ({ transactionDetails, onClose, onSuccess }) => {
             </Row>
             <Row className="mb-3">
                 <Col md={6}>
-                    <CFormLabel>Paymnet Type:</CFormLabel>
-                    <Input type="text" value={state.paymentType || ''} readOnly fullWidth />
+                    <CFormLabel>Payment Method:</CFormLabel>
+                    <Input type="text" value={state.paymentMethod || ''} readOnly fullWidth />
                 </Col>
                 <Col md={6}>
                     <CFormLabel>Email:</CFormLabel>

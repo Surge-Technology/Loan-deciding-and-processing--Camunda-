@@ -97,7 +97,6 @@ const RepayPayment = ({ loanDetails, onClose, onSuccess }) => {
                   <option value="">Select</option>
                   <option value="bank_transfer">Net Banking</option>
                   <option value="online_payment">Online Payment</option>
-                  <option value="cheque">Cheque</option>
                 </CFormSelect>
               </Col>
             </Row>
