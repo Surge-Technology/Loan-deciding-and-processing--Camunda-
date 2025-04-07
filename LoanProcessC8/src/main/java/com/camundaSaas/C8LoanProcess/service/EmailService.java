@@ -66,6 +66,26 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    public void sendEmailWithRepaymentPdfAttachment(String to, String subject, String body, List<RepaymentSchedule> schedules, byte[] pdfBytes)
+            throws MessagingException, IOException {
+
+
+        // Create an email message
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(customerEmail);
+        helper.setSubject(subject);
+        helper.setText(body, true); // 'true' enables HTML content
+        helper.setFrom(fromEmail);
+
+        // Attach the PDF
+        helper.addAttachment("Repayment_Schedule.pdf", () -> new ByteArrayInputStream(pdfBytes));
+
+        // Send the email
+        mailSender.send(message);
+    }
+
     public void sendLoanClosureEmailWithAttachment(String to, String subject, String body, List<LoanTransactionDetails> loanTransactionDetails)
             throws MessagingException, IOException {
 
@@ -152,10 +172,10 @@ public class EmailService {
                 + "Best Regards,\nLoan Management Team";
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(fromEmail);  // Replace with actual banker email
+        message.setTo(customerEmail);  // Replace with actual banker email
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom(customerEmail);  // Replace with your sender email
+        message.setFrom(fromEmail);  // Replace with your sender email
 
         mailSender.send(message);
         System.out.println("Loan decision email sent to banker.");
@@ -191,7 +211,7 @@ public class EmailService {
         message.setTo(fromEmail);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom(customerEmail);  // Replace with your sender email
+        message.setFrom(fromEmail);  // Replace with your sender email
 
         mailSender.send(message);
         System.out.println("Final loan acceptance email sent to banker.");

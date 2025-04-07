@@ -10,6 +10,6 @@ import java.util.List;
 public interface RepaymentScheduleRepository extends JpaRepository<RepaymentSchedule, Long> {
 
     List<RepaymentSchedule> findByLoanAccountNumber(String loanAccountNumber);
-    
+    void deleteAllByLoanAccountNumber(String loanAccountNumber);
     
 }

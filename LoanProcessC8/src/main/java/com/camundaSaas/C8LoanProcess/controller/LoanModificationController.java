@@ -5,11 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.camundaSaas.C8LoanProcess.Repository.LoanModificationRepository;
 import com.camundaSaas.C8LoanProcess.model.LoanModification;
@@ -25,6 +21,7 @@ public class LoanModificationController {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@CrossOrigin
 	@PostMapping("/saveLoanData")
 	public String saveLoanData(@RequestBody JsonNode requestJson) {
 		try {
@@ -48,6 +45,7 @@ public class LoanModificationController {
 		}
 	}
 
+	@CrossOrigin
 	@GetMapping("/get/{loanAccountNumber}")
 	public ResponseEntity<?> getLoanModificationByLoanAccountNumber(@PathVariable String loanAccountNumber) {
 		Optional<LoanModification> result = repository.findByLoanAccountNumber(loanAccountNumber);

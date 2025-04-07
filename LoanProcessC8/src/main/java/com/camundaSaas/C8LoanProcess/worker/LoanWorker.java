@@ -1,5 +1,6 @@
 package com.camundaSaas.C8LoanProcess.worker;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,12 +8,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.camundaSaas.C8LoanProcess.Repository.RepaymentScheduleRepository;
+import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
+import com.camundaSaas.C8LoanProcess.service.LoanApplicantService;
+import com.camundaSaas.C8LoanProcess.service.LoanDetailsService;
+import com.camundaSaas.C8LoanProcess.service.RepaymentScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import com.camundaSaas.C8LoanProcess.Repository.LoanDetailsRepository;
@@ -28,6 +35,8 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
+
+import javax.mail.MessagingException;
 
 @SpringBootApplication
 public class LoanWorker {
@@ -45,6 +54,16 @@ public class LoanWorker {
 
 	@Autowired
 	LoanModificationRepository loanModificationRepository;
+
+	@Autowired
+	private RepaymentScheduleRepository repaymentScheduleRepository;
+	@Autowired
+	private RepaymentScheduleService repaymentScheduleService;
+	@Autowired
+	private LoanApplicantService loanApplicantService;
+	
+	@Autowired
+	private LoanDetailsService loanDetailsService;
 
 	@ZeebeWorker(name = "Persist Customer Information", type = "collection")
 	public void handlePersistCustomerInformation(final JobClient client, final ActivatedJob job) {
@@ -142,6 +161,7 @@ public class LoanWorker {
 		zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
 	}
 
+	@Transactional
 	@ZeebeWorker(name = "LoanTermApprovalNotification", type = "LoanTermApprovalNotification")
 	public void LoanTermApprovalNotification(final JobClient client, final ActivatedJob job) {
 		try {
@@ -162,7 +182,84 @@ public class LoanWorker {
 				loan.setLoanStatus("Approved");
 				loan.setBillDate(LocalDate.now());
 
-				loanDetailsRepository.save(loan);
+				Loan updatedLoan = loanDetailsRepository.save(loan);
+
+				repaymentScheduleRepository.deleteAllByLoanAccountNumber(loanAccountNumber);
+
+
+				int month = updatedLoan.getTenure();
+				Integer installmentNo = updatedLoan.getTenure();
+				Double loanAmount = Double.parseDouble(updatedLoan.getLoanAmount());
+				Double annualInterestRate = updatedLoan.getInterest();
+
+				Double monthlyInterestRate = annualInterestRate / (100 * 12);
+				Double installmentAmount;
+				if (monthlyInterestRate > 0) {
+					installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
+							/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+				} else {
+					installmentAmount = loanAmount / month;
+				}
+				Double closingPrincipal = loanAmount;
+				for (int i = 1; i <= installmentNo; i++) {
+					Double interestComponent = closingPrincipal * monthlyInterestRate;
+					Double principalComponent = installmentAmount - interestComponent;
+					closingPrincipal -= principalComponent;
+				}
+				System.out.println("Installment Amount: " + installmentAmount);
+				System.out.println("Final Closing Principal: " + closingPrincipal);
+
+				for (int i = 0; i < month; i++) {
+					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+
+					LocalDate date = LocalDate.of(2024, month, 11);
+					repaymentSchedule.setInstallmentNo(installmentNo);
+					repaymentSchedule.setInstallmentDate(date);
+					repaymentSchedule.setInstallmentAmount(installmentAmount);
+
+					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
+					repaymentSchedule.setInterest(interest);
+
+					Double principal = installmentAmount - interest;
+					principal = Math.round(principal * 100.0) / 100.0;
+
+					if (principal > closingPrincipal) {
+						principal = closingPrincipal;
+						interest = installmentAmount - principal;
+					}
+
+					repaymentSchedule.setPrincipal(principal);
+
+					closingPrincipal -= principal;
+					closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+
+					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+
+					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+
+					System.out.println("RepaymentSchedule : " + repaymentSchedule);
+
+					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+					HttpHeaders headers1 = new HttpHeaders();
+					headers1.setContentType(MediaType.APPLICATION_JSON);
+					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+
+					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+					Map body = mapResponseEntity.getBody();
+
+					// Increment for Next Installment
+					month += 1;
+					installmentNo += 1;
+
+					if (body != null) {
+						System.out.println("RepaymentSchedule has been saved");
+					}
+				}
+
+				List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+				LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
+
+				byte[] bytes = loanDetailsService.generatePdf(schedules, loanApplicantDetails);
 
 				String updatedPayloadJson = objectMapper.writeValueAsString(variables);
 				LoanModification modification = new LoanModification();
@@ -170,10 +267,36 @@ public class LoanWorker {
 				modification.setPayloadJson(updatedPayloadJson);
 				loanModificationRepository.save(modification);
 
-				String to = "shaukatmakandar786@gmail.com";
-				String subject = "Loan Term Approval Notification";
-				String body = "Loan updated successfully for account: " + loanAccountNumber;
-				emailService.sendSimpleEmail(to, subject, body);
+				emailService.sendModificationAcceptedEmail();
+
+				String to = "camerongre1@gmail.com";
+				String subject = "Repayment Schedule for Your Loan – Important Information";
+				String body = "Dear Customer,<br><br>\n" +
+						"\n" +
+						"We hope this email finds you well. We are sharing the repayment schedule for your loan as part of the ongoing loan process.<br><br>\n" +
+						"\n" +
+						"Below are the details of your repayment schedule, including installment amounts, due dates, and outstanding principal. Please review the attached document for a detailed breakdown of your repayment obligations.<br><br>\n" +
+						"\n" +
+						"To ensure a smooth loan process, kindly review the schedule and let us know if you have any questions or require any clarifications.<br><br>\n" +
+						"\n" +
+						"You can also upload any required documents or additional information at the following link:  \n" +
+						"\n" +
+						"For further assistance, please feel free to contact our support team.<br><br>\n" +
+						"\n" +
+						"Thank you for choosing us for your financial needs.<br><br>\n" +
+						"\n" +
+						"Best regards,<br>  \n" +
+						"Loan Processing Team<br>  \n" +
+						"Surge IT Technology<br>  \n" +
+						"7769979532\n";
+
+				try {
+					emailService.sendEmailWithRepaymentPdfAttachment(to, subject, body, schedules, bytes);
+
+				} catch (MessagingException | IOException e) {
+					e.printStackTrace();
+
+				}
 
 				client.newCompleteCommand(job.getKey()).send().join();
 
@@ -186,6 +309,25 @@ public class LoanWorker {
 			client.newFailCommand(job.getKey()).retries(job.getRetries() - 1)
 					.errorMessage("Error updating loan: " + e.getMessage()).send().join();
 		}
+	}
+
+	@ZeebeWorker(name = "Send Acknowledgement Email", type = "AcknowledgementEmail")
+	public void sendAcknowledgementEmail(final JobClient client, final ActivatedJob activatedJob){
+
+		Map<String, Object> variables = activatedJob.getVariablesAsMap();
+		String customer = variables.get("customer").toString();
+		emailService.sendLoanDecisionEmail(customer);
+
+		client.newCompleteCommand(activatedJob.getKey()).variables(variables).send()
+				.join();
+	}
+
+	@ZeebeWorker(name = "Send Final Acceptance Email", type = "FinalAcceptanceEmail")
+	public void sendFinalAcceptanceEmail(final JobClient client, final ActivatedJob activatedJob){
+
+		emailService.sendFinalLoanAcceptanceEmail();
+		client.newCompleteCommand(activatedJob.getKey()).send()
+				.join();
 	}
 
 	@ZeebeWorker(name = "Persist Loan Details", type = "Persist Loan Details")
@@ -233,7 +375,7 @@ public class LoanWorker {
 			System.out.println("Installment Amount: " + installmentAmount);
 			System.out.println("Final Closing Principal: " + closingPrincipal);
 
-			for (int i = 0; i < 6; i++) {
+			for (int i = 0; i < month; i++) {
 				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
 
 				LocalDate date = LocalDate.of(2024, month, 11);
