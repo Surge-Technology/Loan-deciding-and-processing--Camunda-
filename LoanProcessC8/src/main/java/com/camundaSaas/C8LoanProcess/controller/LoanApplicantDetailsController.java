@@ -27,6 +27,7 @@ import java.util.zip.ZipOutputStream;
 
 import javax.annotation.PostConstruct;
 
+import com.camundaSaas.C8LoanProcess.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -52,12 +53,6 @@ import com.camundaSaas.C8LoanProcess.JsonFileWriter;
 import com.camundaSaas.C8LoanProcess.Repository.LoanApplicantRepository;
 import com.camundaSaas.C8LoanProcess.Repository.LoanModificationRepository;
 import com.camundaSaas.C8LoanProcess.Repository.LoanTransactionDetailsRepository;
-import com.camundaSaas.C8LoanProcess.model.FileEntity;
-import com.camundaSaas.C8LoanProcess.model.Loan;
-import com.camundaSaas.C8LoanProcess.model.LoanApplicantDetails;
-import com.camundaSaas.C8LoanProcess.model.LoanModification;
-import com.camundaSaas.C8LoanProcess.model.LoanTransactionDetails;
-import com.camundaSaas.C8LoanProcess.model.TaskDTO;
 import com.camundaSaas.C8LoanProcess.service.EmailService;
 import com.camundaSaas.C8LoanProcess.service.FileService;
 import com.camundaSaas.C8LoanProcess.service.LoanApplicantService;
@@ -1482,6 +1477,12 @@ public class LoanApplicantDetailsController {
 	        response.put("error", "Failed to process: " + e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 	    }
+	}
+
+
+	@GetMapping("/loan/byLoanAccountNumber")
+	public Loan getRepaymentSchedule() {
+		return loanDetailsService.getLoanByAccountNumber(loanAccountNumber);
 	}
 
 }

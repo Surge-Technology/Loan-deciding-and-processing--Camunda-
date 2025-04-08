@@ -308,7 +308,7 @@ public class LoanWorker {
 
 			byte[] bytes = loanDetailsService.generatePdf(schedules, loanApplicantDetails);
 
-			String to = "camerongre1@gmail.com";
+			String to = "makandarshaukat786@gmail.com";
 			String subject = "Repayment Schedule for Your Loan – Important Information";
 			String body = "Dear Customer,<br><br>\n" +
 					"\n" +
@@ -336,6 +336,13 @@ public class LoanWorker {
 				e.printStackTrace();
 
 			}
+
+			String subject1 = "Loan Approval Confirmation";
+			String body1 = "Congratulations! Your application has been deemed eligible for a loan. "
+					+ "We have attached the disbursement details in the form. Once you acknowledge, we can proceed with account generation."
+					+ "http://localhost:3003/#/LoanAmountDetails";
+			System.out.println(body);
+			emailService.sendSimpleEmail(to, subject, body);
 
 			if (responseBody != null) {
 				client.newCompleteCommand(job.getKey()).variables(responseBody).send().join();

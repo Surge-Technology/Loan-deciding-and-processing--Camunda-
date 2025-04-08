@@ -292,11 +292,25 @@ public class LoanDetailsService {
 			leftTable.addCell(getCell(": " + loanApplicantDetails.getLoanAccountNumber(), smallFont));
 			String data = loanApplicantDetails.getData();
 
-			ObjectMapper objectMapper = new ObjectMapper();
+			/*ObjectMapper objectMapper = new ObjectMapper();
 			JsonNode rootNode = objectMapper.readTree(data);
+
+
 			JsonNode personalDataNode = rootNode.path("personalData");
 
 			// Extract "addressInfo" node
+			JsonNode addressInfoNode = personalDataNode.path("addressInfo");*/
+
+			// Step 1: Parse the outer JSON
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode outerNode = objectMapper.readTree(data);
+
+// Step 2: Extract and parse the "updated" string
+			String updatedJsonString = outerNode.path("updated").asText();
+			JsonNode rootNode = objectMapper.readTree(updatedJsonString);
+
+// Step 3: Now access inner fields
+			JsonNode personalDataNode = rootNode.path("personalData");
 			JsonNode addressInfoNode = personalDataNode.path("addressInfo");
 			String zip = addressInfoNode.path("zip").asText();
 			String city = addressInfoNode.path("city").asText();
