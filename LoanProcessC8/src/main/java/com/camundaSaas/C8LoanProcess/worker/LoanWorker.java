@@ -164,7 +164,7 @@ public class LoanWorker {
 			ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
 			Map<String, Object> responseBody = response.getBody();
 			System.out.println("Loan has been saved...!");
-			String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
+//			String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
 
 //				response.put("loanId", savedLoan.getLoanId());
 //				response.put("loanAmount", savedLoan.getLoanAmount());
@@ -175,73 +175,166 @@ public class LoanWorker {
 //				response.put("loanAccountNumber", loanAccountNumber);
 //				response.put("billDate", localDate);
 
-			int month = (int) responseBody.get("tenure");
-			Integer installmentNo = (Integer) responseBody.get("tenure");
-			Double loanAmount = (Double) responseBody.get("loanAmount");
-			Double annualInterestRate = (Double) responseBody.get("interestRate");
+//			int month = (int) responseBody.get("tenure");
+//			Integer installmentNo = 1;
+//			Double loanAmount = (Double) responseBody.get("loanAmount");
+//			Double annualInterestRate = (Double) responseBody.get("interestRate");
+//
+//			Double monthlyInterestRate = annualInterestRate / (100 * 12);
+//			Double installmentAmount;
+//			if (monthlyInterestRate > 0) {
+//				installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
+//						/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+//			} else {
+//				installmentAmount = loanAmount / month;
+//			}
+//			Double closingPrincipal = loanAmount;
+//			for (int i = 1; i <= month; i++) {
+//				Double interestComponent = closingPrincipal * monthlyInterestRate;
+//				Double principalComponent = installmentAmount - interestComponent;
+//				closingPrincipal -= principalComponent;
+//			}
+//			System.out.println("Installment Amount: " + installmentAmount);
+//			System.out.println("Final Closing Principal: " + closingPrincipal);
+//
+//			for (int i = 0; i < month; i++) {
+//				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+//
+//				LocalDate date = LocalDate.of(2024, month, 11);
+//				repaymentSchedule.setInstallmentNo(installmentNo);
+//				repaymentSchedule.setInstallmentDate(date);
+//				repaymentSchedule.setInstallmentAmount(installmentAmount);
+//
+//				Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
+//				repaymentSchedule.setInterest(interest);
+//
+//				Double principal = installmentAmount - interest;
+//				principal = Math.round(principal * 100.0) / 100.0;
+//
+//				if (principal > closingPrincipal) {
+//					principal = closingPrincipal;
+//					interest = installmentAmount - principal;
+//				}
+//
+//				repaymentSchedule.setPrincipal(principal);
+//
+//				closingPrincipal -= principal;
+//				closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+//
+//				repaymentSchedule.setClosingPrincipal(closingPrincipal);
+//
+//				repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+//
+//				System.out.println("RepaymentSchedule : " + repaymentSchedule);
+//
+//				String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+//				HttpHeaders headers1 = new HttpHeaders();
+//				headers1.setContentType(MediaType.APPLICATION_JSON);
+//				HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+//
+//				ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+//				Map body = mapResponseEntity.getBody();
+//
+//				// Increment for Next Installment
+//				month += 1;
+//				installmentNo += 1;
+//
+//				if (body != null) {
+//					System.out.println("RepaymentSchedule has been saved");
+//				}
+//			}
 
-			Double monthlyInterestRate = annualInterestRate / (100 * 12);
-			Double installmentAmount;
+
+			int tenureMonths = (int) responseBody.get("tenure");
+			double loanAmount = Double.parseDouble(responseBody.get("loanAmount").toString());
+			double annualInterestRate = Double.parseDouble(responseBody.get("interestRate").toString());
+
+			String loanAccountNumber = (String) responseBody.get("loanAccountNumber");
+
+// Calculate monthly interest rate
+			double monthlyInterestRate = annualInterestRate / (12 * 100);
+
+// Calculate EMI using amortization formula
+			double emi;
 			if (monthlyInterestRate > 0) {
-				installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
-						/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+				emi = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenureMonths)) /
+						(Math.pow(1 + monthlyInterestRate, tenureMonths) - 1);
 			} else {
-				installmentAmount = loanAmount / month;
+				emi = loanAmount / tenureMonths;
 			}
-			Double closingPrincipal = loanAmount;
-			for (int i = 1; i <= installmentNo; i++) {
-				Double interestComponent = closingPrincipal * monthlyInterestRate;
-				Double principalComponent = installmentAmount - interestComponent;
-				closingPrincipal -= principalComponent;
-			}
-			System.out.println("Installment Amount: " + installmentAmount);
-			System.out.println("Final Closing Principal: " + closingPrincipal);
+			emi = Math.round(emi * 100.0) / 100.0;
 
-			for (int i = 0; i < month; i++) {
-				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+			double closingPrincipal = loanAmount;
+			LocalDate startDate = LocalDate.of(2024, 4, 11); // Loan start date
 
-				LocalDate date = LocalDate.of(2024, month, 11);
-				repaymentSchedule.setInstallmentNo(installmentNo);
-				repaymentSchedule.setInstallmentDate(date);
-				repaymentSchedule.setInstallmentAmount(installmentAmount);
+			for (int i = 0; i < tenureMonths; i++) {
+				RepaymentSchedule schedule = new RepaymentSchedule();
 
-				Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
-				repaymentSchedule.setInterest(interest);
+				// Interest for this month
+				double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
 
-				Double principal = installmentAmount - interest;
+				// Principal component
+				double principal = emi - interest;
 				principal = Math.round(principal * 100.0) / 100.0;
 
+				// Handle last installment to avoid negative closing principal
 				if (principal > closingPrincipal) {
 					principal = closingPrincipal;
-					interest = installmentAmount - principal;
+					interest = emi - principal;
 				}
 
-				repaymentSchedule.setPrincipal(principal);
+				// Set schedule fields
+				schedule.setInstallmentNo(i + 1);
+				schedule.setInstallmentDate(startDate.plusMonths(i));
+				schedule.setInstallmentAmount(emi);
+				schedule.setInterest(interest);
+				schedule.setPrincipal(principal);
+				closingPrincipal = Math.round((closingPrincipal - principal) * 100.0) / 100.0;
+				schedule.setClosingPrincipal(closingPrincipal);
+				schedule.setLoanAccountNumber(loanAccountNumber);
 
-				closingPrincipal -= principal;
-				closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+				// Print or save the schedule
+				System.out.println(schedule);
 
-				repaymentSchedule.setClosingPrincipal(closingPrincipal);
+				// Save via API
+				HttpHeaders headerss = new HttpHeaders();
+				headerss.setContentType(MediaType.APPLICATION_JSON);
+				HttpEntity<RepaymentSchedule> request = new HttpEntity<>(schedule, headerss);
+				restTemplate.postForEntity("http://localhost:8080/repaymentSchedule/save", request, Void.class);
+			}
 
-				repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+			List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
+			LoanApplicantDetails loanApplicantDetails = loanApplicantService.getapplicantData(loanAccountNumber);
 
-				System.out.println("RepaymentSchedule : " + repaymentSchedule);
+			byte[] bytes = loanDetailsService.generatePdf(schedules, loanApplicantDetails);
 
-				String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
-				HttpHeaders headers1 = new HttpHeaders();
-				headers1.setContentType(MediaType.APPLICATION_JSON);
-				HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+			String to = "camerongre1@gmail.com";
+			String subject = "Repayment Schedule for Your Loan – Important Information";
+			String body = "Dear Customer,<br><br>\n" +
+					"\n" +
+					"We hope this email finds you well. We are sharing the repayment schedule for your loan as part of the ongoing loan process.<br><br>\n" +
+					"\n" +
+					"Below are the details of your repayment schedule, including installment amounts, due dates, and outstanding principal. Please review the attached document for a detailed breakdown of your repayment obligations.<br><br>\n" +
+					"\n" +
+					"To ensure a smooth loan process, kindly review the schedule and let us know if you have any questions or require any clarifications.<br><br>\n" +
+					"\n" +
+					"You can also upload any required documents or additional information at the following link:  \n" +
+					"\n" +
+					"For further assistance, please feel free to contact our support team.<br><br>\n" +
+					"\n" +
+					"Thank you for choosing us for your financial needs.<br><br>\n" +
+					"\n" +
+					"Best regards,<br>  \n" +
+					"Loan Processing Team<br>  \n" +
+					"Surge IT Technology<br>  \n" +
+					"7769979532\n";
 
-				ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
-				Map body = mapResponseEntity.getBody();
+			try {
+				emailService.sendEmailWithRepaymentPdfAttachment(to, subject, body, schedules, bytes);
 
-				// Increment for Next Installment
-				month += 1;
-				installmentNo += 1;
+			} catch (MessagingException | IOException e) {
+				e.printStackTrace();
 
-				if (body != null) {
-					System.out.println("RepaymentSchedule has been saved");
-				}
 			}
 
 			if (responseBody != null) {
@@ -290,73 +383,140 @@ public class LoanWorker {
 				repaymentScheduleRepository.deleteAllByLoanAccountNumber(loanAccountNumber);
 
 
-				int month = updatedLoan.getTenure();
-				Integer installmentNo = updatedLoan.getTenure();
+//				int month = updatedLoan.getTenure();
+//				Integer installmentNo = updatedLoan.getTenure();
+//				Double loanAmount = Double.parseDouble(updatedLoan.getLoanAmount());
+//				Double annualInterestRate = updatedLoan.getInterest();
+//
+//				Double monthlyInterestRate = annualInterestRate / (100 * 12);
+//				Double installmentAmount;
+//				if (monthlyInterestRate > 0) {
+//					installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
+//							/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+//				} else {
+//					installmentAmount = loanAmount / month;
+//				}
+//				Double closingPrincipal = loanAmount;
+//				for (int i = 1; i <= installmentNo; i++) {
+//					Double interestComponent = closingPrincipal * monthlyInterestRate;
+//					Double principalComponent = installmentAmount - interestComponent;
+//					closingPrincipal -= principalComponent;
+//				}
+//				System.out.println("Installment Amount: " + installmentAmount);
+//				System.out.println("Final Closing Principal: " + closingPrincipal);
+//
+//				for (int i = 0; i < month; i++) {
+//					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+//
+//					LocalDate date = LocalDate.of(2024, month, 11);
+//					repaymentSchedule.setInstallmentNo(installmentNo);
+//					repaymentSchedule.setInstallmentDate(date);
+//					repaymentSchedule.setInstallmentAmount(installmentAmount);
+//
+//					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
+//					repaymentSchedule.setInterest(interest);
+//
+//					Double principal = installmentAmount - interest;
+//					principal = Math.round(principal * 100.0) / 100.0;
+//
+//					if (principal > closingPrincipal) {
+//						principal = closingPrincipal;
+//						interest = installmentAmount - principal;
+//					}
+//
+//					repaymentSchedule.setPrincipal(principal);
+//
+//					closingPrincipal -= principal;
+//					closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+//
+//					repaymentSchedule.setClosingPrincipal(closingPrincipal);
+//
+//					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+//
+//					System.out.println("RepaymentSchedule : " + repaymentSchedule);
+//
+//					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+//					HttpHeaders headers1 = new HttpHeaders();
+//					headers1.setContentType(MediaType.APPLICATION_JSON);
+//					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+//
+//					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+//					Map body = mapResponseEntity.getBody();
+//
+//					// Increment for Next Installment
+//					month += 1;
+//					installmentNo += 1;
+//
+//					if (body != null) {
+//						System.out.println("RepaymentSchedule has been saved");
+//					}
+//				}
+
+
+				int tenureMonths = updatedLoan.getTenure();
 				Double loanAmount = Double.parseDouble(updatedLoan.getLoanAmount());
 				Double annualInterestRate = updatedLoan.getInterest();
+				Integer installmentNo = 1;
 
-				Double monthlyInterestRate = annualInterestRate / (100 * 12);
-				Double installmentAmount;
+
+
+
+//				int tenureMonths = (int) responseBody.get("tenure");
+//				double loanAmount = Double.parseDouble(responseBody.get("loanAmount").toString());
+//				double annualInterestRate = Double.parseDouble(responseBody.get("interestRate").toString());
+//
+//				String loanAccountNumber = (String) responseBody.get("loanAccountNumber");
+
+// Calculate monthly interest rate
+				double monthlyInterestRate = annualInterestRate / (12 * 100);
+
+// Calculate EMI using amortization formula
+				double emi;
 				if (monthlyInterestRate > 0) {
-					installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
-							/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+					emi = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenureMonths)) /
+							(Math.pow(1 + monthlyInterestRate, tenureMonths) - 1);
 				} else {
-					installmentAmount = loanAmount / month;
+					emi = loanAmount / tenureMonths;
 				}
-				Double closingPrincipal = loanAmount;
-				for (int i = 1; i <= installmentNo; i++) {
-					Double interestComponent = closingPrincipal * monthlyInterestRate;
-					Double principalComponent = installmentAmount - interestComponent;
-					closingPrincipal -= principalComponent;
-				}
-				System.out.println("Installment Amount: " + installmentAmount);
-				System.out.println("Final Closing Principal: " + closingPrincipal);
+				emi = Math.round(emi * 100.0) / 100.0;
 
-				for (int i = 0; i < month; i++) {
-					RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+				double closingPrincipal = loanAmount;
+				LocalDate startDate = LocalDate.of(2024, 4, 11); // Loan start date
 
-					LocalDate date = LocalDate.of(2024, month, 11);
-					repaymentSchedule.setInstallmentNo(installmentNo);
-					repaymentSchedule.setInstallmentDate(date);
-					repaymentSchedule.setInstallmentAmount(installmentAmount);
+				for (int i = 0; i < tenureMonths; i++) {
+					RepaymentSchedule schedule = new RepaymentSchedule();
 
-					Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
-					repaymentSchedule.setInterest(interest);
+					// Interest for this month
+					double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
 
-					Double principal = installmentAmount - interest;
+					// Principal component
+					double principal = emi - interest;
 					principal = Math.round(principal * 100.0) / 100.0;
 
+					// Handle last installment to avoid negative closing principal
 					if (principal > closingPrincipal) {
 						principal = closingPrincipal;
-						interest = installmentAmount - principal;
+						interest = emi - principal;
 					}
 
-					repaymentSchedule.setPrincipal(principal);
+					// Set schedule fields
+					schedule.setInstallmentNo(i + 1);
+					schedule.setInstallmentDate(startDate.plusMonths(i));
+					schedule.setInstallmentAmount(emi);
+					schedule.setInterest(interest);
+					schedule.setPrincipal(principal);
+					closingPrincipal = Math.round((closingPrincipal - principal) * 100.0) / 100.0;
+					schedule.setClosingPrincipal(closingPrincipal);
+					schedule.setLoanAccountNumber(loanAccountNumber);
 
-					closingPrincipal -= principal;
-					closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+					// Print or save the schedule
+					System.out.println(schedule);
 
-					repaymentSchedule.setClosingPrincipal(closingPrincipal);
-
-					repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
-
-					System.out.println("RepaymentSchedule : " + repaymentSchedule);
-
-					String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
-					HttpHeaders headers1 = new HttpHeaders();
-					headers1.setContentType(MediaType.APPLICATION_JSON);
-					HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
-
-					ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
-					Map body = mapResponseEntity.getBody();
-
-					// Increment for Next Installment
-					month += 1;
-					installmentNo += 1;
-
-					if (body != null) {
-						System.out.println("RepaymentSchedule has been saved");
-					}
+					// Save via API
+					HttpHeaders headers = new HttpHeaders();
+					headers.setContentType(MediaType.APPLICATION_JSON);
+					HttpEntity<RepaymentSchedule> request = new HttpEntity<>(schedule, headers);
+					restTemplate.postForEntity("http://localhost:8080/repaymentSchedule/save", request, Void.class);
 				}
 
 				List<RepaymentSchedule> schedules = repaymentScheduleService.getRepaymentScheduleByLoanAccountNumber(loanAccountNumber);
@@ -433,110 +593,110 @@ public class LoanWorker {
 				.join();
 	}
 
-	@ZeebeWorker(name = "Persist Loan Details", type = "Persist Loan Details")
-	public void calculateTenure(final JobClient client, final ActivatedJob job) {
-		try {
-			Map<String, Object> variables = job.getVariablesAsMap();
-
-			String apiUrl = "http://localhost:8080/calculateTenureInterestSaveData";
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
-			ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
-			Map<String, Object> responseBody = response.getBody();
-			System.out.println("Loan has been saved...!");
-			String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
-
-//				response.put("loanId", savedLoan.getLoanId());
-//				response.put("loanAmount", savedLoan.getLoanAmount());
-//				response.put("tenure", savedLoan.getTenure());
-//				response.put("interestRate", savedLoan.getInterest());
-//				response.put("uanNumber", uanNumber);
-//				response.put("loanStatus", loanStatus);
-//				response.put("loanAccountNumber", loanAccountNumber);
-//				response.put("billDate", localDate);
-
-			int month = (int) responseBody.get("tenure");
-			Integer installmentNo = (Integer) responseBody.get("tenure");
-			Double loanAmount = (Double) responseBody.get("loanAmount");
-			Double annualInterestRate = (Double) responseBody.get("interestRate");
-
-			Double monthlyInterestRate = annualInterestRate / (100 * 12);
-			Double installmentAmount;
-			if (monthlyInterestRate > 0) {
-				installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
-						/ (Math.pow(1 + monthlyInterestRate, month) - 1);
-			} else {
-				installmentAmount = loanAmount / month;
-			}
-			Double closingPrincipal = loanAmount;
-			for (int i = 1; i <= installmentNo; i++) {
-				Double interestComponent = closingPrincipal * monthlyInterestRate;
-				Double principalComponent = installmentAmount - interestComponent;
-				closingPrincipal -= principalComponent;
-			}
-			System.out.println("Installment Amount: " + installmentAmount);
-			System.out.println("Final Closing Principal: " + closingPrincipal);
-
-			for (int i = 0; i < month; i++) {
-				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
-
-				LocalDate date = LocalDate.of(2024, month, 11);
-				repaymentSchedule.setInstallmentNo(installmentNo);
-				repaymentSchedule.setInstallmentDate(date);
-				repaymentSchedule.setInstallmentAmount(installmentAmount);
-
-				Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
-				repaymentSchedule.setInterest(interest);
-
-				Double principal = installmentAmount - interest;
-				principal = Math.round(principal * 100.0) / 100.0;
-
-				if (principal > closingPrincipal) {
-					principal = closingPrincipal;
-					interest = installmentAmount - principal;
-				}
-
-				repaymentSchedule.setPrincipal(principal);
-
-				closingPrincipal -= principal;
-				closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
-
-				repaymentSchedule.setClosingPrincipal(closingPrincipal);
-
-				repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
-
-				System.out.println("RepaymentSchedule : " + repaymentSchedule);
-
-				String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
-				HttpHeaders headers1 = new HttpHeaders();
-				headers1.setContentType(MediaType.APPLICATION_JSON);
-				HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
-
-				ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
-				Map body = mapResponseEntity.getBody();
-
-				// Increment for Next Installment
-				month += 1;
-				installmentNo += 1;
-
-				if (body != null) {
-					System.out.println("RepaymentSchedule has been saved");
-				}
-			}
-
-			if (responseBody != null) {
-				client.newCompleteCommand(job.getKey()).variables(responseBody).send().join();
-			} else {
-				client.newCompleteCommand(job.getKey()).variables(Map.of("error", "No response from API")).send()
-						.join();
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			client.newFailCommand(job.getKey()).retries(job.getRetries() - 1)
-					.errorMessage("Error in Loan Status Update Worker: " + e.getMessage()).send().join();
-		}
-	}
+//	@ZeebeWorker(name = "Persist Loan Details", type = "Persist Loan Details")
+//	public void calculateTenure(final JobClient client, final ActivatedJob job) {
+//		try {
+//			Map<String, Object> variables = job.getVariablesAsMap();
+//
+//			String apiUrl = "http://localhost:8080/calculateTenureInterestSaveData";
+//			HttpHeaders headers = new HttpHeaders();
+//			headers.setContentType(MediaType.APPLICATION_JSON);
+//			HttpEntity<String> entity = new HttpEntity<>(headers);
+//			ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+//			Map<String, Object> responseBody = response.getBody();
+//			System.out.println("Loan has been saved...!");
+//			String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
+//
+////				response.put("loanId", savedLoan.getLoanId());
+////				response.put("loanAmount", savedLoan.getLoanAmount());
+////				response.put("tenure", savedLoan.getTenure());
+////				response.put("interestRate", savedLoan.getInterest());
+////				response.put("uanNumber", uanNumber);
+////				response.put("loanStatus", loanStatus);
+////				response.put("loanAccountNumber", loanAccountNumber);
+////				response.put("billDate", localDate);
+//
+//			int month = (int) responseBody.get("tenure");
+//			Integer installmentNo = (Integer) responseBody.get("tenure");
+//			Double loanAmount = (Double) responseBody.get("loanAmount");
+//			Double annualInterestRate = (Double) responseBody.get("interestRate");
+//
+//			Double monthlyInterestRate = annualInterestRate / (100 * 12);
+//			Double installmentAmount;
+//			if (monthlyInterestRate > 0) {
+//				installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
+//						/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+//			} else {
+//				installmentAmount = loanAmount / month;
+//			}
+//			Double closingPrincipal = loanAmount;
+//			for (int i = 1; i <= installmentNo; i++) {
+//				Double interestComponent = closingPrincipal * monthlyInterestRate;
+//				Double principalComponent = installmentAmount - interestComponent;
+//				closingPrincipal -= principalComponent;
+//			}
+//			System.out.println("Installment Amount: " + installmentAmount);
+//			System.out.println("Final Closing Principal: " + closingPrincipal);
+//
+//			for (int i = 0; i < month; i++) {
+//				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+//
+//				LocalDate date = LocalDate.of(2024, month, 11);
+//				repaymentSchedule.setInstallmentNo(installmentNo);
+//				repaymentSchedule.setInstallmentDate(date);
+//				repaymentSchedule.setInstallmentAmount(installmentAmount);
+//
+//				Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
+//				repaymentSchedule.setInterest(interest);
+//
+//				Double principal = installmentAmount - interest;
+//				principal = Math.round(principal * 100.0) / 100.0;
+//
+//				if (principal > closingPrincipal) {
+//					principal = closingPrincipal;
+//					interest = installmentAmount - principal;
+//				}
+//
+//				repaymentSchedule.setPrincipal(principal);
+//
+//				closingPrincipal -= principal;
+//				closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+//
+//				repaymentSchedule.setClosingPrincipal(closingPrincipal);
+//
+//				repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+//
+//				System.out.println("RepaymentSchedule : " + repaymentSchedule);
+//
+//				String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+//				HttpHeaders headers1 = new HttpHeaders();
+//				headers1.setContentType(MediaType.APPLICATION_JSON);
+//				HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+//
+//				ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+//				Map body = mapResponseEntity.getBody();
+//
+//				// Increment for Next Installment
+//				month += 1;
+//				installmentNo += 1;
+//
+//				if (body != null) {
+//					System.out.println("RepaymentSchedule has been saved");
+//				}
+//			}
+//
+//			if (responseBody != null) {
+//				client.newCompleteCommand(job.getKey()).variables(responseBody).send().join();
+//			} else {
+//				client.newCompleteCommand(job.getKey()).variables(Map.of("error", "No response from API")).send()
+//						.join();
+//			}
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			client.newFailCommand(job.getKey()).retries(job.getRetries() - 1)
+//					.errorMessage("Error in Loan Status Update Worker: " + e.getMessage()).send().join();
+//		}
+//	}
 
 }
