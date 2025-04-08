@@ -172,10 +172,10 @@ public class EmailService {
                 + "Best Regards,\nLoan Management Team";
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(customerEmail);  // Replace with actual banker email
+        message.setTo(fromEmail);  // Replace with actual banker email
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom(fromEmail);  // Replace with your sender email
+        message.setFrom(customerEmail);  // Replace with your sender email
 
         mailSender.send(message);
         System.out.println("Loan decision email sent to banker.");

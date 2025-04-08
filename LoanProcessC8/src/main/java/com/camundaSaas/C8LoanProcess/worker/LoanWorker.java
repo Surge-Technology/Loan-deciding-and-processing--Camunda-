@@ -151,8 +151,112 @@ public class LoanWorker {
 
 	@ZeebeWorker(name = "loan Status Update", type = "loan Status Update")
 	public void LoanStatusUpdate(final JobClient client, final ActivatedJob job) {
-		Map<String, Object> variableasmap = job.getVariablesAsMap();
-		zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
+//		Map<String, Object> variableasmap = job.getVariablesAsMap();
+//		zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
+
+		try {
+			Map<String, Object> variables = job.getVariablesAsMap();
+
+			String apiUrl = "http://localhost:8080/calculateTenureInterestSaveData";
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			HttpEntity<String> entity = new HttpEntity<>(headers);
+			ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+			Map<String, Object> responseBody = response.getBody();
+			System.out.println("Loan has been saved...!");
+			String loanAccountNumber = responseBody.get("loanAccountNumber").toString();
+
+//				response.put("loanId", savedLoan.getLoanId());
+//				response.put("loanAmount", savedLoan.getLoanAmount());
+//				response.put("tenure", savedLoan.getTenure());
+//				response.put("interestRate", savedLoan.getInterest());
+//				response.put("uanNumber", uanNumber);
+//				response.put("loanStatus", loanStatus);
+//				response.put("loanAccountNumber", loanAccountNumber);
+//				response.put("billDate", localDate);
+
+			int month = (int) responseBody.get("tenure");
+			Integer installmentNo = (Integer) responseBody.get("tenure");
+			Double loanAmount = (Double) responseBody.get("loanAmount");
+			Double annualInterestRate = (Double) responseBody.get("interestRate");
+
+			Double monthlyInterestRate = annualInterestRate / (100 * 12);
+			Double installmentAmount;
+			if (monthlyInterestRate > 0) {
+				installmentAmount = (loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, month))
+						/ (Math.pow(1 + monthlyInterestRate, month) - 1);
+			} else {
+				installmentAmount = loanAmount / month;
+			}
+			Double closingPrincipal = loanAmount;
+			for (int i = 1; i <= installmentNo; i++) {
+				Double interestComponent = closingPrincipal * monthlyInterestRate;
+				Double principalComponent = installmentAmount - interestComponent;
+				closingPrincipal -= principalComponent;
+			}
+			System.out.println("Installment Amount: " + installmentAmount);
+			System.out.println("Final Closing Principal: " + closingPrincipal);
+
+			for (int i = 0; i < month; i++) {
+				RepaymentSchedule repaymentSchedule = new RepaymentSchedule();
+
+				LocalDate date = LocalDate.of(2024, month, 11);
+				repaymentSchedule.setInstallmentNo(installmentNo);
+				repaymentSchedule.setInstallmentDate(date);
+				repaymentSchedule.setInstallmentAmount(installmentAmount);
+
+				Double interest = Math.round(closingPrincipal * monthlyInterestRate * 100.0) / 100.0;
+				repaymentSchedule.setInterest(interest);
+
+				Double principal = installmentAmount - interest;
+				principal = Math.round(principal * 100.0) / 100.0;
+
+				if (principal > closingPrincipal) {
+					principal = closingPrincipal;
+					interest = installmentAmount - principal;
+				}
+
+				repaymentSchedule.setPrincipal(principal);
+
+				closingPrincipal -= principal;
+				closingPrincipal = Math.round(closingPrincipal * 100.0) / 100.0;
+
+				repaymentSchedule.setClosingPrincipal(closingPrincipal);
+
+				repaymentSchedule.setLoanAccountNumber(loanAccountNumber);
+
+				System.out.println("RepaymentSchedule : " + repaymentSchedule);
+
+				String apiUrl1 = "http://localhost:8080/repaymentSchedule/save";
+				HttpHeaders headers1 = new HttpHeaders();
+				headers1.setContentType(MediaType.APPLICATION_JSON);
+				HttpEntity<RepaymentSchedule> entity1 = new HttpEntity<>(repaymentSchedule, headers1);
+
+				ResponseEntity<Map> mapResponseEntity = restTemplate.postForEntity(apiUrl1, entity1, Map.class);
+				Map body = mapResponseEntity.getBody();
+
+				// Increment for Next Installment
+				month += 1;
+				installmentNo += 1;
+
+				if (body != null) {
+					System.out.println("RepaymentSchedule has been saved");
+				}
+			}
+
+			if (responseBody != null) {
+				client.newCompleteCommand(job.getKey()).variables(responseBody).send().join();
+			} else {
+				client.newCompleteCommand(job.getKey()).variables(Map.of("error", "No response from API")).send()
+						.join();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			client.newFailCommand(job.getKey()).retries(job.getRetries() - 1)
+					.errorMessage("Error in Loan Status Update Worker: " + e.getMessage()).send().join();
+		}
+
 	}
 
 	@ZeebeWorker(name = "Loan Status Update", type = "Loan Status Update")
@@ -161,7 +265,6 @@ public class LoanWorker {
 		zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
 	}
 
-	@Transactional
 	@ZeebeWorker(name = "LoanTermApprovalNotification", type = "LoanTermApprovalNotification")
 	public void LoanTermApprovalNotification(final JobClient client, final ActivatedJob job) {
 		try {
