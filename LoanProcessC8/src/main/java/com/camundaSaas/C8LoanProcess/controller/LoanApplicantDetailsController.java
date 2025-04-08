@@ -1481,8 +1481,18 @@ public class LoanApplicantDetailsController {
 
 
 	@GetMapping("/loan/byLoanAccountNumber")
-	public Loan getRepaymentSchedule() {
-		return loanDetailsService.getLoanByAccountNumber(loanAccountNumber);
+	public Map<String, Object> getRepaymentSchedule() throws TaskListException {
+		ResponseEntity<List<TaskDTO>> resp = getActiveTasks();
+
+		 
+		List<String> taskIds = resp.getBody().stream().map(TaskDTO::getTaskId).collect(Collectors.toList());
+		Map<String, Object> customerReply = getClarificationDetails();
+		customerReply.put("taskIds", taskIds);
+		loanResponseMap.put("Details", loanDetailsService.getLoanByAccountNumber(loanAccountNumber));
+		loanResponseMap.put("customerReply", customerReply);
+		loanResponseMap.put("taskIds", taskIds);
+		return loanResponseMap;
+	//	return loanDetailsService.getLoanByAccountNumber(loanAccountNumber);
 	}
 
 }

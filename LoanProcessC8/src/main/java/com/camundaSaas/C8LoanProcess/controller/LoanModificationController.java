@@ -26,7 +26,7 @@ public class LoanModificationController {
 	public String saveLoanData(@RequestBody JsonNode requestJson) {
 		try {
 			// Extract loanAccountNumber from NewData
-			String loanAccountNumber = requestJson.path("NewData").path("loanAccountNumber").asText();
+			String loanAccountNumber = requestJson.path("OldData").path("Details").path("loanAccountNumber").asText();
 
 			// Convert full request JSON to string
 			String fullJson = objectMapper.writeValueAsString(requestJson);

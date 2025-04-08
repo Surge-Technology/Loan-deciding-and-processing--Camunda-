@@ -365,6 +365,7 @@ public class LoanWorker {
 		zeebeClient.newCompleteCommand(job.getKey()).variables("").send().join();
 	}
 
+	@Transactional
 	@ZeebeWorker(name = "LoanTermApprovalNotification", type = "LoanTermApprovalNotification")
 	public void LoanTermApprovalNotification(final JobClient client, final ActivatedJob job) {
 		try {
