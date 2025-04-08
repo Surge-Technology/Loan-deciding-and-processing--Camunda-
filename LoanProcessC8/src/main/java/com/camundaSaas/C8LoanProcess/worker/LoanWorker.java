@@ -373,18 +373,18 @@ public class LoanWorker {
 			ObjectMapper objectMapper = new ObjectMapper();
 
 			JsonNode newDataNode = objectMapper.convertValue(variables.get("NewData"), JsonNode.class);
-			String loanAccountNumber = newDataNode.path("loanAccountNumber").asText();
+			String loanAccountNumber = newDataNode.path("customerReply").path("loanAccountNumber").asText();
 
 			Optional<Loan> optionalLoan = loanDetailsRepository.findByLoanAccountNumber(loanAccountNumber);
 
 			if (optionalLoan.isPresent()) {
 				Loan loan = optionalLoan.get();
 
-				loan.setLoanAmount(newDataNode.path("loanAmount").asText());
+//				loan.setLoanAmount(newDataNode.path("loanAmount").asText());
 				loan.setTenure(newDataNode.path("tenure").asInt());
-				loan.setInterest(newDataNode.path("interestRate").asDouble());
-				loan.setLoanStatus("Approved");
-				loan.setBillDate(LocalDate.now());
+//				loan.setInterest(newDataNode.path("interestRate").asDouble());
+//				loan.setLoanStatus("Approved");
+//				loan.setBillDate(LocalDate.now());
 
 				Loan updatedLoan = loanDetailsRepository.save(loan);
 
@@ -532,11 +532,11 @@ public class LoanWorker {
 
 				byte[] bytes = loanDetailsService.generatePdf(schedules, loanApplicantDetails);
 
-				String updatedPayloadJson = objectMapper.writeValueAsString(variables);
-				LoanModification modification = new LoanModification();
-				modification.setLoanAccountNumber(loanAccountNumber);
-				modification.setPayloadJson(updatedPayloadJson);
-				loanModificationRepository.save(modification);
+//				String updatedPayloadJson = objectMapper.writeValueAsString(variables);
+//				LoanModification modification = new LoanModification();
+//				modification.setLoanAccountNumber(loanAccountNumber);
+//				modification.setPayloadJson(updatedPayloadJson);
+//				loanModificationRepository.save(modification);
 
 				emailService.sendModificationAcceptedEmail();
 

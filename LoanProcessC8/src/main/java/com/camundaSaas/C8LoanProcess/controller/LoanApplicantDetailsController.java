@@ -1183,8 +1183,8 @@ public class LoanApplicantDetailsController {
 		String validJsonString;
 		try {
 			ObjectNode jsonNode = objectMapper.createObjectNode();
-			jsonNode.put("updated", detail.getData());
-			validJsonString = objectMapper.writeValueAsString(jsonNode);
+//			jsonNode.put("updated", detail.getData());
+			validJsonString = objectMapper.writeValueAsString(detail.getData());
 		} catch (Exception e) {
 			return "Failed to generate JSON: " + e.getMessage();
 		}
@@ -1442,8 +1442,9 @@ public class LoanApplicantDetailsController {
 	        JsonNode oldDataNode = rootNode.path("OldData");
 	        JsonNode newDataNode = rootNode.path("NewData");
 
-	        String loanAccountNumber = newDataNode.path("loanAccountNumber").asText();
-	        String payloadJson = objectMapper.writeValueAsString(rootNode);
+			String loanAccountNumber = newDataNode.path("customerReply").path("loanAccountNumber").asText();
+
+			String payloadJson = objectMapper.writeValueAsString(rootNode);
 
 	        LoanModification loanModification = new LoanModification();
 	        loanModification.setLoanAccountNumber(loanAccountNumber);
