@@ -14,12 +14,13 @@ const LoanAmountDetails = (props) => {
   const [loanData, setLoanData] = useState(null)
   useEffect(() => {
     axios
-      .get(`${URL}/calculateTenureInterest`)
+      // .get(`${URL}/calculateTenureInterest`)
+      .get(`${URL}/loan/byLoanAccountNumber`)
       .then((response) => {
         setLoanData(response.data)
         if (response.data.taskIds && response.data.taskIds.length > 0) {
           const idTask = response.data.taskIds[0]
-          // console.log(idTask, "idTask");
+          console.log(idTask, "idTask");
           localStorage.setItem('id', idTask)
         }
       })
@@ -29,16 +30,15 @@ const LoanAmountDetails = (props) => {
   const formik = useFormik({
     enableReinitialize: true, // Allows updating initial values dynamically
     initialValues: {
-      loanType: loanData?.customerReply?.loanType || 'Home Loan',
-      loanAmount: loanData?.loanAmount || '',
+      loanType: loanData?.customerReply?.loanType || 'Home LLoan',
+      loanAmount: loanData?.Details?.loanAmount || '',
       loanAccountNumber: loanData?.loanAccountNumber || '',
       applicantName: loanData?.applicantName || '',
       repayLoan: '4 month',
       emiAmount: '6000',
-      intrestRate: loanData?.interestRate || '',
+      intrestRate: loanData?.Details?.interest || '',
       expectedDate: loanData?.billDate|| '2025-05-10',
-      repayDuration: loanData?.tenure || '',
-      taskId: loanData?.taskIds[0],
+      repayDuration: loanData?.Details?.tenure || '',
     },
     onSubmit: (values) => {
       console.log('Submitted Data:', values)
