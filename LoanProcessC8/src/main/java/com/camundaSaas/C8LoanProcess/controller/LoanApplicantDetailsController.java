@@ -1183,8 +1183,8 @@ public class LoanApplicantDetailsController {
 		String validJsonString;
 		try {
 			ObjectNode jsonNode = objectMapper.createObjectNode();
-//			jsonNode.put("updated", detail.getData());
-			validJsonString = objectMapper.writeValueAsString(detail.getData());
+			jsonNode.put("updated", detail.getData());
+			validJsonString = objectMapper.writeValueAsString(jsonNode);
 		} catch (Exception e) {
 			return "Failed to generate JSON: " + e.getMessage();
 		}
